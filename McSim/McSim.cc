@@ -222,7 +222,7 @@ McSim::McSim(PthreadTimingSimulator * pts_)
     exit(1);
   }
 
-  if (is_nuca == true)
+  if (is_nuca == true && noc_type == "mesh")
   {
     for (uint32_t i = 0; i < num_hthreads; i++)
     {
@@ -293,6 +293,112 @@ McSim::McSim(PthreadTimingSimulator * pts_)
 
     assert(noc_type == "mesh");
     noc = new Mesh2D(ct_mesh, 0, this);
+
+    // instantiate L2 caches and directories
+    for (uint32_t i = 0; i < num_hthreads; i++)
+    {
+      l2s.push_back(new CacheL2(ct_cachel2, i, this));
+      l2s[i]->directory = NULL;
+      l2s[i]->crossbar = noc;
+      noc->cachel2.push_back(l2s[i]);
+
+      l1is[i]->cachel2 = l2s[i];
+      l1ds[i]->cachel2 = l2s[i];
+    }
+
+    // connect l1s and network
+    for (uint32_t i = 0; i < num_hthreads / num_threads_per_l1_cache; i++) {
+      l1is[i]->noc = noc;
+      l1ds[i]->noc = noc;
+      noc->cachel1i.push_back(l1is[i]);
+      noc->cachel1d.push_back(l1ds[i]);
+    }
+
+    for (uint32_t i = 0; i < num_mcs; i++) {
+      mcs.push_back(new MemoryController(ct_memory_controller, i, this));
+      dirs.push_back(new Directory(ct_directory, i, this));
+      dirs[i]->memorycontroller = (mcs[i]);
+      mcs[i]->directory = (dirs[i]);
+
+      noc->directory.push_back(dirs[i]);
+      dirs[i]->cachel2  = NULL;
+      dirs[i]->crossbar = noc;
+    }
+
+    noc->connect_l2_directory();
+  }
+  else if (is_nuca == true)
+  {
+    for (uint32_t i = 0; i < num_hthreads; i++)
+    {
+      if (use_o3core == true)
+      {
+        o3cores.push_back(new O3Core(ct_o3core, i, this));
+        is_migrate_ready.push_back(false);
+      }
+      else
+      {
+        hthreads.push_back(new Hthread(ct_lsu, i, this));
+      }
+    }
+
+    // instantiate L1 caches
+    for (uint32_t i = 0; i < num_hthreads / num_threads_per_l1_cache; i++)
+    {
+      if (use_o3core == false)
+      {
+        cores.push_back(new Core(ct_core, i, this));
+      }
+      l1is.push_back(new CacheL1(ct_cachel1i, i, this));
+      l1ds.push_back(new CacheL1(ct_cachel1d, i, this));
+      tlbl1ds.push_back(new TLBL1(ct_tlbl1d, i, this));
+      tlbl1is.push_back(new TLBL1(ct_tlbl1i, i, this));
+    }
+    if (num_hthreads % num_threads_per_l1_cache != 0)
+    {
+      if (use_o3core == false)
+      {
+        cores.push_back(cores[0]);
+      }
+      l1is.push_back(l1is[0]);
+      l1ds.push_back(l1ds[0]);
+      tlbl1ds.push_back(tlbl1ds[0]);
+      tlbl1is.push_back(tlbl1is[0]);
+    }
+
+    // connect hthreads and l1s
+    for (uint32_t i = 0; i < num_hthreads; i++)
+    {
+      if (use_o3core == true)
+      {
+        o3cores[i]->cachel1i = (l1is[i]);
+        l1is[i]->lsus.push_back(o3cores[i]);
+        o3cores[i]->cachel1d = (l1ds[i]);
+        l1ds[i]->lsus.push_back(o3cores[i]);
+        o3cores[i]->tlbl1d   = (tlbl1ds[i]);
+        tlbl1ds[i]->lsus.push_back(o3cores[i]);
+        o3cores[i]->tlbl1i   = (tlbl1is[i]);
+        tlbl1is[i]->lsus.push_back(o3cores[i]);
+      }
+      else
+      {
+        hthreads[i]->core     = (cores[i/num_threads_per_l1_cache]);
+        cores[i/num_threads_per_l1_cache]->hthreads.push_back(hthreads[i]);
+        cores[i/num_threads_per_l1_cache]->is_active.push_back(false);
+        hthreads[i]->cachel1i = (l1is[i/num_threads_per_l1_cache]);
+        l1is[i/num_threads_per_l1_cache]->lsus.push_back(hthreads[i]);
+        hthreads[i]->cachel1d = (l1ds[i/num_threads_per_l1_cache]);
+        l1ds[i/num_threads_per_l1_cache]->lsus.push_back(hthreads[i]);
+        hthreads[i]->tlbl1d   = (tlbl1ds[i/num_threads_per_l1_cache]);
+        tlbl1ds[i/num_threads_per_l1_cache]->lsus.push_back(hthreads[i]);
+        hthreads[i]->tlbl1i   = (tlbl1is[i/num_threads_per_l1_cache]);
+        tlbl1is[i/num_threads_per_l1_cache]->lsus.push_back(hthreads[i]);
+      }
+    }
+
+    assert(noc_type == "xbar");
+    noc = new Crossbar(ct_crossbar, 0, this, num_hthreads / num_threads_per_l1_cache / num_l1_caches_per_l2_cache);
+    //noc = new Mesh2D(ct_mesh, 0, this);
 
     // instantiate L2 caches and directories
     for (uint32_t i = 0; i < num_hthreads; i++)
