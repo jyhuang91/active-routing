@@ -52,7 +52,7 @@ namespace PinPthread
     /* -------------------------------------------------------------- */
 
     PthreadSim* pthreadsim;
-    bool inROI;
+    bool in_roi;
 #if 0
     [FIXME] add knob to let user pick stack size of new threads
     KNOB<UINT32> KnobStackSize(KNOB_MODE_WRITEONCE, "pintool",
@@ -133,8 +133,11 @@ namespace PinPthread
     int   CallPthreadBarrierattrGetpshared(ADDRINT, ADDRINT);
     int   CallPthreadBarrierattrSetpshared(ADDRINT, ADDRINT);
 
+    // Jiayi, 01/29/2018
     VOID CallROIBegin(CHAR *name);
     VOID CallROIEnd(CHAR *name);
+    VOID CallActiveBegin();
+    VOID CallActiveEnd();
     
 } // namespace PinPthread
 

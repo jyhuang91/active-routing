@@ -30,7 +30,7 @@ namespace PinPthread
 VOID Init(uint32_t argc, char** argv) 
 {
     pthreadsim = new PthreadSim(argc, argv);
-    inROI = false;
+    in_roi = false;
 }
 
 VOID Fini(INT32 code, VOID* v) 
@@ -74,7 +74,7 @@ VOID ProcessMemIns(
     //pthreadsim->initiate(context);  // Jiayi, for skip instructions
   }
 
-  if (pthreadsim->run_roi == false || (pthreadsim->run_roi && inROI))
+  if (pthreadsim->run_roi == false || (pthreadsim->run_roi && in_roi))
   {
     pthreadsim->process_ins(
         context,
@@ -93,6 +93,138 @@ VOID ProcessMemIns(
 VOID NewPthreadSim(CONTEXT* ctxt)
 {
   pthreadsim->set_stack(ctxt);
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Active-Routing Callback Routines                                   */
+/* ------------------------------------------------------------------ */
+
+// Jiayi, 01/29/2018
+VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int function)
+{
+  uint32_t category = -1;
+  switch (function)
+  {
+    case 1:
+      //* ((float *)c) += * ((float *)a);
+      category = 128;
+      break;
+    case 2:
+      //* ((float *)c) += (*((float *)a)) * (*((float *)b));
+      category = 130;
+      break;
+    default: fprintf(stderr, "Unknown active operation: %d\n", function); exit(1);
+  }
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, (ADDRINT) b, 0,
+      (ADDRINT) c, 0,
+      false, false,
+      category,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //printf(" [UPDATE API Pin: %p %p %p <%i>]  \n",a,b,c,function);
+}
+
+VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthreads)
+{
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, (ADDRINT) b, 0,
+      (ADDRINT) c, nthreads,
+      false, false,
+      129,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //printf(" [GATHER API Pin: %p %p %p <%i>]  \n",a,b,c,nthreads);
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Graph preprocessing callback functions                             */
+/* ------------------------------------------------------------------ */
+
+VOID PRInitMemCall(INT32 N, INT32 *test, INT32 *exist, INT32 *test2, INT32 *dangling, INT32 *inlinks, INT32 *outlinks)
+{
+  std::cout << "Pagerank memory init in Pin Pthread Tool" << endl;
+  for (int i = 0; i < N; i++) {
+    test[i] = 0;
+    exist[i] = 0;
+    test2[i] = 0;
+    dangling[i] = 0;
+    inlinks[i] = 0;
+    outlinks[i] = 0;
+  }
+}
+
+VOID PRGraphFirstScanCall(FILE *fp, int *inlinks, int *outlinks, int *exist, int *test2, int *dangling)
+{
+  int number0 = -1;
+  int number1 = -1;
+  char line[256];
+
+  std::cout << "Pagerank graph first scan in Pin Pthread Tool" << endl;
+  while (fgets(line, sizeof(line), fp)) {
+    if (line[0] == '#') continue;
+    sscanf(line, "%d%*[^0-9]%d\n", &number0, &number1);
+    inlinks[number1]++;
+    outlinks[number0]++;
+    exist[number0] = 1;
+    exist[number1] = 1;
+    test2[number0] = 1;
+    dangling[number1] = 1;
+  }
+}
+
+VOID PRGraphSecondScanCall(FILE *fp, int N, double ***W, int ***W_index, int *inlinks, int *outlinks, int *test, int *test2, int *dangling)
+{
+  int number0 = -1;
+  int number1 = -1;
+  int inter = -1;
+  char line[256];
+
+  std::cout << "Pagerank graph second scan in Pin Pthread Tool" << endl;
+  (*W) = (double**) malloc(N*sizeof(double*));
+  (*W_index) = (int**) malloc(N*sizeof(int*));
+  for (int i = 0; i < N; i++)
+  {
+    int ret = posix_memalign((void**) &(*W)[i], 64, outlinks[i]*sizeof(double));
+    int re1 = posix_memalign((void**) &(*W_index)[i], 64, inlinks[i]*sizeof(int));
+    if (ret != 0 || re1!=0)
+    {
+      fprintf(stderr, "Could not allocate memory\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  rewind(fp);
+  //nodecount = N;
+  while (fgets(line, sizeof(line), fp)) {
+    if (line[0] == '#') continue;
+    sscanf(line, "%d%*[^0-9]%d\n", &number0, &number1);
+
+    inter = test[number1];
+
+    (*W_index)[number1][inter] = number0;
+    test[number1]++;
+  }
+
+  for (int i = 0; i < N; i++)
+  {
+    if (test2[i] == 1 && dangling[i] == 1)
+      dangling[i] = 0;
+  }
+
+  printf("\nLargest Vertex: %d\n", N);//nodecount);
+  //N = nodecount;
+}
+
+VOID RandIndexCall(int *index, int start, int stop)
+{
+  *index = rand() % (stop - start) + start;
 }
 
 
@@ -119,6 +251,41 @@ VOID FlagImg(IMG img, VOID* v)
         IARG_ADDRINT, "ROI-End",
         IARG_END);
     RTN_Close(rtn);
+  }
+  // Jiayi, 01/29/2018
+  rtn = RTN_FindByName(img, "UPDATE");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)UpdateAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_END);
+  }
+  rtn = RTN_FindByName(img, "GATHER");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)GatherAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_END);
+  }
+  rtn = RTN_FindByName(img, "active_begin");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_Replace(rtn, (AFUNPTR)CallActiveBegin);
+  }
+  rtn = RTN_FindByName(img, "active_end");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_Replace(rtn, (AFUNPTR)CallActiveEnd);
   }
 
   rtn = RTN_FindByName(img, "__kmp_get_global_thread_id");
@@ -706,6 +873,23 @@ VOID FlagRtn(RTN rtn, VOID* v)
         IARG_INST_PTR,
         IARG_END);
   }
+  // Jiayi, 01/29/2018
+  else if (rtn_name->find("pr_init_mem") != string::npos)
+  {
+    RTN_Replace(rtn, (AFUNPTR)PRInitMemCall);
+  }
+  else if (rtn_name->find("pr_graph_first_scan") != string::npos)
+  {
+    RTN_Replace(rtn, (AFUNPTR)PRGraphFirstScanCall);
+  }
+  else if (rtn_name->find("pr_graph_second_scan") != string::npos)
+  {
+    RTN_Replace(rtn, (AFUNPTR)PRGraphSecondScanCall);
+  }
+  else if (rtn_name->find("randindex") != string::npos)
+  {
+    RTN_Replace(rtn, (AFUNPTR)RandIndexCall);
+  }
   RTN_Close(rtn);
 }
 
@@ -1264,13 +1448,24 @@ VOID PrintRtnName(const string* rtn_name)
 VOID CallROIBegin(CHAR *name)
 {
   fprintf(stderr, "I am in ::::::::::::::::::::::::::::::::::: %s\n",name);
-  inROI = true;
+  in_roi = true;
 }
 
 VOID CallROIEnd(CHAR *name)
 {
   fprintf(stderr, "I am in ::::::::::::::::::::::::::::::::::: %s\n",name);
-  inROI = false;
+  in_roi = false;
+}
+
+// Jiayi, 01/29/2018
+VOID CallActiveBegin()
+{
+  fprintf(stderr, "[MCSIM-HOOKS] Active_begin\n");
+}
+
+VOID CallActiveEnd()
+{
+  fprintf(stderr, "[MCSIM-HOOKS] Active_end\n");
 }
 
 } // namespace PinPthread
