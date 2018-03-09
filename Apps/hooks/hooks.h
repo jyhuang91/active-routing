@@ -15,6 +15,16 @@
 #define MAGIC_OP_SKIP_INSTR_END    (1028)
 #define MAGIC_OP_SPIN_BEGIN        (1029)
 #define MAGIC_OP_SPIN_END          (1030)
+#define MAGIC_OP_UPDATE            (1031)
+#define MAGIC_OP_GATHER            (1032)
+#define MAGIC_OP_ACTIVE_BEGIN      (1033)
+#define MAGIC_OP_ACTIVE_END        (1034)
+#define MAGIC_OP_INSTRS_COUNT      (1035)
+
+// Active operations
+#define GET     (0)
+#define ADD     (1)
+#define MULT    (2)
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,10 +47,16 @@ static inline void magic_op(uint64_t op) {
 void roi_begin();
 void roi_end();
 
+void active_begin();
+void active_end();
+
 void mcsim_skip_instrs_begin();
 void mcsim_skip_instrs_end();
 void mcsim_spinning_begin();
 void mcsim_spinning_end();
+
+void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, int op);
+void GATHER(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads);
 
 #ifdef __cplusplus
 }
