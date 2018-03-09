@@ -666,7 +666,8 @@ void PthreadScheduler::SetActiveState(pthread_t thread, bool active)
 {
   pthread_queue_t::iterator threadptr = GetThreadPtr(thread);
   (threadptr->second)->active = active;
-  pts->set_active(threadptr->first, (threadptr->second)->active);
+  //pts->set_active(threadptr->first, (threadptr->second)->active);
+  pts->set_active(pth_to_hth[threadptr->second], (threadptr->second)->active);// Jiayi modified, FIXME
 }
 
 
