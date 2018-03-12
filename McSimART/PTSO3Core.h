@@ -182,10 +182,10 @@ namespace PinPthread
       int32_t   max_st;
       int32_t   max_sse;
 
-      static uint64_t num_updates;
-      static double roundtrip_lat;
-      static uint64_t num_gathers;
-      static double get_roundtrip_lat;
+      uint64_t num_update_ins;
+      uint64_t num_gather_ins;
+      double total_update_roundtrip_time;
+      double total_gather_roundtrip_time;
 
       bool      is_private(ADDRINT);
 

@@ -226,9 +226,18 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   num_l2_acc_last         = 0;
   num_l2_miss_last        = 0;
   num_dependency_distance_last = 0;
+
+  num_update_ins_last     = 0;
+  num_gather_ins_last     = 0;
   num_update_acc_last     = 0;
   num_gather_acc_last     = 0;
+  num_update_acc_sent_last = 0;
   num_back_invalidate_last = 0;
+
+  update_noc_lat_last       = 0.0;
+  update_stall_lat_last     = 0.0;
+  update_roundtrip_lat_last = 0.0;
+  gather_roundtrip_lat_last = 0.0;
 
   if (noc_type != "mesh" && noc_type != "ring" &&
       num_mcs * num_l1_caches_per_l2_cache * num_threads_per_l1_cache > num_hthreads)
@@ -951,6 +960,23 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     uint64_t num_mem_acc = 0;
     uint64_t num_used_pages = 0;
 
+    uint64_t num_update_acc = 0;
+    uint64_t num_gather_acc = 0;
+    uint64_t num_update_acc_sent = 0;
+
+    double update_noc_lat   = 0.0;
+    double update_stall_lat = 0.0;
+
+    for (unsigned int i = 0; i < hmcs.size(); i++)
+    {
+      num_used_pages += hmcs[i]->os_page_acc_dist_curr.size();
+      num_mem_acc    += hmcs[i]->num_reqs;
+      num_update_acc += hmcs[i]->num_update;
+      num_gather_acc += hmcs[i]->num_gather;
+      num_update_acc_sent += hmcs[i]->num_update_sent;
+      update_noc_lat += hmcs[i]->total_update_noc_time / hmcs[i]->process_interval;
+      update_stall_lat += hmcs[i]->total_update_stall_time / hmcs[i]->process_interval;
+    }
     for (unsigned int i = 0; i < mcs.size(); i++)
     {
       num_used_pages += mcs[i]->os_page_acc_dist_curr.size();
@@ -961,6 +987,11 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     cout << setw(4) << num_used_pages << ", ";
 
     num_used_pages = 0;
+    for (unsigned int i = 0; i < hmcs.size(); i++)
+    {
+      hmcs[i]->update_acc_dist();
+      num_used_pages += hmcs[i]->os_page_acc_dist.size();
+    }
     for (unsigned int i = 0; i < mcs.size(); i++)
     {
       mcs[i]->update_acc_dist();
@@ -968,6 +999,8 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     }
 
     cout << setw(4) << num_used_pages - num_used_pages_last << ") touched pages (this time, 1stly), ";
+    cout << setw(6) << num_update_acc - num_update_acc_last << " update accs, ";
+    cout << setw(6) << num_gather_acc - num_gather_acc_last << " gather accs, ";
     num_mem_acc_last    = num_mem_acc;
     num_used_pages_last = num_used_pages;
 
@@ -987,6 +1020,81 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
       }
       num_dependency_distance_last = total_dependency_distance;
     }
+
+    uint64_t num_back_invalidate = 0;
+    for (uint32_t i = 0; i < dirs.size(); i++)
+    {
+      num_back_invalidate += dirs[i]->num_back_invalidate;
+    }
+    cout << setw(6) << num_back_invalidate - num_back_invalidate_last << " back-inv, ";
+    num_back_invalidate_last = num_back_invalidate;
+
+    double avg_update_noc_lat   = 0.0;
+    double avg_update_stall_lat = 0.0;
+    if (num_update_acc == num_update_acc_last)
+    {
+      assert(update_noc_lat == update_noc_lat_last);
+    }
+    else
+    {
+      avg_update_noc_lat = (update_noc_lat - update_noc_lat_last) / (num_update_acc - num_update_acc_last);
+      num_update_acc_last = num_update_acc;
+      update_noc_lat_last = update_noc_lat;
+    }
+    if (num_update_acc_sent == num_update_acc_sent_last)
+    {
+      assert(update_stall_lat == update_stall_lat_last);
+    }
+    else
+    {
+      avg_update_stall_lat = (update_stall_lat - update_stall_lat_last) / (num_update_acc_sent - num_update_acc_sent_last);
+      update_stall_lat_last = update_stall_lat;
+      num_update_acc_sent_last = num_update_acc_sent;
+    }
+    cout << setw(6) << avg_update_noc_lat << " update-noc-lat, ";
+    cout << setw(6) << avg_update_stall_lat << " update-stall-lat, ";
+
+    if (o3cores.size() > 0)
+    {
+      uint64_t num_update_ins = 0;
+      uint64_t num_gather_ins = 0;
+      double   update_roundtrip_lat = 0.0;
+      double   gather_roundtrip_lat = 0.0;
+      for (uint32_t i = 0; i < o3cores.size(); i++)
+      {
+        num_update_ins += o3cores[i]->num_update_ins;
+        num_gather_ins += o3cores[i]->num_gather_ins;
+        update_roundtrip_lat += o3cores[i]->total_update_roundtrip_time / o3cores[i]->process_interval;
+        gather_roundtrip_lat += o3cores[i]->total_gather_roundtrip_time / o3cores[i]->process_interval;
+      }
+
+      double avg_update_roundtrip_lat = 0.0;
+      double avg_gather_roundtrip_lat = 0.0;
+      if (num_update_ins == num_update_ins_last)
+      {
+        assert(update_roundtrip_lat == update_roundtrip_lat_last);
+      }
+      else
+      {
+        avg_update_roundtrip_lat = (update_roundtrip_lat - update_roundtrip_lat_last) / (num_update_ins - num_update_ins_last);
+        num_update_ins_last = num_update_ins;
+        update_roundtrip_lat_last = update_roundtrip_lat;
+      }
+      if (num_gather_ins == num_gather_ins_last)
+      {
+        assert(gather_roundtrip_lat == gather_roundtrip_lat_last);
+      }
+      else
+      {
+        avg_gather_roundtrip_lat = (gather_roundtrip_lat - gather_roundtrip_lat_last) / (num_gather_ins - num_gather_ins_last);
+        num_gather_ins_last = num_gather_ins;
+        gather_roundtrip_lat_last = gather_roundtrip_lat;
+      }
+      cout << setw(6) << avg_update_roundtrip_lat << " update-roundtrip-lat, ";
+      cout << setw(6) << avg_gather_roundtrip_lat << " gather-roundtrip-lat, ";
+    }
+
+    cout << setw(4) << noc->req_noc_latency << " req_noc_lat, ";
 
     num_fetched_instrs_last = num_fetched_instrs;
     curr_time_last = global_q->curr_time;
@@ -1039,7 +1147,10 @@ uint32_t McSim::add_instruction(
         o3core->is_active = true;
       }
     }
-    ins_type type = (islock == true && isunlock == true && isbarrier == false) ? ins_notify :
+    ins_type type = (category == 128) ? ins_update_add :
+      (category == 130)               ? ins_update_mult :
+      (category == 129)               ? ins_gather :
+      (islock == true && isunlock == true && isbarrier == false) ? ins_notify :
       (islock == true && isunlock == true && isbarrier == true) ? ins_waitfor :
       (isbranch && isbranchtaken)        ? ins_branch_taken :
       (isbranch && !isbranchtaken)       ? ins_branch_not_taken :

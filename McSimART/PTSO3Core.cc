@@ -39,10 +39,6 @@ using namespace PinPthread;
 
 static const int32_t word_log = 3;
 
-uint64_t O3Core::num_updates = 0;
-double O3Core::roundtrip_lat = 0.0;
-uint64_t O3Core::num_gathers = 0;
-double O3Core::get_roundtrip_lat = 0.0;
 
 ostream& operator<<(ostream & output, o3_instr_queue_state iqs)
 {
@@ -148,6 +144,11 @@ O3Core::O3Core(
     cout << "as of now, it is assumed that o3rob_max_size >= 4" << endl;
     exit(1);
   }
+
+  num_update_ins = 0;
+  num_gather_ins = 0;
+  total_update_roundtrip_time = 0.0;
+  total_gather_roundtrip_time = 0.0;
 }
 
 
@@ -863,19 +864,18 @@ void O3Core::add_rep_event(
     if (local_event->type == et_hmc_update_add)
     {
       //cout << "receive update ack" << endl;
-      num_updates++;
-      roundtrip_lat = (roundtrip_lat * (num_updates - 1) + geq->curr_time - local_event->issue_time) / num_updates;
+      num_update_ins++;
+      total_update_roundtrip_time += geq->curr_time - local_event->issue_time;
     }
     else if (local_event->type == et_hmc_update_mult)
     {
-      //cout << "receive update ack" << endl;
-      num_updates++;
-      roundtrip_lat = (roundtrip_lat * (num_updates - 1) + geq->curr_time - local_event->issue_time) / num_updates;
+      num_update_ins++;
+      total_update_roundtrip_time += geq->curr_time - local_event->issue_time;
     }
     else if (local_event->type == et_hmc_gather)
     {
-      num_gathers++;
-      get_roundtrip_lat = (get_roundtrip_lat * (num_gathers - 1) + geq->curr_time - local_event->issue_time) / num_gathers;
+      num_gather_ins++;
+      total_gather_roundtrip_time += geq->curr_time - local_event->issue_time;
     }
     uint64_t aligned_event_time = event_time;
     if (aligned_event_time%process_interval != 0)

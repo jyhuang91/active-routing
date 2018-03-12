@@ -12,15 +12,11 @@ using namespace PinPthread;
 extern ostream& operator<<(ostream & output, component_type ct);
 
 uint64_t  PTSHMCController::last_process_time = 0;
-uint64_t  PTSHMCController::num_updates = 0;
-double    PTSHMCController::noc_latency = 0;
-uint64_t  PTSHMCController::num_updates_sent = 0;
-double    PTSHMCController::stall_ticks = 0;
+
 
 PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
     McSim * mcsim_, Network *hmc_net_) : Component(type_, num_, mcsim_), noc()
 {
-  last_transaction = 0;
   last_process_time = 0;
   page_sz_base_bit = get_param_uint64("page_sz_base_bit", 12);
   display_os_page_usage = get_param_str("display_os_page_usage") == "true" ? true : false;
@@ -54,10 +50,24 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
     assert("Unsupported configuaration" == 0);
   }
 
-  num_reqs = 0;
-  num_update_reqs = 0;
-  num_gather_reqs = 0;
-  
+  num_reqs        = 0;
+
+  num_read        = 0;
+  num_write       = 0;
+  num_evict       = 0;
+  num_update      = 0;
+  num_gather      = 0;
+  num_update_sent = 0;
+
+  total_rd_stall_time     = 0.0;
+  total_wr_stall_time     = 0.0;
+  total_ev_stall_time     = 0.0;
+  total_rd_mem_time       = 0.0;
+  total_wr_mem_time       = 0.0;
+  total_ev_mem_time       = 0.0;
+  total_update_noc_time   = 0.0;
+  total_update_stall_time = 0.0;
+
   outstanding_req.clear();
   active_update_event.clear();
   active_gather_event.clear();
@@ -65,12 +75,25 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   active_mult_twins.clear();
 }
 
-PTSHMCController::~PTSHMCController(){
+PTSHMCController::~PTSHMCController()
+{
+  cout << "  -- HMCCtrl [" << num << "] : (rd, wr, evict, update, gather) = ("
+    << setw(9) << num_read << ", " << setw(9) << num_write << ", " << setw(9) << num_evict << ", "
+    << setw(9) << num_update << ", " << setw(9) << num_gather << "), ";
+  cout << "(avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_update_noc, avg_update_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = ("
+    << setw(9) << total_rd_stall_time / num_read / process_interval << ", "
+    << setw(9) << total_wr_stall_time / num_write / process_interval << ", "
+    << setw(9) << total_ev_stall_time / num_evict / process_interval << ", "
+    << setw(9) << total_update_noc_time / num_update / process_interval << ", "
+    << setw(9) << total_update_stall_time / num_update_sent / process_interval << ", "
+    << setw(9) << total_rd_mem_time / num_read / process_interval << ", "
+    << setw(9) << total_wr_mem_time / num_write / process_interval << ", "
+    << setw(9) << total_ev_mem_time / num_evict / process_interval << ")" << endl;
+
   assert(tran_buf.empty());
   tran_buf.clear();
   active_update_event.clear();
   active_gather_event.clear();
-  cout << "Delete the McSim HMCController " << num << endl;
 }
 
 void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lqele, Component * from)
@@ -118,30 +141,12 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   switch (transaction_type)
   {
-    case 1:
-      tranType = DATA_READ;
-      dataSize = 32;  //this size can vary from 32 to 256 !!!!
-      break;
-    case 2:
-      tranType = DATA_WRITE;
-      dataSize = 128;
-      break;
-    case 3:
-      tranType = DATA_WRITE;
-      dataSize = 32;
-      break;
-    case 4:
-      tranType = ACTIVE_GET;
-      dataSize = 32;
-      break;
-    case 5:
-      tranType = ACTIVE_ADD;
-      dataSize = 32;
-      break;
-    case 6:
-      tranType = ACTIVE_MULT;
-      dataSize = 32;
-      break;
+    case 1: tranType = DATA_READ;   dataSize = 32;/* size can vary from 32 to 256 */  break;
+    case 2: tranType = DATA_WRITE;  dataSize = 128; break;
+    case 3: tranType = DATA_WRITE;  dataSize = 32;  break;
+    case 4: tranType = ACTIVE_GET;  dataSize = 32;  break;
+    case 5: tranType = ACTIVE_ADD;  dataSize = 32;  break;
+    case 6: tranType = ACTIVE_MULT; dataSize = 32;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -152,18 +157,10 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     switch (net_num)
     {
-      case 0:
-        src_cube = 0;
-        break;
-      case 8:
-        src_cube = 3;
-        break;
-      case 11:
-        src_cube = 15;
-        break;
-      case 3:
-        src_cube = 12;
-        break;
+      case 0: src_cube = 0; break;
+      case 8: src_cube = 3; break;
+      case 11: src_cube = 15; break;
+      case 3: src_cube = 12; break;
       defualt:
         cerr << "ERROR: HMC Configuaration unclear" << endl;
         assert(0);
@@ -181,8 +178,6 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       dest_cube = get_active_cube_num(lqele->src_addr1);
       newTran = new Transaction(ACTIVE_ADD, lqele->dest_addr, lqele->src_addr1, dataSize, hmc_net, 0, dest_cube);
       assert(lqele->nthreads == -1);
-      num_updates++;
-      noc_latency = ((noc_latency * (double) (num_updates-1) + geq->curr_time - lqele->issue_time)) / num_updates;
       break;
     case ACTIVE_GET:
       newTran = new Transaction(ACTIVE_GET, lqele->dest_addr, lqele->src_addr1, dataSize, hmc_net, 0, 0);
@@ -196,8 +191,6 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       newTran = new Transaction(ACTIVE_MULT, lqele->dest_addr, lqele->src_addr1, lqele->src_addr2, dataSize,
           hmc_net, 0, dest_cube1, dest_cube2);
       assert(lqele->nthreads == -1);
-      num_updates++;
-      noc_latency = ((noc_latency * (double) (num_updates-1) + geq->curr_time - lqele->issue_time)) / num_updates;
       break;
 
   }
@@ -208,13 +201,14 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   if (lqele->type == et_hmc_update_add || lqele->type == et_hmc_update_mult)
   {
     active_update_event.insert(make_pair(req_id, lqele));
-    num_update_reqs++;
+    num_update++;
+    total_update_noc_time += geq->curr_time - lqele->issue_time;
   }
   else if (lqele->type == et_hmc_gather)
   {
     //active_gather_event.insert(make_pair(req_id, lqele));  // not neccessary though
     active_gather_event.insert(make_pair(lqele->dest_addr, lqele));
-    num_gather_reqs++;
+    num_gather++;
   }
   else
   {
@@ -266,12 +260,12 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         if (active_update_event.find(req_id) != active_update_event.end())
         {
           multimap<uint64_t, LocalQueueElement *>::iterator it = active_update_event.find(req_id);
-          assert(it == active_update_event.begin());
+          //assert(it == active_update_event.begin());
           LocalQueueElement *lqele = (it->second);
           assert(lqele);
           assert(lqele->from.top());
-          num_updates_sent++;
-          stall_ticks = ((stall_ticks * (double) (num_updates_sent-1) + curr_time - tran_buf.begin()->first)) / num_updates_sent;
+          num_update_sent++;
+          total_update_stall_time += curr_time - tran_buf.begin()->first;
           noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
           pending_active_updates.insert(make_pair(addr, lqele));
           active_update_event.erase(req_id);
@@ -290,6 +284,28 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       }
       else // normal memory requests
       {
+        if (tran->transactionType == DATA_READ)
+        {
+          num_read++;
+          total_rd_stall_time += curr_time - tran_buf.begin()->first;
+        }
+        else
+        {
+          assert(tran->transactionType == DATA_WRITE);
+          LocalQueueElement *lqele = req_event.find(req_id)->second;
+          if (lqele->type == et_write || lqele->type == et_write_nd ||
+              lqele->type == et_s_rd_wr)
+          {
+            num_write++;
+            total_wr_stall_time += curr_time - tran_buf.begin()->first;
+          }
+          else
+          {
+            assert(lqele->type == et_evict || lqele->type == et_evict_nd || lqele->type == et_dir_evict);
+            num_evict++;
+            total_ev_stall_time += curr_time - tran_buf.begin()->first;
+          }
+        }
         outstanding_req.insert(make_pair(req_id, curr_time));
       }
       tran_buf.erase(tran_buf.begin());
@@ -299,17 +315,17 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
   vector<pair<uint64_t, PacketCommandType> > &served_trans = hmc_net->get_serv_trans(net_num);
   bool have_trans = !served_trans.empty();
   
-  if (have_trans) {
-    last_transaction = served_trans[0].first;
-
+  if (have_trans)
+  {
     bool is_active = false;
     if (served_trans[0].second == ACT_GET)
     {
       is_active = true;
-      multimap<uint64_t, LocalQueueElement *>::iterator it = pending_active_updates.find(last_transaction);
+      uint64_t get_addr = served_trans[0].first;
+      multimap<uint64_t, LocalQueueElement *>::iterator it = pending_active_updates.find(get_addr);
       assert(it != pending_active_updates.end());
       uint64_t dest_addr = it->first;
-      assert(dest_addr == last_transaction);
+      assert(dest_addr == get_addr);
 #ifdef DEBUG_GATHER
       cout << "Get active response (should be gather) dest addr: " << hex << dest_addr << dec << ", type: ACT_GET" << endl;
 #endif
@@ -334,10 +350,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     int same_trans = 0;
     while (tran_it != outstanding_req.end() && !is_active)
     {
-      if (tran_it->first == served_trans[0].first)
-      {
-        ++same_trans;
-      }
+      if (tran_it->first == served_trans[0].first) ++same_trans;
       ++tran_it;
     }
     if (same_trans > 1)
@@ -362,6 +375,24 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       assert(req_event_iter != req_event.end());
       resp_queue.push_back(req_event_iter->second);
       req_event.erase(req_id);
+
+      int tran_type = hmc_transaction_type(req_event_iter->second);
+      int issue_time = tran_it->second;
+      switch (tran_type)
+      {
+        case 1: // read
+          total_rd_mem_time += curr_time - issue_time;
+          break;
+        case 2: // write
+          total_wr_mem_time += curr_time - issue_time;
+          break;
+        case 3: // evict
+          total_ev_mem_time += curr_time - issue_time;
+          break;
+        default:
+          cerr << "Unknown reply transaction type: " << tran_type  << endl;
+          exit(1);
+      }
     }
 
 #ifdef DEBUG_GATEHR
@@ -455,7 +486,8 @@ void PTSHMCController::update_hmc(uint64_t cycles)
 
 int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
 
-  switch(lqe->type){
+  switch(lqe->type)
+  {
 
     case et_read:
     case et_dir_rd:

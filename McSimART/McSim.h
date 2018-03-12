@@ -193,9 +193,17 @@ namespace PinPthread
       uint64_t num_l2_miss_last;
       uint64_t num_dependency_distance_last;
 
+      uint64_t num_update_ins_last;
+      uint64_t num_gather_ins_last;
       uint64_t num_update_acc_last;
       uint64_t num_gather_acc_last;
+      uint64_t num_update_acc_sent_last;
       uint64_t num_back_invalidate_last;
+
+      double update_noc_lat_last;
+      double update_stall_lat_last;
+      double update_roundtrip_lat_last;
+      double gather_roundtrip_lat_last;
   };
 
 }

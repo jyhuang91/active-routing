@@ -37,7 +37,6 @@ namespace PinPthread
       std::multimap<uint64_t, LocalQueueElement *> active_gather_event;  // Jiayi, <tran_id, lqe>, 03/28/17
       std::multimap<uint64_t, LocalQueueElement *> pending_active_updates;
       std::map<LocalQueueElement *, LocalQueueElement *> active_mult_twins;
-      uint64_t last_transaction;
       TOPOLOGY hmc_top;
       int net_num;
       uint64_t mc_to_dir_t;
@@ -50,17 +49,27 @@ namespace PinPthread
       bool display_os_page_usage_summary;
       bool display_os_page_usage;
       uint64_t num_reqs;
-      uint64_t num_update_reqs;
-      uint64_t num_gather_reqs;
       uint64_t page_sz_base_bit;
 
       uint32_t interleave_xor_base_bit; // Jiayi, for addressing, 04/16/17
       uint32_t cube_interleave_base_bit;
 
-      static uint64_t num_updates;
-      static double noc_latency;
-      static uint64_t num_updates_sent;
-      static double stall_ticks;
+      uint64_t num_read;
+      uint64_t num_write;
+      uint64_t num_evict;
+      uint64_t num_update;
+      uint64_t num_gather;
+      uint64_t num_update_sent;
+
+      double total_rd_stall_time;
+      double total_wr_stall_time;
+      double total_ev_stall_time;
+      double total_rd_mem_time;
+      double total_wr_mem_time;
+      double total_ev_mem_time;
+      double total_update_noc_time;
+      double total_update_stall_time;
+
       static uint64_t last_process_time;
 
       inline uint32_t get_cube_num(uint64_t addr) {  // Jiayi, addressing
@@ -72,5 +81,7 @@ namespace PinPthread
         return (base_num * 4) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % 4;
       }
 
+      double get_update_noc_lat() { return (total_update_noc_time/ num_update_sent / process_interval); }
+      double get_update_stall_lat() { return (total_update_stall_time / num_update / process_interval); }
   };
 }
