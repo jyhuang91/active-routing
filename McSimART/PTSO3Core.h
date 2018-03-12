@@ -182,6 +182,8 @@ namespace PinPthread
       int32_t   max_st;
       int32_t   max_sse;
 
+      uint64_t num_rd;
+      uint64_t num_wr;
       uint64_t num_update_ins;
       uint64_t num_gather_ins;
       double total_update_roundtrip_time;

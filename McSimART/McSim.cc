@@ -234,7 +234,7 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   num_update_acc_sent_last = 0;
   num_back_invalidate_last = 0;
 
-  update_noc_lat_last       = 0.0;
+  update_req_lat_last       = 0.0;
   update_stall_lat_last     = 0.0;
   update_roundtrip_lat_last = 0.0;
   gather_roundtrip_lat_last = 0.0;
@@ -779,6 +779,53 @@ McSim::~McSim()
   uint64_t ipc1000 = (global_q->curr_time == 0 ) ? 0 : (1000 * num_fetched_instrs * lsu_process_interval / global_q->curr_time);
   cout << "  -- total number of fetched instructions : " << num_fetched_instrs
     << " (IPC = " << setw(3) << ipc1000/1000 << "." << setfill('0') << setw(3) << ipc1000%1000 << ")" << endl;
+  cout << "  -- total number of ticks: " << global_q->curr_time << " , cycles: " << global_q->curr_time / lsu_process_interval << endl;
+
+  uint64_t num_mem_acc = 0;
+  uint64_t num_update_acc = 0;
+  uint64_t num_gather_acc = 0;
+  double update_req_lat = 0.0;
+  double update_stall_lat = 0.0;
+  for (uint32_t i = 0; i < hmcs.size(); i++)
+  {
+    num_mem_acc += hmcs[i]->num_reqs;
+    num_update_acc += hmcs[i]->num_update;
+    num_gather_acc += hmcs[i]->num_gather;
+    update_req_lat += hmcs[i]->total_update_req_time;
+    update_stall_lat += hmcs[i]->total_update_stall_time;
+  }
+  update_req_lat = update_req_lat / num_update_acc / hmcs[0]->process_interval;
+  update_stall_lat = update_stall_lat / num_update_acc / hmcs[0]->process_interval;
+
+  uint64_t num_update_ins = 0;
+  uint64_t num_gather_ins = 0;
+  double update_roundtrip_lat = 0.0;
+  double gather_roundtrip_lat = 0.0;
+  for (uint32_t i = 0; i < o3cores.size(); i++)
+  {
+    num_update_ins += o3cores[i]->num_update_ins;
+    num_gather_ins += o3cores[i]->num_gather_ins;
+    update_roundtrip_lat += o3cores[i]->total_update_roundtrip_time;
+    gather_roundtrip_lat += o3cores[i]->total_gather_roundtrip_time;
+  }
+  assert(num_update_acc == num_update_ins && num_gather_acc == num_gather_ins);
+  update_roundtrip_lat = update_roundtrip_lat / lsu_process_interval / num_update_ins;
+  gather_roundtrip_lat = gather_roundtrip_lat / lsu_process_interval / num_gather_ins;
+
+  uint64_t num_back_inv = 0;
+  for (uint32_t i = 0; i < dirs.size(); i++)
+  {
+    num_back_inv += dirs[i]->num_back_invalidate;
+  }
+
+  cout << "  -- total number of mem accs : " <<  num_mem_acc << endl;
+  cout << "  -- total number of updates : " << num_update_acc << endl;
+  cout << "  -- total number of gathers : " << num_gather_acc << endl;
+  cout << "  -- total number of back invalidations : " << num_back_inv << endl;
+  cout << "  -- average update request latency : " << update_req_lat << endl;
+  cout << "  -- average update stalls in hmc controllers : " << update_stall_lat << endl;
+  cout << "  -- average update roundtrip latency : " << update_roundtrip_lat << endl;
+  cout << "  -- average gather roundtrip latency : " << gather_roundtrip_lat << endl;
 
   cout << right << setfill(' ');
   for (vector<Hthread *>::iterator iter = hthreads.begin(); iter != hthreads.end(); ++iter)
@@ -964,7 +1011,7 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     uint64_t num_gather_acc = 0;
     uint64_t num_update_acc_sent = 0;
 
-    double update_noc_lat   = 0.0;
+    double update_req_lat   = 0.0;
     double update_stall_lat = 0.0;
 
     for (unsigned int i = 0; i < hmcs.size(); i++)
@@ -974,7 +1021,7 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
       num_update_acc += hmcs[i]->num_update;
       num_gather_acc += hmcs[i]->num_gather;
       num_update_acc_sent += hmcs[i]->num_update_sent;
-      update_noc_lat += hmcs[i]->total_update_noc_time / hmcs[i]->process_interval;
+      update_req_lat += hmcs[i]->total_update_req_time / hmcs[i]->process_interval;
       update_stall_lat += hmcs[i]->total_update_stall_time / hmcs[i]->process_interval;
     }
     for (unsigned int i = 0; i < mcs.size(); i++)
@@ -1029,17 +1076,17 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     cout << setw(6) << num_back_invalidate - num_back_invalidate_last << " back-inv, ";
     num_back_invalidate_last = num_back_invalidate;
 
-    double avg_update_noc_lat   = 0.0;
+    double avg_update_req_lat   = 0.0;
     double avg_update_stall_lat = 0.0;
     if (num_update_acc == num_update_acc_last)
     {
-      assert(update_noc_lat == update_noc_lat_last);
+      assert(update_req_lat == update_req_lat_last);
     }
     else
     {
-      avg_update_noc_lat = (update_noc_lat - update_noc_lat_last) / (num_update_acc - num_update_acc_last);
+      avg_update_req_lat = (update_req_lat - update_req_lat_last) / (num_update_acc - num_update_acc_last);
       num_update_acc_last = num_update_acc;
-      update_noc_lat_last = update_noc_lat;
+      update_req_lat_last = update_req_lat;
     }
     if (num_update_acc_sent == num_update_acc_sent_last)
     {
@@ -1051,7 +1098,7 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
       update_stall_lat_last = update_stall_lat;
       num_update_acc_sent_last = num_update_acc_sent;
     }
-    cout << setw(6) << avg_update_noc_lat << " update-noc-lat, ";
+    cout << setw(6) << avg_update_req_lat << " update-noc-lat, ";
     cout << setw(6) << avg_update_stall_lat << " update-stall-lat, ";
 
     if (o3cores.size() > 0)
@@ -1064,8 +1111,8 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
       {
         num_update_ins += o3cores[i]->num_update_ins;
         num_gather_ins += o3cores[i]->num_gather_ins;
-        update_roundtrip_lat += o3cores[i]->total_update_roundtrip_time / o3cores[i]->process_interval;
-        gather_roundtrip_lat += o3cores[i]->total_gather_roundtrip_time / o3cores[i]->process_interval;
+        update_roundtrip_lat += o3cores[i]->total_update_roundtrip_time / lsu_process_interval;
+        gather_roundtrip_lat += o3cores[i]->total_gather_roundtrip_time / lsu_process_interval;
       }
 
       double avg_update_roundtrip_lat = 0.0;
@@ -1093,6 +1140,42 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
       cout << setw(6) << avg_update_roundtrip_lat << " update-roundtrip-lat, ";
       cout << setw(6) << avg_gather_roundtrip_lat << " gather-roundtrip-lat, ";
     }
+
+    uint64_t num_ld = 0;
+    uint64_t num_st = 0;
+    double mem_ld_acc_lat = 0.0;
+    double mem_st_acc_lat = 0.0;
+    double avg_ld_acc_lat = 0.0;
+    double avg_st_acc_lat = 0.0;
+    for (uint32_t i = 0; i < o3cores.size(); i++)
+    {
+      num_ld += o3cores[i]->num_rd;
+      num_st += o3cores[i]->num_wr;
+      mem_ld_acc_lat += o3cores[i]->total_mem_rd_time / lsu_process_interval;
+      mem_st_acc_lat += o3cores[i]->total_mem_wr_time / lsu_process_interval;
+    }
+    if (num_ld == num_ld_last)
+    {
+      assert(mem_ld_acc_lat == mem_ld_acc_lat_last);
+    }
+    else
+    {
+      avg_ld_acc_lat = (mem_ld_acc_lat - mem_ld_acc_lat_last) / (num_ld - num_ld_last);
+      mem_ld_acc_lat_last = mem_ld_acc_lat;
+      num_ld_last = num_ld;
+    }
+    if (num_st == num_st_last)
+    {
+      assert(mem_st_acc_lat == mem_st_acc_lat_last);
+    }
+    else
+    {
+      avg_st_acc_lat = (mem_st_acc_lat - mem_st_acc_lat_last) / (num_st - num_st_last);
+      mem_st_acc_lat_last = mem_st_acc_lat;
+      num_st_last = num_st;
+    }
+    cout << setw(6) << avg_ld_acc_lat << " load-amat, ";
+    cout << setw(6) << avg_st_acc_lat << " store-amat, ";
 
     cout << setw(4) << noc->req_noc_latency << " req_noc_lat, ";
 

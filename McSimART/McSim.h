@@ -199,11 +199,15 @@ namespace PinPthread
       uint64_t num_gather_acc_last;
       uint64_t num_update_acc_sent_last;
       uint64_t num_back_invalidate_last;
+      uint64_t num_ld_last;
+      uint64_t num_st_last;
 
-      double update_noc_lat_last;
+      double update_req_lat_last;
       double update_stall_lat_last;
       double update_roundtrip_lat_last;
       double gather_roundtrip_lat_last;
+      double mem_ld_acc_lat_last;
+      double mem_st_acc_lat_last;
   };
 
 }
