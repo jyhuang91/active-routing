@@ -65,7 +65,7 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   total_rd_mem_time       = 0.0;
   total_wr_mem_time       = 0.0;
   total_ev_mem_time       = 0.0;
-  total_update_noc_time   = 0.0;
+  total_update_req_time   = 0.0;
   total_update_stall_time = 0.0;
 
   outstanding_req.clear();
@@ -78,17 +78,18 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
 PTSHMCController::~PTSHMCController()
 {
   cout << "  -- HMCCtrl [" << num << "] : (rd, wr, evict, update, gather) = ("
-    << setw(9) << num_read << ", " << setw(9) << num_write << ", " << setw(9) << num_evict << ", "
-    << setw(9) << num_update << ", " << setw(9) << num_gather << "), ";
-  cout << "(avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_update_noc, avg_update_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = ("
-    << setw(9) << total_rd_stall_time / num_read / process_interval << ", "
-    << setw(9) << total_wr_stall_time / num_write / process_interval << ", "
-    << setw(9) << total_ev_stall_time / num_evict / process_interval << ", "
-    << setw(9) << total_update_noc_time / num_update / process_interval << ", "
-    << setw(9) << total_update_stall_time / num_update_sent / process_interval << ", "
-    << setw(9) << total_rd_mem_time / num_read / process_interval << ", "
-    << setw(9) << total_wr_mem_time / num_write / process_interval << ", "
-    << setw(9) << total_ev_mem_time / num_evict / process_interval << ")" << endl;
+    << setw(8) << num_read << ", " << setw(8) << num_write << ", " << setw(8) << num_evict << ", "
+    << setw(8) << num_update << ", " << setw(8) << num_gather << "), ";
+  cout << "(avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = ("
+    << setw(8) << total_rd_stall_time / num_read / process_interval << ", "
+    << setw(8) << total_wr_stall_time / num_write / process_interval << ", "
+    << setw(8) << total_ev_stall_time / num_evict / process_interval << ", "
+    << setw(8) << total_rd_mem_time / num_read / process_interval << ", "
+    << setw(8) << total_wr_mem_time / num_write / process_interval << ", "
+    << setw(8) << total_ev_mem_time / num_evict / process_interval << "), ";
+  cout << "(avg_update_req, avg_update_stall [cycles]) = ("
+    << setw(8) << total_update_req_time / num_update / process_interval << ", "
+    << setw(8) << total_update_stall_time / num_update_sent / process_interval << ")" << endl;
 
   assert(tran_buf.empty());
   tran_buf.clear();
@@ -202,7 +203,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     active_update_event.insert(make_pair(req_id, lqele));
     num_update++;
-    total_update_noc_time += geq->curr_time - lqele->issue_time;
+    total_update_req_time += geq->curr_time - lqele->issue_time;
   }
   else if (lqele->type == et_hmc_gather)
   {

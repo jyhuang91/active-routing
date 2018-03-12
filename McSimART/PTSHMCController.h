@@ -67,7 +67,7 @@ namespace PinPthread
       double total_rd_mem_time;
       double total_wr_mem_time;
       double total_ev_mem_time;
-      double total_update_noc_time;
+      double total_update_req_time;
       double total_update_stall_time;
 
       static uint64_t last_process_time;
@@ -81,7 +81,7 @@ namespace PinPthread
         return (base_num * 4) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % 4;
       }
 
-      double get_update_noc_lat() { return (total_update_noc_time/ num_update_sent / process_interval); }
+      double get_update_req_lat() { return (total_update_req_time/ num_update_sent / process_interval); }
       double get_update_stall_lat() { return (total_update_stall_time / num_update / process_interval); }
   };
 }
