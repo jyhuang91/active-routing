@@ -137,51 +137,38 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   }
 
   int transaction_type = hmc_transaction_type(lqele);
-  int dataSize = 32;
+  int data_size = 32;
   uint32_t dest_cube = get_cube_num(lqele->address);
 
   switch (transaction_type)
   {
-    case 1: tranType = DATA_READ;   dataSize = 32;/* size can vary from 32 to 256 */  break;
-    case 2: tranType = DATA_WRITE;  dataSize = 128; break;
-    case 3: tranType = DATA_WRITE;  dataSize = 32;  break;
-    case 4: tranType = ACTIVE_GET;  dataSize = 32;  break;
-    case 5: tranType = ACTIVE_ADD;  dataSize = 32;  break;
-    case 6: tranType = ACTIVE_MULT; dataSize = 32;  break;
+    case 1: tranType = DATA_READ;   data_size = 32;/* size can vary from 32 to 256 */  break;
+    case 2: tranType = DATA_WRITE;  data_size = 128; break;
+    case 3: tranType = DATA_WRITE;  data_size = 32;  break;
+    case 4: tranType = ACTIVE_GET;  data_size = 32;  break;
+    case 5: tranType = ACTIVE_ADD;  data_size = 32;  break;
+    case 6: tranType = ACTIVE_MULT; data_size = 32;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
   }
- 
-  int src_cube = net_num * 5;
-  if (hmc_top == MESH) //Works only for 4x4;
-  {
-    switch (net_num)
-    {
-      case 0: src_cube = 0; break;
-      case 8: src_cube = 3; break;
-      case 11: src_cube = 15; break;
-      case 3: src_cube = 12; break;
-      defualt:
-        cerr << "ERROR: HMC Configuaration unclear" << endl;
-        assert(0);
-    }
-  }
+
+  int src_cube = get_src_cubeID(num);
   Transaction *newTran = NULL;
   switch (tranType)
   {
     case DATA_READ:
     case DATA_WRITE:
-      newTran = new Transaction(tranType, lqele->address, dataSize, hmc_net,src_cube, dest_cube);
+      newTran = new Transaction(tranType, lqele->address, data_size, hmc_net, src_cube, dest_cube);
       break;
 
     case ACTIVE_ADD:
       dest_cube = get_active_cube_num(lqele->src_addr1);
-      newTran = new Transaction(ACTIVE_ADD, lqele->dest_addr, lqele->src_addr1, dataSize, hmc_net, 0, dest_cube);
+      newTran = new Transaction(ACTIVE_ADD, lqele->dest_addr, lqele->src_addr1, data_size, hmc_net, 0, dest_cube);
       assert(lqele->nthreads == -1);
       break;
     case ACTIVE_GET:
-      newTran = new Transaction(ACTIVE_GET, lqele->dest_addr, lqele->src_addr1, dataSize, hmc_net, 0, 0);
+      newTran = new Transaction(ACTIVE_GET, lqele->dest_addr, lqele->src_addr1, data_size, hmc_net, 0, 0);
       assert(lqele->nthreads >= 1);
       //cout << "Gather's nthreads: " << lqele->nthreads << endl;
       newTran->nthreads = lqele->nthreads;
@@ -189,7 +176,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
     case ACTIVE_MULT:
       uint32_t dest_cube1 = get_cube_num(lqele->src_addr1);
       uint32_t dest_cube2 = get_cube_num(lqele->src_addr2);
-      newTran = new Transaction(ACTIVE_MULT, lqele->dest_addr, lqele->src_addr1, lqele->src_addr2, dataSize,
+      newTran = new Transaction(ACTIVE_MULT, lqele->dest_addr, lqele->src_addr1, lqele->src_addr2, data_size,
           hmc_net, 0, dest_cube1, dest_cube2);
       assert(lqele->nthreads == -1);
       break;
@@ -484,6 +471,25 @@ void PTSHMCController::update_hmc(uint64_t cycles)
   hmc_net->Update();
 }
 
+int PTSHMCController::get_src_cubeID(int num)
+{
+  int src_cube = num * 5;
+  if (hmc_top == MESH) //Works only for 4x4;
+  {
+    switch (num)
+    {
+      case 0: src_cube = 0; break;
+      case 1: src_cube = 3; break;
+      case 2: src_cube = 15; break;
+      case 3: src_cube = 12; break;
+      defualt:
+        cerr << "ERROR: HMC Configuaration unclear" << endl;
+        assert(0);
+    }
+  }
+
+  return src_cube;
+}
 
 int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
 
