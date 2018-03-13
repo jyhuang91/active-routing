@@ -227,6 +227,8 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   num_l2_miss_last        = 0;
   num_dependency_distance_last = 0;
 
+  num_ld_last = 0;
+  num_st_last = 0;
   num_update_ins_last     = 0;
   num_gather_ins_last     = 0;
   num_update_acc_last     = 0;
@@ -234,6 +236,8 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   num_update_acc_sent_last = 0;
   num_back_invalidate_last = 0;
 
+  mem_ld_acc_lat_last       = 0.0;
+  mem_st_acc_lat_last       = 0.0;
   update_req_lat_last       = 0.0;
   update_stall_lat_last     = 0.0;
   update_roundtrip_lat_last = 0.0;
