@@ -1,4 +1,4 @@
-export PIN_HOME=${PWD}/pin_kit
+export PIN_HOME=${PWD}/pin
 export PIN=${PIN_HOME}/intel64/bin/pinbin
 export MCSIM_PARENT_DIR=${PWD}
 export PINTOOL=${MCSIM_PARENT_DIR}/Pthread/mypthreadtool
