@@ -90,6 +90,16 @@ PTSHMCController::~PTSHMCController()
   cout << "(avg_update_req, avg_update_stall [cycles]) = ("
     << setw(8) << total_update_req_time / num_update / process_interval << ", "
     << setw(8) << total_update_stall_time / num_update_sent / process_interval << ")" << endl;
+  display();
+  if (!pending_active_updates.empty())
+  {
+    multimap<uint64_t, LocalQueueElement *>::iterator iter = pending_active_updates.begin();
+    cout << "remaining pending updates:" << endl;
+    for (; iter != pending_active_updates.end(); iter++)
+    {
+      cout << "flow " << hex << iter->first << dec << endl;
+    }
+  }
 
   assert(tran_buf.empty());
   tran_buf.clear();
@@ -106,8 +116,8 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   }
 
   if (outstanding_req.empty() && tran_buf.empty() && active_update_event.empty() &&
-      //active_gather_event.empty() && resp_queue.empty()) {
-      active_gather_event.empty() && resp_queue.empty() && pending_active_updates.empty())
+      req_event.empty() && active_gather_event.empty() && resp_queue.empty())
+      //active_gather_event.empty() && resp_queue.empty() && pending_active_updates.empty())
   {
     geq->add_event(event_time, this);
   }
@@ -222,7 +232,8 @@ void PTSHMCController::add_rep_event(uint64_t event_time, LocalQueueElement * lq
 {
 
   if (outstanding_req.empty() && tran_buf.empty() && active_update_event.empty() &&
-      active_gather_event.empty() && resp_queue.empty() && pending_active_updates.empty())
+      req_event.empty() && active_gather_event.empty() && resp_queue.empty())
+      //active_gather_event.empty() && resp_queue.empty() && pending_active_updates.empty())
   {
     geq->add_event(event_time, this);
   }
@@ -267,6 +278,9 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       }
       else if (tran->transactionType == ACTIVE_GET)
       {
+#ifdef DEBUG_GATHER
+        cout << "send Gather for flow " << hex << addr << dec << endl;
+#endif
         //display();
         // do nothing
       }
@@ -393,10 +407,10 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     served_trans.erase(served_trans.begin());
   }
 
-  if (!outstanding_req.empty() ||
-      //!tran_buf.empty() || !active_update_event.empty() ||
-      !tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
-      !resp_queue.empty())
+  if (!req_event.empty() || !outstanding_req.empty() ||
+      !tran_buf.empty() || !active_update_event.empty() ||
+      //!tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
+      !active_gather_event.empty() || !resp_queue.empty())
   {
     geq->add_event(curr_time+process_interval, this);
   }
@@ -411,7 +425,8 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     uint64_t c = (curr_time - last_process_time) / process_interval;
     update_hmc(c);
 #else
-    for (uint64_t c = last_process_time+process_interval; c <= curr_time; c = c + process_interval) {
+    for (uint64_t c = last_process_time+process_interval; c <= curr_time; c = c + process_interval)
+    {
       update_hmc(c);
     }
 #endif
@@ -517,13 +532,13 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
       return 3;//type 3 is EVICT
 
     case et_hmc_gather:
-      return 4; // Jiayi, type 5 is ACTIVE_GET
+      return 4; // Jiayi, type 4 is ACTIVE_GET
 
     case et_hmc_update_add:
-      return 5; // Jiayi, type 4 is ACTIVE_ADD
+      return 5; // Jiayi, type 5 is ACTIVE_ADD
 
     case et_hmc_update_mult:
-      return 6; // Jiayi, type 4 is ACTIVE_ADD
+      return 6; // Jiayi, type 6 is ACTIVE_MULT
 
     case et_rd_bypass:   // this read is older than what is in the cache
     case et_e_to_m:

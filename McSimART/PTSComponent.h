@@ -182,6 +182,7 @@ namespace PinPthread
       event_queue_t event_queue;
       uint64_t curr_time;
       McSim * mcsim;
+      uint64_t num_ticks_printed_last_time;
 
     public:
       GlobalEventQueue(McSim * mcsim_);

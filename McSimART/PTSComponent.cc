@@ -32,6 +32,7 @@
 #include "PTSComponent.h"
 #include "PTSCore.h"
 #include "PTSO3Core.h"
+#include "PTSHMCController.h"
 
 using namespace PinPthread;
 
@@ -157,7 +158,7 @@ uint32_t Component::log2(uint64_t num)
 
 
 GlobalEventQueue::GlobalEventQueue(McSim * mcsim_)
-:event_queue(), curr_time(0), mcsim(mcsim_)
+:event_queue(), curr_time(0), mcsim(mcsim_), num_ticks_printed_last_time(0)
 {
   num_hthreads = mcsim->pts->get_param_uint64("pts.num_hthreads", max_hthreads);
   num_mcs      = mcsim->pts->get_param_uint64("pts.num_mcs", 2);
@@ -195,6 +196,32 @@ uint32_t GlobalEventQueue::process_event()
 
   while (true)
   {
+    if (curr_time / 10000000 != num_ticks_printed_last_time)
+    {
+      num_ticks_printed_last_time = curr_time / 10000000;
+      /*if (mcsim->use_o3core == true)
+      {
+        for (uint32_t i = 0; i < mcsim->o3cores.size(); i++)
+        {
+          O3Core * o3core = mcsim->o3cores[i];
+          o3core->displayO3ROB();
+        }
+      }*/
+      for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
+      {
+        PTSHMCController * hmc = mcsim->hmcs[i];
+        cout << "hmc-controller " << hmc->num << ": resp_queue size " << hmc->resp_queue.size() << endl;
+        for (vector<LocalQueueElement *>::iterator it = hmc->resp_queue.begin();
+            it != hmc->resp_queue.end(); it++)
+        {
+          cout << "  "; (*it)->display();
+        }
+        hmc->display();
+      }
+      cout << "Event queue:" << endl;
+      display();
+    }
+
     event_queue_t::iterator event_queue_iter = event_queue.begin();
 
     if (event_queue_iter != event_queue.end())
@@ -297,6 +324,17 @@ uint32_t GlobalEventQueue::process_event()
       }*/
 
       cout << " -- event became empty at cycle = " << curr_time << " num_threads " << endl;
+      for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
+      {
+        PTSHMCController * hmc = mcsim->hmcs[i];
+        cout << "hmc-controller " << hmc->num << ": resp_queue size " << hmc->resp_queue.size() << endl;
+        for (vector<LocalQueueElement *>::iterator it = hmc->resp_queue.begin();
+            it != hmc->resp_queue.end(); it++)
+        {
+          cout << "  "; (*it)->display();
+        }
+        hmc->display();
+      }
       if (mcsim->use_o3core == true)
       {
         for (uint32_t i = 0; i < mcsim->o3cores.size(); i++)
