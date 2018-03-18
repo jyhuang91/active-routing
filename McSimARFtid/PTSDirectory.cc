@@ -746,7 +746,7 @@ uint32_t Directory::process_event(uint64_t curr_time)
             uint32_t hmc_num = req_lqe->th_id % 4;
             if (hmc_num == num)
             {
-              hmccontroller->add_req_event(curr_time + dir_to_xbar_t, req_lqe);
+              hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
             }
             else
             {
