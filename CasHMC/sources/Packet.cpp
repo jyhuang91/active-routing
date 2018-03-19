@@ -470,6 +470,7 @@ namespace CasHMC
       case ACT_ADD: header = "[P" + id.str() + "-ACT_ADD]"; break;
       case ACT_MULT: header = "[P" + id.str() + "-ACT_MULT]"; break;
       case ACT_GET: header = "[P" + id.str() + "-ACT_GET]"; break;
+      case PEI_DOT: header = "[P" + id.str() + "-PEI_DOT]"; break;
       case ERROR:		header = "[P" + id.str() + "-ERROR]";		break;
       default:
                     ERROR(" (FL) == Error - Trying to print unknown kind of Packet CMD type");

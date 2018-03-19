@@ -158,6 +158,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
     case 4: tranType = ACTIVE_GET;  data_size = 32;  break;
     case 5: tranType = ACTIVE_ADD;  data_size = 32;  break;
     case 6: tranType = ACTIVE_MULT; data_size = 32;  break;
+    case 7: tranType = PIMINS_DOT; data_size = 32;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -169,6 +170,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     case DATA_READ:
     case DATA_WRITE:
+    case PIMINS_DOT:
       newTran = new Transaction(tranType, lqele->address, data_size, hmc_net, src_cube, dest_cube);
       break;
 
@@ -291,7 +293,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           num_read++;
           total_rd_stall_time += curr_time - tran_buf.begin()->first;
         }
-        else
+        else if(tran->transactionType == DATA_WRITE)
         {
           assert(tran->transactionType == DATA_WRITE);
           LocalQueueElement *lqele = req_event.find(req_id)->second;
@@ -307,6 +309,10 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
             num_evict++;
             total_ev_stall_time += curr_time - tran_buf.begin()->first;
           }
+        }
+        else
+        {
+          assert(tran->transactionType == PIMINS_DOT);
         }
         outstanding_req.insert(make_pair(req_id, curr_time));
       }
@@ -391,6 +397,8 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         case 3: // evict
           total_ev_mem_time += curr_time - issue_time;
           break;
+        case 7: // pei
+          break;
         default:
           cerr << "Unknown reply transaction type: " << tran_type  << endl;
           exit(1);
@@ -462,6 +470,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           resp_queue.erase(iter);
           break;
         case et_hmc_gather:
+        case et_hmc_pei:
           noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
           resp_queue.erase(iter);
           break;
@@ -540,6 +549,9 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
     case et_hmc_update_mult:
       return 6; // Jiayi, type 6 is ACTIVE_MULT
 
+    case et_hmc_pei:
+      return 7; // Jiayi, type 6 is ACTIVE_MULT
+    
     case et_rd_bypass:   // this read is older than what is in the cache
     case et_e_to_m:
     case et_e_to_i:
