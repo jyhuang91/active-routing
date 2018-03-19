@@ -196,17 +196,17 @@ uint32_t GlobalEventQueue::process_event()
 
   while (true)
   {
-    if (curr_time / 10000000 != num_ticks_printed_last_time)
+    /*if (curr_time / 10000000 != num_ticks_printed_last_time)
     {
       num_ticks_printed_last_time = curr_time / 10000000;
-      /*if (mcsim->use_o3core == true)
+      if (mcsim->use_o3core == true)
       {
         for (uint32_t i = 0; i < mcsim->o3cores.size(); i++)
         {
           O3Core * o3core = mcsim->o3cores[i];
           o3core->displayO3ROB();
         }
-      }*/
+      }
       for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
       {
         PTSHMCController * hmc = mcsim->hmcs[i];
@@ -220,7 +220,7 @@ uint32_t GlobalEventQueue::process_event()
       }
       cout << "Event queue:" << endl;
       display();
-    }
+    }*/
 
     event_queue_t::iterator event_queue_iter = event_queue.begin();
 
@@ -323,8 +323,8 @@ uint32_t GlobalEventQueue::process_event()
 
       }*/
 
-      cout << " -- event became empty at cycle = " << curr_time << " num_threads " << endl;
-      for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
+      // for debugging
+      /*for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
       {
         PTSHMCController * hmc = mcsim->hmcs[i];
         cout << "hmc-controller " << hmc->num << ": resp_queue size " << hmc->resp_queue.size() << endl;
@@ -334,7 +334,8 @@ uint32_t GlobalEventQueue::process_event()
           cout << "  "; (*it)->display();
         }
         hmc->display();
-      }
+      }*/
+      cout << " -- event became empty at cycle = " << curr_time << " num_threads " << endl;
       if (mcsim->use_o3core == true)
       {
         for (uint32_t i = 0; i < mcsim->o3cores.size(); i++)
