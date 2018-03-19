@@ -423,52 +423,55 @@ void PthreadScheduler::process_ins(
     return;
   }
 
-  //first_instrs++;
-  if ((ignore_skip_instrs == false && pthread->skip_instrs > 0 && pthread->spinning <= 0)/* ||
-      (skip_first > first_instrs + total_discarded_instrs)*/)
+  if (category < 128 && category > 130) // Jiayi, 01/29/2018, active instructions
   {
-    return;
-  }
+    //first_instrs++;
+    if ((ignore_skip_instrs == false && pthread->skip_instrs > 0 && pthread->spinning <= 0) /* ||
+        (skip_first > first_instrs + total_discarded_instrs)*/)
+    {
+      return;
+    }
 
-  pthread->num_ins_mem_rd     += (raddr)  ? 1 : 0;
-  pthread->num_ins_mem_wr     += (waddr)  ? 1 : 0;
-  pthread->num_ins_2nd_mem_rd += (raddr2) ? 1 : 0;
-  pthread->num_ins++;
-  pthread->num_ins_for_spinning += (pthread->spinning > 0) ? 1 : 0;
-  total_instrs++;
+    pthread->num_ins_mem_rd     += (raddr)  ? 1 : 0;
+    pthread->num_ins_mem_wr     += (waddr)  ? 1 : 0;
+    pthread->num_ins_2nd_mem_rd += (raddr2) ? 1 : 0;
+    pthread->num_ins++;
+    pthread->num_ins_for_spinning += (pthread->spinning > 0) ? 1 : 0;
+    total_instrs++;
 
-  if (agile_bank_th >= 1.0)
-  {
-    if (raddr  != 0) raddr  |= ((uint64_t)1 << 63);
-    if (raddr2 != 0) raddr2 |= ((uint64_t)1 << 63);
-    if (waddr  != 0) waddr  |= ((uint64_t)1 << 63);
-    if (ip     != 0) ip     |= ((uint64_t)1 << 63);
-  }
-  else if (agile_bank_th > 0)
-  {
-    if (raddr != 0 &&
-        addr_perc.find(raddr >> page_sz_log2) != addr_perc.end() &&
-        addr_perc[raddr >> page_sz_log2] < agile_bank_th)
+    if (agile_bank_th >= 1.0)
     {
-      raddr |= ((uint64_t)1 << 63);
+      if (raddr  != 0) raddr  |= ((uint64_t)1 << 63);
+      if (raddr2 != 0) raddr2 |= ((uint64_t)1 << 63);
+      if (waddr  != 0) waddr  |= ((uint64_t)1 << 63);
+      if (ip     != 0) ip     |= ((uint64_t)1 << 63);
     }
-    if (raddr2 != 0 &&
-        addr_perc.find(raddr2 >> page_sz_log2) != addr_perc.end() &&
-        addr_perc[raddr2 >> page_sz_log2] < agile_bank_th)
+    else if (agile_bank_th > 0)
     {
-      raddr2 |= ((uint64_t)1 << 63);
-    }
-    if (waddr != 0 &&
-        addr_perc.find(waddr >> page_sz_log2) != addr_perc.end() &&
-        addr_perc[waddr >> page_sz_log2] < agile_bank_th)
-    {
-      waddr |= ((uint64_t)1 << 63);
-    }
-    if (ip != 0 &&
-        addr_perc.find(ip >> page_sz_log2) != addr_perc.end() &&
-        addr_perc[ip >> page_sz_log2] < agile_bank_th)
-    {
-      ip |= ((uint64_t)1 << 63);
+      if (raddr != 0 &&
+          addr_perc.find(raddr >> page_sz_log2) != addr_perc.end() &&
+          addr_perc[raddr >> page_sz_log2] < agile_bank_th)
+      {
+        raddr |= ((uint64_t)1 << 63);
+      }
+      if (raddr2 != 0 &&
+          addr_perc.find(raddr2 >> page_sz_log2) != addr_perc.end() &&
+          addr_perc[raddr2 >> page_sz_log2] < agile_bank_th)
+      {
+        raddr2 |= ((uint64_t)1 << 63);
+      }
+      if (waddr != 0 &&
+          addr_perc.find(waddr >> page_sz_log2) != addr_perc.end() &&
+          addr_perc[waddr >> page_sz_log2] < agile_bank_th)
+      {
+        waddr |= ((uint64_t)1 << 63);
+      }
+      if (ip != 0 &&
+          addr_perc.find(ip >> page_sz_log2) != addr_perc.end() &&
+          addr_perc[ip >> page_sz_log2] < agile_bank_th)
+      {
+        ip |= ((uint64_t)1 << 63);
+      }
     }
   }
   bool must_resume = pts->add_instruction(pth_to_hth[current->second], curr_time,
@@ -663,7 +666,8 @@ void PthreadScheduler::SetActiveState(pthread_t thread, bool active)
 {
   pthread_queue_t::iterator threadptr = GetThreadPtr(thread);
   (threadptr->second)->active = active;
-  pts->set_active(threadptr->first, (threadptr->second)->active);
+  //pts->set_active(threadptr->first, (threadptr->second)->active);
+  pts->set_active(pth_to_hth[threadptr->second], (threadptr->second)->active);// Jiayi modified, FIXME
 }
 
 

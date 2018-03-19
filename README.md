@@ -32,7 +32,7 @@ How to compile
 
    ```shell
    $ cd ${MCSIM_PARENT_DIR}
-   $ make INCS=-I${MCSIM_PARENT_DIR}/pin_kit/extras/xed2-intel64/include -j 8
+   $ make INCS=-I${MCSIM_PARENT_DIR}/pin/extras/xed2-intel64/include -j 8
    ```
 
 -  McSimA+ needs snappy compression library from Google.
@@ -56,7 +56,7 @@ How to compile
 
    ```shell
    $ cd ${MCSIM_PARENT_DIR}/Pthread
-   $ make TOOLS_DIR=${MCSIM_PARENT_DIR}/pin_kit/source/tools -j 8
+   $ make TOOLS_DIR=${MCSIM_PARENT_DIR}/pin/source/tools -j 8
    ```
 
 5. Compile a test program 'stream'
@@ -130,14 +130,14 @@ How to generate traces
 
    ```shell
    $ cd ${MCSIM_PARENT_DIR}/TraceGen
-   $ make TOOLS_DIR=${MCSIM_PARENT_DIR}/pin_kit/source/tools -j 8
+   $ make TOOLS_DIR=${MCSIM_PARENT_DIR}/pin/source/tools -j 8
    ```
 
 
 2. Run tracegen
 
    ```shell
-   $ ${MCSIM_PARENT_DIR}/pin_kit/intel64/bin/pinbin -t ${MCSIM_PARENT_DIR}/TraceGen/tracegen -prefix prefix_name -slice_size size point1 point2 ... -- exectuable to extract traces
+   $ ${MCSIM_PARENT_DIR}/pin/intel64/bin/pinbin -t ${MCSIM_PARENT_DIR}/TraceGen/tracegen -prefix prefix_name -slice_size size point1 point2 ... -- exectuable to extract traces
    ```
 
 

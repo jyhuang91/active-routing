@@ -1,0 +1,5 @@
+*.o
+pin.log
+pintool.log
+pagerank
+pagerank_lock
