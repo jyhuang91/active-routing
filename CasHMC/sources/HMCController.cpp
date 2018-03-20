@@ -415,6 +415,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       case ACTIVE_ADD:    cmdtype = ACT_ADD;  packetLength = 1;   break;
       case ACTIVE_MULT:   cmdtype = ACT_MULT; packetLength = 1;   break;
       case ACTIVE_GET: cmdtype = ACT_GET;  packetLength = 1;   break;
+      case PIMINS_DOT: cmdtype = PEI_DOT;  packetLength = 3;   break;
 
       default:
                        ERROR(header<<"   == Error - WRONG transaction type  (CurrentClock : "<<currentClockCycle<<")");

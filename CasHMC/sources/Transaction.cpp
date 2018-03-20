@@ -118,6 +118,7 @@ namespace CasHMC
       case ACTIVE_ADD:    header = "[T" + id.str() + "-ACT_ADD]"; break;
       case ACTIVE_MULT: header = "[T" + id.str() + "-ACT_MULT]"; break;
       case ACTIVE_GET:    header = "[T" + id.str() + "-ACT_GET]"; break;
+      case PIMINS_DOT:    header = "[T" + id.str() + "-PEI_DOT]"; break;
       default:
                           ERROR(" (TS) == Error - Trying to print unknown kind of transaction type");
                           ERROR("         T"<<t.transactionID<<" [?"<<t.transactionType<<"?] [0x"<<hex<<setw(16)<<setfill('0')<<t.address<<dec<<"]");

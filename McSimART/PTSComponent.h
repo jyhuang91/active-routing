@@ -106,6 +106,7 @@ namespace PinPthread
     et_hmc_update_mult,
     et_hmc_gather,
     et_hmc_gather_rep,
+    et_hmc_pei,
   };
 
   struct LocalQueueElement

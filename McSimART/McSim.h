@@ -86,6 +86,7 @@ namespace PinPthread
     ins_update_add,
     ins_update_mult,
     ins_gather,
+    ins_pei,
     ins_invalid
   };
 

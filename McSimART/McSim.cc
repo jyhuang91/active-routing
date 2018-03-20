@@ -125,6 +125,7 @@ ostream & operator << (ostream & output, event_type et)
     case et_hmc_update_mult:  output << "et_hmc_update_mult"; break;
     case et_hmc_gather:       output << "et_hmc_gather"; break;
     case et_hmc_gather_rep:   output << "et_hmc_gather_rep"; break;
+    case et_hmc_pei:    output << "et_hmc_pei"; break;
     default: break;
   }
   return output;
@@ -1237,6 +1238,7 @@ uint32_t McSim::add_instruction(
     ins_type type = (category == 128) ? ins_update_add :
       (category == 130)               ? ins_update_mult :
       (category == 129)               ? ins_gather :
+      (category == 131)               ? ins_pei :
       (islock == true && isunlock == true && isbarrier == false) ? ins_notify :
       (islock == true && isunlock == true && isbarrier == true) ? ins_waitfor :
       (isbranch && isbranchtaken)        ? ins_branch_taken :

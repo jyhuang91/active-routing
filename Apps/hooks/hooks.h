@@ -25,6 +25,7 @@
 #define GET     (0)
 #define ADD     (1)
 #define MULT    (2)
+#define PEI_DOT (3)
 
 #ifdef __cplusplus
 extern "C" {

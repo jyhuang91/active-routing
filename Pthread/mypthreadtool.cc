@@ -113,6 +113,8 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
     case 2:
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
       category = 130;
+    case 3:
+      category = 131;
       break;
     default: fprintf(stderr, "Unknown active operation: %d\n", function); exit(1);
   }

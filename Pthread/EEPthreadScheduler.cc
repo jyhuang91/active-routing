@@ -423,7 +423,7 @@ void PthreadScheduler::process_ins(
     return;
   }
 
-  if (category < 128 && category > 130) // Jiayi, 01/29/2018, active instructions
+  if (category < 128 && category > 131) // Jiayi, 01/29/2018, active instructions
   {
     //first_instrs++;
     if ((ignore_skip_instrs == false && pthread->skip_instrs > 0 && pthread->spinning <= 0) /* ||

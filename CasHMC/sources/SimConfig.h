@@ -52,7 +52,7 @@ static bool ONLY_CR = false;		//Print only critical debug
 static bool STATE_SIM = false;		//State log file generation (true / false)
 static int PLOT_SAMPLING = 10000;	//(cycle)Bandwidth graph data time unit
 static bool BANDWIDTH_PLOT = true;	//Bandwidth graph files generation
-
+static int PCU_DELAY = 4;
 
 //
 //Memory transaction setting

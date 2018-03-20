@@ -1,5 +1,5 @@
 
-TRGS = mac ar_mac
+TRGS = mac ar_mac pei_mac
 
 LIB_DEPEND = hooks
 
@@ -23,6 +23,8 @@ $(LIB_DEPEND):
 mac: main.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_mac: main_ar.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+pei_mac: main_pei.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 
 clean:

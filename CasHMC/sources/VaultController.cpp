@@ -97,6 +97,7 @@ namespace CasHMC
         case WR_RS:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING write response packet");		break;
         case ACT_ADD:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");		break;  // Jiayi
         case ACT_MULT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet");  break;
+        case PEI_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING PEI_DOT response packet");  break;
         default:
                     ERROR(header<<"  == Error - WRONG response packet command type  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
                     exit(0);
@@ -182,6 +183,7 @@ namespace CasHMC
         pendingDataSize -= (retCMD->dataSize/16)+1;
         //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   pendingDataSize "<<(retCMD->dataSize/16)+1<<" decreased   (current pendingDataSize : "<<pendingDataSize<<")");
         newPacket->ADRS = retCMD->addr; // Jiayi, 03/27/17
+       
         if (retCMD->packetCMD == ACT_ADD) { // Jiayi
           newPacket->CMD = ACT_ADD; // Jiayi, 03/15/17
           newPacket->active = true;
@@ -191,7 +193,12 @@ namespace CasHMC
 #ifdef DEBUG_UPDATE
           cout << "Active ADD packet " << newPacket->TAG << " is returned" << endl;
 #endif
-        } else if (retCMD->packetCMD == ACT_MULT) { // 03/24/17
+
+        } else if(retCMD->packetCMD == PEI_DOT) {
+          newPacket->LNG = 2;
+          newPacket->CMD = PEI_DOT; // Jiayi, 03/15/17
+        }
+        else if (retCMD->packetCMD == ACT_MULT) { // 03/24/17
           newPacket->CMD = ACT_MULT;
           //newPacket->SRCCUB = retCMD->dest_cube;
           //newPacket->DESTCUB = retCMD->src_cube;
@@ -229,7 +236,16 @@ namespace CasHMC
     newPacket->orig_addr = retCMD->addr;
     newPacket->tran_tag = retCMD->tran_tag;
     newPacket->segment = retCMD->segment;
+    if(newPacket->CMD != PEI_DOT){
     ReceiveUp(newPacket);
+    }else{
+       if(pcuPacket.empty()){ 
+         newPacket->bufPopDelay = PCU_DELAY;
+       }else{
+         newPacket->bufPopDelay = max(PCU_DELAY,(pcuPacket.back())->bufPopDelay + 1);
+       }
+       pcuPacket.push_back(newPacket);
+    }
   }
 
   //
@@ -237,6 +253,9 @@ namespace CasHMC
   //
   void VaultController::Update()
   {
+    if(!pcuPacket.empty() && (pcuPacket.front())->bufPopDelay == 0){
+      ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
+    } 
     //Update DRAM state and various countdown
     UpdateCountdown();
 
@@ -355,6 +374,7 @@ namespace CasHMC
 
         if(!atomicCMD->posted) {
           MakeRespondPacket(atomicCMD);
+          assert(atomicCMD->packetCMD != PEI_DOT);
         }
         delete atomicCMD;
         atomicCMD = NULL;
@@ -369,6 +389,10 @@ namespace CasHMC
     EnablePowerdown();
 
     commandQueue->Update();
+    for(int i=0; i<pcuPacket.size(); i++){
+      assert(pcuPacket[i]->bufPopDelay > 0);
+      pcuPacket[i]->bufPopDelay--;
+    }
     Step();
   }
 
@@ -397,6 +421,7 @@ namespace CasHMC
         if(dataBus->lastCMD) {
           if(!dataBus->atomic && !dataBus->posted) {
             MakeRespondPacket(dataBus);
+            assert(dataBus->packetCMD != PEI_DOT); 
           }
           else if(dataBus->trace != NULL && dataBus->posted) {
             dataBus->trace->tranFullLat = ceil(currentClockCycle * (double)tCK/CPU_CLK_PERIOD) - dataBus->trace->tranTransmitTime;
@@ -516,6 +541,7 @@ namespace CasHMC
       // Active Add
       case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; pendingReadData.push_back(packet->TAG); break; 
       case ACT_MULT:   tempCMD = OPEN_PAGE ? READ : READ_P; pendingReadData.push_back(packet->TAG); break; 
+      case PEI_DOT:   tempCMD = OPEN_PAGE ? READ : READ_P; pendingReadData.push_back(packet->TAG); break; 
 
       default:
                       ERROR(header<<"  == Error - WRONG packet command type  (CurrentClock : "<<currentClockCycle<<")");

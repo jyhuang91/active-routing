@@ -779,7 +779,8 @@ void Mesh2D::process_qs(
       }
       else if (curr_q.first->type == et_hmc_update_add ||
           curr_q.first->type == et_hmc_update_mult ||
-          curr_q.first->type == et_hmc_gather)
+          curr_q.first->type == et_hmc_gather ||
+          curr_q.first->type == et_hmc_pei)
       {
         uint32_t cluster_num = curr_q.first->from.top()->num;
         col = cluster_num % num_cols;
@@ -837,6 +838,18 @@ void Mesh2D::process_qs(
           col = mc_pos[0] % num_cols;
           row = mc_pos[0] / num_cols;
         }
+        else if (etype == et_hmc_pei)
+        {
+          uint32_t which_mc = geq->which_mc(curr_q.first->src_addr2); /*Remote arg for invalidation*/
+          col = mc_pos[which_mc] % num_cols;
+          row = mc_pos[which_mc] / num_cols;
+          to_dir = directory[which_mc];
+        }
+        else
+        {
+          cout << "Invalid event: " << etype << endl; 
+          assert(false); 
+        }
       }
       else if (curr_q.first->from.top()->type == ct_directory &&
           (curr_q.first->type == et_hmc_update_mult || curr_q.first->type == et_hmc_update_add))
@@ -845,6 +858,15 @@ void Mesh2D::process_qs(
         row = mc_pos[0] / num_cols;
         to_hmc = hmccontroller[0];
       }
+      else if (curr_q.first->from.top()->type == ct_directory &&
+                (curr_q.first->type == et_hmc_pei))
+      { 
+        /*RAM: VERIFY with jiayi: Should never reach here but there are req's*/
+        assert(false); 
+        col = mc_pos[0] % num_cols;
+        row = mc_pos[0] / num_cols;
+        to_hmc = hmccontroller[0];
+      }  
       else
       {
         uint32_t which_mc = geq->which_mc(curr_q.first->address);
@@ -906,7 +928,9 @@ void Mesh2D::process_qs(
       {
         if (curr_q.first->from.top()->type == ct_directory)
         {
-          assert(curr_q.first->type == et_hmc_update_mult || curr_q.first->type == et_hmc_update_add);
+          assert(curr_q.first->type == et_hmc_update_mult || 
+                 curr_q.first->type == et_hmc_update_add ||
+                 curr_q.first->type == et_hmc_pei);
           curr_q.first->from.pop();
         }
         to_hmc->add_req_event(curr_time + sw_to_sw_t, curr_q.first);
@@ -945,7 +969,10 @@ void Mesh2D::process_qs(
         to_dir->add_req_event(curr_time + sw_to_sw_t, curr_q.first);
         //cout << to_dir->num << ", " << curr_time << endl;
         event_type etype = curr_q.first->type;
-        if (etype != et_hmc_update_add && etype != et_hmc_update_mult && etype != et_hmc_gather)
+        if (etype != et_hmc_update_add && 
+            etype != et_hmc_update_mult && 
+            etype != et_hmc_gather && 
+            etype != et_hmc_pei)
         {
           num_req_done++;
           req_noc_latency = (req_noc_latency * (num_req_done - 1) + curr_time - curr_q.first->issue_time) / (num_req_done++);

@@ -57,7 +57,8 @@ namespace CasHMC
     RD_RS=56, WR_RS, MD_RD_RS, MD_WR_RS, ERROR=62,
 
     // ACTIVE commands
-    ACT_ADD=108, ACT_MULT, ACT_GET // FIXME: what should be the number?
+    ACT_ADD=108, ACT_MULT, ACT_GET, // FIXME: what should be the number?
+    PEI_DOT
   };
 
   class Packet
