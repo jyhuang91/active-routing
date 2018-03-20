@@ -31,11 +31,13 @@ VOID Init(uint32_t argc, char** argv)
 {
     pthreadsim = new PthreadSim(argc, argv);
     in_roi = false;
+    ngather = 0;
 }
 
 VOID Fini(INT32 code, VOID* v) 
 {
     delete pthreadsim;
+    fprintf(stdout, "Pthread Tool ngather: %d\n", ngather);
 }
 
 VOID ProcessMemIns(
@@ -74,7 +76,7 @@ VOID ProcessMemIns(
     //pthreadsim->initiate(context);  // Jiayi, for skip instructions
   }
 
-  if (pthreadsim->run_roi == false || (pthreadsim->run_roi && in_roi))
+  if ((pthreadsim->run_roi && in_roi) || pthreadsim->run_roi == false)
   {
     pthreadsim->process_ins(
         context,
@@ -127,7 +129,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //printf(" [UPDATE API Pin: %p %p %p <%i>]  \n",a,b,c,function);
+  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
 }
 
 VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthreads)
@@ -141,7 +143,8 @@ VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthr
       129,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //printf(" [GATHER API Pin: %p %p %p <%i>]  \n",a,b,c,nthreads);
+  ngather++;
+  //fprintf(stderr, " [GATHER API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, nthreads, pthreadsim->scheduler->current->first);
 }
 
 
