@@ -53,6 +53,7 @@ namespace PinPthread
 
     PthreadSim* pthreadsim;
     bool in_roi;
+    uint32_t ngather; // debug/verification purpose
 #if 0
     [FIXME] add knob to let user pick stack size of new threads
     KNOB<UINT32> KnobStackSize(KNOB_MODE_WRITEONCE, "pintool",
