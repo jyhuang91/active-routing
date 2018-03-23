@@ -215,6 +215,9 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   num_l2_miss_last        = 0;
   num_dependency_distance_last = 0;
 
+  num_ld_last = 0;
+  num_st_last = 0;
+
   if (noc_type != "mesh" && noc_type != "ring" &&
       num_mcs * num_l1_caches_per_l2_cache * num_threads_per_l1_cache > num_hthreads)
   {
@@ -708,6 +711,7 @@ McSim::~McSim()
   uint64_t ipc1000 = (global_q->curr_time == 0 ) ? 0 : (1000 * num_fetched_instrs * lsu_process_interval / global_q->curr_time);
   cout << "  -- total number of fetched instructions : " << num_fetched_instrs
     << " (IPC = " << setw(3) << ipc1000/1000 << "." << setfill('0') << setw(3) << ipc1000%1000 << ")" << endl;
+  cout << "  -- total number of ticks: " << global_q->curr_time << " , cycles: " << global_q->curr_time / lsu_process_interval << endl;
 
   for (vector<Hthread *>::iterator iter = hthreads.begin(); iter != hthreads.end(); ++iter)
   {
@@ -735,6 +739,14 @@ McSim::~McSim()
     delete (*iter);
   }
   for (vector<CacheL1 *>::iterator iter = l1ds.begin(); iter != l1ds.end(); ++iter)
+  {
+    delete (*iter);
+  }
+  for (vector<TLBL1 *>::iterator iter = tlbl1is.begin(); iter != tlbl1is.end(); ++iter)
+  {
+    delete (*iter);
+  }
+  for (vector<TLBL1 *>::iterator iter = tlbl1ds.begin(); iter != tlbl1ds.end(); ++iter)
   {
     delete (*iter);
   }
@@ -911,6 +923,42 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
       }
       num_dependency_distance_last = total_dependency_distance;
     }
+
+    uint64_t num_ld = 0;
+    uint64_t num_st = 0;
+    double mem_ld_acc_lat = 0.0;
+    double mem_st_acc_lat = 0.0;
+    double avg_ld_acc_lat = 0.0;
+    double avg_st_acc_lat = 0.0;
+    for (uint32_t i = 0; i < o3cores.size(); i++)
+    {
+      num_ld += o3cores[i]->num_rd;
+      num_st += o3cores[i]->num_wr;
+      mem_ld_acc_lat += o3cores[i]->total_mem_rd_time / lsu_process_interval;
+      mem_st_acc_lat += o3cores[i]->total_mem_wr_time / lsu_process_interval;
+    }
+    if (num_ld == num_ld_last)
+    {
+      assert(mem_ld_acc_lat == mem_ld_acc_lat_last);
+    }
+    else
+    {
+      avg_ld_acc_lat = (mem_ld_acc_lat - mem_ld_acc_lat_last) / (num_ld - num_ld_last);
+      mem_ld_acc_lat_last = mem_ld_acc_lat;
+      num_ld_last = num_ld;
+    }
+    if (num_st == num_st_last)
+    {
+      assert(mem_st_acc_lat == mem_st_acc_lat_last);
+    }
+    else
+    {
+      avg_st_acc_lat = (mem_st_acc_lat - mem_st_acc_lat_last) / (num_st - num_st_last);
+      mem_st_acc_lat_last = mem_st_acc_lat;
+      num_st_last = num_st;
+    }
+    cout << setw(6) << avg_ld_acc_lat << " load-amat, ";
+    cout << setw(6) << avg_st_acc_lat << " store-amat, ";
 
     num_fetched_instrs_last = num_fetched_instrs;
     curr_time_last = global_q->curr_time;
