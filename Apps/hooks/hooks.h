@@ -22,10 +22,12 @@
 #define MAGIC_OP_INSTRS_COUNT      (1035)
 
 // Active operations
-#define GET     (0)
-#define ADD     (1)
-#define MULT    (2)
-#define PEI_DOT (3)
+#define GET         (0)
+#define ADD         (1)
+#define MULT        (2)
+#define PEI_DOT     (3)
+#define PEI_DOT_2   (4)
+#define PEI         (5)
 
 #ifdef __cplusplus
 extern "C" {
