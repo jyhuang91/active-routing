@@ -57,7 +57,7 @@ static int PCU_DELAY = 4;
 //
 //Memory transaction setting
 //
-static double CPU_CLK_PERIOD = 0.5;	//(ns) CPU clock period in nanoseconds
+static double CPU_CLK_PERIOD = 0.25; //0.5;	//(ns) CPU clock period in nanoseconds
 static int TRANSACTION_SIZE = 32; 	//(byte) Data size of DRAM request (the internal 32-byte granularity of the DRAM data bus within each vault in the HMC)
 static int TRANSACTION_SIZE_ACTIVE = 32; //(byte) Data size of transaction excluding 1FLIT Control information TBD
 static int TRANSACTION_SIZE_GET = 0; //(byte) Data size of transaction excluding 1FLIT Control information TBD

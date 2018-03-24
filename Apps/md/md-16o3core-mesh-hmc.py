@@ -45,10 +45,14 @@ pts.o3core.num_bp_entries      = 256
 # further information
 pts.o3core.gp_size             = 60
 pts.o3core.spinning_slowdown   = 10
-pts.o3core.o3queue_max_size    = 128
-pts.o3core.o3rob_max_size      = 64
-pts.o3core.max_issue_width     = 8
-pts.o3core.max_commit_width    = 8
+pts.o3core.o3queue_max_size    = 256 #128
+pts.o3core.o3rob_max_size      = 128 #64
+pts.o3core.max_issue_width     = 4 #8
+pts.o3core.max_commit_width    = 4 #8
+pts.o3core.max_alu             = 8
+pts.o3core.max_ldst            = 32
+pts.o3core.max_ld              = 32
+pts.o3core.max_st              = 32
 
 pts.l1i$.num_sets           = 128 #64
 pts.l1i$.num_ways           = 4
@@ -75,9 +79,9 @@ pts.l2$.num_sets            = 1024 #256
 pts.l2$.num_ways            = 16
 pts.l2$.set_lsb             = 6
 pts.l2$.process_interval    = 10
-pts.l2$.to_l1_t             = 80
-pts.l2$.to_dir_t            = 80
-pts.l2$.to_xbar_t           = 80
+pts.l2$.to_l1_t             = 40
+pts.l2$.to_dir_t            = 40
+pts.l2$.to_xbar_t           = 40
 #pts.l2$.num_banks           = 4
 # how many flits are needed for a packet with data.  it is 
 # assumed that a packet without data need a single flit.
@@ -92,9 +96,8 @@ pts.dir.to_l2_t              = 20
 pts.dir.to_xbar_t            = 20
 pts.dir.cache_sz             = 8192
 pts.dir.num_flits_per_packet = 5
-pts.dir.num_sets             = 2048 #1024
+pts.dir.num_sets             = 1024
 pts.dir.num_ways             = 16
-pts.dir.set_lsb              = 6
 pts.dir.has_directory_cache  = true #false
 
 # NoC type = ring/mesh/xbar
@@ -102,20 +105,20 @@ pts.noc_type                 = mesh #xbar
 # added begin, leads to some errors
 pts.mesh.num_rows            = 4
 pts.mesh.num_cols            = 4
-pts.mesh.sw_to_sw_t          = 50
+pts.mesh.sw_to_sw_t          = 30
 pts.mesh.mc_pos0             = 0,0
 pts.mesh.mc_pos1             = 0,3
 pts.mesh.mc_pos2             = 3,0
 pts.mesh.mc_pos3             = 3,3
 # added end
-pts.xbar.to_dir_t            = 80
-pts.xbar.to_l2_t             = 80
+pts.xbar.to_dir_t            = 40
+pts.xbar.to_l2_t             = 40
 pts.xbar.process_interval    = 10
 
 # please check 'Future Scaling of Processor-Memory
 # Interfaces' by Jung Ho Ahn at el. SC09 for further
 # details on the concept of VMDs.
-pts.mc.process_interval      = 30
+pts.mc.process_interval      = 32
 pts.mc.to_dir_t              = 430
 pts.mc.interleave_base_bit     = 12
 pts.mc.interleave_xor_base_bit = 18
@@ -151,7 +154,7 @@ pts.mc.display_os_page_usage = false
 # parameters for HMC
 pts.hmc.process_interval         = 10
 pts.hmc.page_sz_base_bit         = 12
-pts.hmc.to_dir_t                 = 430
+pts.hmc.to_dir_t                 = 40
 pts.hmc.interleave_xor_base_bit  = 20
 pts.hmc.cube_interleave_base_bit = 32
 pts.hmc.display_os_page_usage = false
