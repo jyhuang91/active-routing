@@ -176,6 +176,9 @@ namespace PinPthread
       int32_t   max_st;
       int32_t   max_sse;
 
+      uint64_t num_rd;
+      uint64_t num_wr;
+
       bool      is_private(ADDRINT);
 
       void displayO3Queue();

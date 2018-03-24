@@ -115,6 +115,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
     case 2:
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
       category = 130;
+      break;
     case 3:
       category = 131;
       break;
