@@ -61,7 +61,7 @@ void* do_work(void* args){
     int j,k; 
     for(j = i + tid; j<size; j+=P){
       local_sum = shared_mat[i*size+j];
-      for(k=0; k<i; k++) local_sum -= shared_mat[i*size + k]*shared_mat[k*size + i]; 
+      for(k=0; k<i; k++) local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j];
       shared_mat[i*size + j] = local_sum;       //No lock required since j is different for each thread
     }
     
