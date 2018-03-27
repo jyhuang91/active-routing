@@ -780,7 +780,7 @@ namespace CasHMC
                   if (!is_inorder) continue;
                   map<uint64_t, pair<pair<unsigned, int>, pair<int, vector<int> > > >::iterator it;
                   it = reserveTable.find(dest_addr);
-                  if(it == reserveTable.end()) cout << "HMC#" << cubeID <<" assert for destAddr#"<<dest_addr<< endl;
+                  if(it == reserveTable.end()) cout << "HMC#" << cubeID <<" assert for flow " << hex << dest_addr << dec << endl;
                   assert(it != reserveTable.end());
                   map<uint64_t, vector<bool> >::iterator c_it = childrenTable.find(dest_addr);
                   assert(c_it != childrenTable.end());

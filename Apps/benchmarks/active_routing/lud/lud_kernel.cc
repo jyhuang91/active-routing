@@ -75,10 +75,10 @@ void* do_work(void* args){
       local_sum = shared_mat[j*size + i];
       for(k=0; k<i; k++){
         //local_sum -= shared_mat[j*size + k]*shared_mat[k*size + i];
-        UPDATE(&shared_mat[j*size + k], &shared_mat[k*size + i], &local_sum, MULT);
+        UPDATE(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
       }
-      if(i != 0) GATHER(NULL, NULL, &local_sum, 1);
-      shared_mat[j*size + i] = local_sum/shared_mat[i*size + i];
+      if(i != 0) GATHER(NULL, NULL, &shared_mat[j*size + i], 1);
+      shared_mat[j*size + i] = (local_sum - shared_mat[j*size + i]) / shared_mat[i*size + i];
     }
     pthread_barrier_wait(arg->barrier);
   }
