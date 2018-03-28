@@ -97,7 +97,7 @@ static int MAX_CROSS_BUF = 64;
 //(packet) Crossbar switch buffer size (one buffer space is for 1 unit packet (128 bits) )
 static int MAX_CMD_QUE = 16;		//(Command) Command queue size (the minimum is 8 due to 256-byte request [max data size(256) / min address mapping block size(32)])
 
-static bool CRC_CHECK = true;		//CRC checking enable
+static bool CRC_CHECK = false;		//CRC checking enable
 static double CRC_CAL_CYCLE = 0.01;	//(clock) CPU clock cycles to calculate CRC value of one packet (128 bits)
 ////  '0' of CRC_CAL_CYCLE means that CRC calculation delay is completely hidden in transmitting packet header
 ////  (the beginning of the packet may have been forwarded before the CRC was performed at the tail, to minimize latency )
