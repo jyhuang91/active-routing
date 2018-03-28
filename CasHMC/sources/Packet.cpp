@@ -481,4 +481,20 @@ namespace CasHMC
     return out;
   }
 
+  void Packet::Display()
+  {
+    string header;
+    stringstream id;
+    switch(packetType) {
+      case REQUEST:   id << "REQ";  break;
+      case RESPONSE:  id << "REP";  break;
+      case FLOW:      id << "FLOW"; break;
+      default: ERROR("ERROR Packet Type"); exit(0);
+    }
+    id << "-" << TAG << "-(LNG " << LNG << ", utk " << URTC << ", dtk " << DRTC << ")";
+    header = "[" + id.str() + "]";
+
+    cout << header << endl;
+  }
+
 } //namespace CasHMC

@@ -742,7 +742,7 @@ namespace CasHMC
         cout << (upBuffers[i]->packetType == REQUEST ? "    Request " : "    Response ")
           << *upBuffers[i] << " from current cube " << xbar->cubeID << " to next cube " << next_cube
           << " (src_cube: " << upBuffers[i]->SRCCUB << ", dest_cube: " << upBuffers[i]->DESTCUB
-          << ", packet length: " << upBuffers[i]->LNG << endl;
+          << ", packet length: " << upBuffers[i]->LNG;
         if (upBuffers[i]->CMD == ACT_MULT) {
           if (upBuffers[i]->SRCADRS1 && upBuffers[i]->SRCADRS2) {
             cout << ", full pkt, dest_cube1: " << upBuffers[i]->DESTCUB1 << ", dest_cube2: " << upBuffers[i]->DESTCUB2
