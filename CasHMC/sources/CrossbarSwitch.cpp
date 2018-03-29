@@ -228,12 +228,12 @@ namespace CasHMC
                     reserveTable[dest_addr].first.first--;  // update the counter
 #ifdef DEBUG_UPDATE
 #ifdef COMPUTE
-                    cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                    cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                       << *curUpBuffers[i] << ", update it from " << org << " to " << *dest << ", src is " << *src << " (0x"
                       << src << "), remaining count: " << reserveTable[dest_addr].first.first
                       << " ---- send ACT_GET response to parent#" << parent_cube << " as well" << endl;
 #else
-                    cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                    cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                       << *curUpBuffers[i] << ", remaining count: " << reserveTable[dest_addr].first.first
                       << " ---- send ACT_GET response to parent#" << parent_cube << " as well" << endl;
 #endif
@@ -262,12 +262,12 @@ namespace CasHMC
                   reserveTable[dest_addr].first.first--;  // update the counter
 #ifdef DEBUG_UPDATE
 #ifdef COMPUTE
-                  cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                  cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                     << *curUpBuffers[i] << ", update it from " << org << " to " << entry << ", src is " << *src << " (0x"
                     << src << "), remaining count: " << reserveTable[dest_addr].first.first
                     << " ---- put into activeReturnBuffers, ";
 #else
-                  cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                  cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                     << *curUpBuffers[i] << ", remaining count: " << reserveTable[dest_addr].first.first
                     << " ---- put into activeReturnBuffers, ";
 #endif
@@ -287,12 +287,12 @@ namespace CasHMC
                 reserveTable[dest_addr].first.first--;
 #ifdef DEBUG_UPDATE
 #ifdef COMPUTE
-                cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                   << *curUpBuffers[i] << ", update it from " << org << " to " << entry << ", src is " << *src << " (0x"
                   << src << "), remaining count: " << reserveTable[dest_addr].first.first << endl;
                 reserveTable[dest_addr].first.second = entry;
 #else
-                cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                   << *curUpBuffers[i] << ", remaining count: " << reserveTable[dest_addr].first.first << endl;
 #endif
 #endif
@@ -390,13 +390,13 @@ namespace CasHMC
                       reserveTable[dest_addr].first.first--;
 #ifdef DEBUG_UPDATE
 #ifdef COMPUTE
-                      cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                      cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                         << *curUpBuffers[i] << ", update it from " << org << " to " << entry << ", src1 is " << *src1
                         << " (0x" << src1 << "), src2 is " << *src2 << " (0x" << src2
                         << "), remaining count: " << reserveTable[dest_addr].first.first
                         << " ---- send ACT_GET response to parent#" << parent_cube << " as well" << endl;
 #else
-                      cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << " by "
+                      cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << " by "
                         << *curUpBuffers[i] << ", remaining count: " << reserveTable[dest_addr].first.first
                         << " ---- send ACT_GET response to parent#" << parent_cube << " as well" << endl;
 #endif
@@ -452,13 +452,13 @@ namespace CasHMC
                     cout << "Packet#" << curUpBuffers[i]->TAG << " returns operand buffer " << operand_buf_id
                       << " in cube#" << cubeID << endl;
 #ifdef COMPUTE
-                    cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                    cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                       << *curUpBuffers[i] << ", update it from " << org << " to " << entry << ", src1 is " << *src1
                       << " (0x" << src1 << "), src2 is " << *src2 << " (0x" << src2
                       << "), remaining count: " << reserveTable[dest_addr].first.first
                       << " ---- put into activeReturnBuffers: ";
 #else
-                    cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                    cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                       << *curUpBuffers[i] << ", remaining count: " << reserveTable[dest_addr].first.first
                       << " ---- put into activeReturnBuffers: ";
 #endif
@@ -498,12 +498,12 @@ namespace CasHMC
                   cout << "Packet#" << curUpBuffers[i]->TAG << " returns operand buffer " << operand_buf_id
                     << " in cube#" << cubeID << endl;
 #ifdef COMPUTE
-                  cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                  cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                     << *curUpBuffers[i] << ", update it from " << org << " to " << entry << ", src1 is " << *src1
                     << " (0x" << src1 << "), src2 is " << *src2 << " (0x" << src2
                     << "), remaining count: " << reserveTable[dest_addr].first.first << endl;
 #else
-                  cout << CYCLE() << "Active-Routing: target found in reserve table (cube#" << cubeID << ") by "
+                  cout << CYCLE() << "Active-Routing: target " << hex << dest_addr << dec << " found in reserve table (cube#" << cubeID << ") by "
                     << *curUpBuffers[i] << ", remaining count: " << reserveTable[dest_addr].first.first << endl;
 #endif
 #endif
@@ -547,7 +547,7 @@ namespace CasHMC
                   int *dest = (int *) dest_addr;
                   int current_dest = *dest;
                   *dest += reserveTable[dest_addr].first.second;
-                  cout << "CUBE#" << cubeID << " sends back GET response, update target from " << current_dest
+                  cout << "CUBE#" << cubeID << " sends back GET response for flow " << hex << dest_addr << dec << ", update target from " << current_dest
                     << " to " << *dest << endl;
 #endif
                   activeReturnBuffers.erase(ret_it);
@@ -1320,56 +1320,95 @@ namespace CasHMC
   void CrossbarSwitch::PrintBuffers()
   {
     cout << "Crossbar (HMC) " << cubeID << endl;
-    cout << " -- downBuffers: (size: " << downBuffers.size() << ")" << endl;
-    for (int i = 0; i < downBuffers.size(); i++) {
-      if (downBuffers[i] != NULL) {
-        int link = rf->findNextLink(inServiceLink, cubeID, downBuffers[i]->DESTCUB);
-        int next_cube = neighborCubeID[link];
-        cout << (downBuffers[i]->packetType == REQUEST ? "    Request " : "    Response ")
-          << *downBuffers[i] << " from current cube " << cubeID << " to next cube " << next_cube
-          << " (src_cube: " << downBuffers[i]->SRCCUB << ", dest_cube: " << downBuffers[i]->DESTCUB
-          << ", packet length: " << downBuffers[i]->LNG;
-        if (downBuffers[i]->CMD == ACT_MULT) {
-          if (downBuffers[i]->SRCADRS1 && downBuffers[i]->SRCADRS2) {
-            cout << ", full pkt, dest_cube1: " << downBuffers[i]->DESTCUB1 << ", dest_cube: " << downBuffers[i]->DESTCUB2
-              << ")" << endl;
-          } else if (downBuffers[i]->SRCADRS1 && !downBuffers[i]->SRCADRS2) {
-            cout << ", first operand pkt)" << endl;
+    for (int i = 0; i < inputBuffers.size(); i++) {
+      vector<Packet *> downBuffer = inputBuffers[i]->downBuffers;
+      vector<Packet *> upBuffer = inputBuffers[i]->upBuffers;
+      cout << " -- input buffer " << i << ":" << endl;
+      cout << "    downBuffer (size: " << downBuffer.size() << ")" << endl;
+      for (int i = 0; i < downBuffer.size(); i++) {
+        if (downBuffer[i] != NULL) {
+          int link = rf->findNextLink(inServiceLink, cubeID, downBuffer[i]->DESTCUB);
+          int next_cube = neighborCubeID[link];
+          cout << (downBuffer[i]->packetType == REQUEST ? "    Request " : "    Response ")
+            << *downBuffer[i] << " from current cube " << cubeID << " to next cube " << next_cube
+            << " (src_cube: " << downBuffer[i]->SRCCUB << ", dest_cube: " << downBuffer[i]->DESTCUB
+            << ", packet length: " << downBuffer[i]->LNG;
+          if (downBuffer[i]->CMD == ACT_MULT) {
+            if (downBuffer[i]->SRCADRS1 && downBuffer[i]->SRCADRS2) {
+              cout << ", full pkt, dest_cube1: " << downBuffer[i]->DESTCUB1 << ", dest_cube: " << downBuffer[i]->DESTCUB2
+                << ")" << endl;
+            } else if (downBuffer[i]->SRCADRS1 && !downBuffer[i]->SRCADRS2) {
+              cout << ", first operand pkt)" << endl;
+            } else {
+              cout <<", second operand pkt)" << endl;
+            }
           } else {
-            cout <<", second operand pkt)" << endl;
+            cout << ")" << endl;
           }
-        } else {
-          cout << ")" << endl;
         }
       }
-    }
-    cout << " -- upBuffers: (size: " << upBuffers.size() << ")" << endl;
-    for (int i = 0; i < upBuffers.size(); i++) {
-      if (upBuffers[i] != NULL) {
-        int link = rf->findNextLink(inServiceLink, cubeID, upBuffers[i]->DESTCUB);
-        int next_cube = neighborCubeID[link];
-        cout << (upBuffers[i]->packetType == REQUEST ? "    Request " : "    Response ")
-          << *upBuffers[i] << " from current cube " << cubeID << " to next cube " << next_cube
-          << " (src_cube: " << upBuffers[i]->SRCCUB << ", dest_cube: " << upBuffers[i]->DESTCUB
-          << ", packet length: " << upBuffers[i]->LNG;
-        if (upBuffers[i]->CMD == ACT_MULT) {
-          if (upBuffers[i]->SRCADRS1 && upBuffers[i]->SRCADRS2) {
-            cout << ", full pkt, dest_cube1: " << upBuffers[i]->DESTCUB1 << ", dest_cube2: " << upBuffers[i]->DESTCUB2
-              << ")" << endl;
-          } else if (upBuffers[i]->SRCADRS1 && !upBuffers[i]->SRCADRS2) {
-            cout << ", first operand pkt)" << endl;
+      cout << "    upBuffer (size: " << upBuffer.size() << ")" << endl;
+      for (int i = 0; i < upBuffer.size(); i++) {
+        if (upBuffer[i] != NULL) {
+          int link = rf->findNextLink(inServiceLink, cubeID, upBuffer[i]->DESTCUB);
+          int next_cube = neighborCubeID[link];
+          cout << (upBuffer[i]->packetType == REQUEST ? "    Request " : "    Response ")
+            << *upBuffer[i] << " from current cube " << cubeID << " to next cube " << next_cube
+            << " (src_cube: " << upBuffer[i]->SRCCUB << ", dest_cube: " << upBuffer[i]->DESTCUB
+            << ", packet length: " << upBuffer[i]->LNG;
+          if (upBuffer[i]->CMD == ACT_MULT) {
+            if (upBuffer[i]->SRCADRS1 && upBuffer[i]->SRCADRS2) {
+              cout << ", full pkt, dest_cube1: " << upBuffer[i]->DESTCUB1 << ", dest_cube2: " << upBuffer[i]->DESTCUB2
+                << ")" << endl;
+            } else if (upBuffer[i]->SRCADRS1 && !upBuffer[i]->SRCADRS2) {
+              cout << ", first operand pkt)" << endl;
+            } else {
+              cout <<", second operand pkt)" << endl;
+            }
           } else {
-            cout <<", second operand pkt)" << endl;
+            cout << ")" << endl;
           }
-        } else {
-          cout << ")" << endl;
         }
       }
     }
     cout << " -- LinkMaster token counts:" << endl;
     for (int i = 0; i < upBufferDest.size(); i++) {
       cout << "    linkMaster " << i << ": utk( " << upBufferDest[i]->upTokenCount
-        << " ) - dtk( " << upBufferDest[i]->downTokenCount << " )" << endl;
+        << " ) - dtk( " << upBufferDest[i]->downTokenCount << " ) - linkRxTx( "
+        << upBufferDest[i]->linkRxTx.size() << " ) - upBuffer( "
+        << upBufferDest[i]->upBuffers.size() << " ) - downBuffer( "
+        << upBufferDest[i]->downBuffers.size() << " )"<< endl;
+      cout << "      upBuffer size: " << upBufferDest[i]->upBuffers.size() << endl;
+      for (int j = 0; j < upBufferDest[i]->upBuffers.size(); j++) {
+        if (upBufferDest[i]->upBuffers[j] != NULL) {
+          cout << "        ";
+          upBufferDest[i]->upBuffers[j]->Display();
+        }
+      }
+      cout << "      downBuffer size: " << upBufferDest[i]->downBuffers.size() << endl;
+      for (int j = 0; j < upBufferDest[i]->downBuffers.size(); j++) {
+        if (upBufferDest[i]->downBuffers[j] != NULL) {
+          cout << "        ";
+          upBufferDest[i]->downBuffers[j]->Display();
+        }
+      }
+      cout << "    localLinkSlave " << i << ": downBuffer( "
+        << upBufferDest[i]->localLinkSlave->downBuffers.size() << " ) - upBuffer( "
+        << upBufferDest[i]->localLinkSlave->upBuffers.size() << " )"<< endl;
+      cout << "      upBuffer size: " << upBufferDest[i]->localLinkSlave->upBuffers.size() << endl;
+      for (int j = 0; j < upBufferDest[i]->localLinkSlave->upBuffers.size(); j++) {
+        if (upBufferDest[i]->localLinkSlave->upBuffers[j] != NULL) {
+          cout << "        ";
+          upBufferDest[i]->localLinkSlave->upBuffers[j]->Display();
+        }
+      }
+      cout << "      downBuffer size: " << upBufferDest[i]->localLinkSlave->downBuffers.size() << endl;
+      for (int j = 0; j < upBufferDest[i]->localLinkSlave->downBuffers.size(); j++) {
+        if (upBufferDest[i]->localLinkSlave->downBuffers[j] != NULL) {
+          cout << "        ";
+          upBufferDest[i]->localLinkSlave->downBuffers[j]->Display();
+        }
+      }
     }
     for (int i = 0; i < downBufferDest.size(); i++) {
       VaultController *vault = dynamic_cast<VaultController *> (downBufferDest[i]);
