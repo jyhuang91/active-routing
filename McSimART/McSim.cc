@@ -173,6 +173,8 @@ ostream & operator << (ostream & output, ins_type it)
     case ins_update_add: output << "ins_update_add"; break;
     case ins_update_mult: output << "ins_update_mult"; break;
     case ins_gather: output << "ins_gather"; break;
+    case ins_pei: output << "ins_pei"; break;
+    case ins_dummy: output << "ins_dummy"; break;
     default: break;
   }
   return output;
@@ -1239,6 +1241,8 @@ uint32_t McSim::add_instruction(
       (category == 130)               ? ins_update_mult :
       (category == 129)               ? ins_gather :
       (category == 131)               ? ins_pei :
+      (category == 132)               ? ins_pei_rand :
+      (category == 0)               ? ins_dummy :
       (islock == true && isunlock == true && isbarrier == false) ? ins_notify :
       (islock == true && isunlock == true && isbarrier == true) ? ins_waitfor :
       (isbranch && isbranchtaken)        ? ins_branch_taken :

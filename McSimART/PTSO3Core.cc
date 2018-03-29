@@ -210,7 +210,6 @@ uint32_t O3Core::process_event(uint64_t curr_time)
   }
 
   LocalQueueElement * lqe;
-
   // process o3queue
 
   //  check queue and send a request to iTLB -- TODO: can we send multiple requests to an iTLB simultaneously?
@@ -245,14 +244,13 @@ uint32_t O3Core::process_event(uint64_t curr_time)
       }
     }
   }
-
   //  check queue and send the instructions to the reorder buffer
   for (unsigned int i = 0; i < max_issue_width && o3queue_size > 0 && o3rob_size < o3rob_max_size - 3; i++)
   {
     uint64_t dependency_distance = o3rob_size;
     O3Queue & o3queue_entry      = o3queue[o3queue_head];
 
-    if(o3queue_entry.type == ins_pei && o3rob_size >= o3rob_max_size - 5 ) break;
+    //if(o3queue_entry.type == ins_pei && o3rob_size >= o3rob_max_size - 5 ) break;
 
     if (o3queue_entry.state == o3iqs_ready && o3queue_entry.ready_time <= curr_time)
     {
@@ -375,74 +373,34 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         o3rob_size++;
         o3rob_entry.nthreads   = (o3queue_entry.type == ins_gather) ? o3queue_entry.wlen : -1;  // Jiayi, 03/31/17
       }
-      else if(o3queue_entry.type == ins_pei){
+      else if(o3queue_entry.type == ins_pei || o3queue_entry.type == ins_pei_rand){
         /*Handle raddr dependency for pei instructions
           Since data(belongs to one of the source operands) 
           is read from memory location to CPU and then 
           sent back to MemNet for processing DOT product*/
         if (o3queue_entry.raddr != 0)
         {
-          for(int pei_args = 0; pei_args < 4; pei_args ++){
-            O3ROB & o3rob_entry    = o3rob[rob_idx];
-            o3rob_entry.state      = o3irs_issued;
-            o3rob_entry.ready_time = curr_time + process_interval;
-            o3rob_entry.ip         = o3queue_entry.ip;
-            int32_t mem_dep        = -1;
-        
-            for (unsigned int j = 0; j < o3rob_size; j++)
-            {
-
-              int rob_idx = (o3rob_head + o3rob_size - 1 - j) % o3rob_max_size;
-              if ((o3rob[rob_idx].state != o3irs_completed ||
-                    o3rob[rob_idx].ready_time > curr_time) &&
-                  (o3rob[rob_idx].memaddr >> word_log) ==
-                  ((o3queue_entry.raddr + pei_args*8) >> word_log))
-              {
-                mem_dep = rob_idx;
-                dependency_distance = (j+1 < dependency_distance) ? (j+1) : dependency_distance;
-                break;
-              }
-            }
-            o3rob_entry.memaddr    = o3queue_entry.raddr + pei_args*8;
-            o3rob_entry.branch_miss = branch_miss;
-            o3rob_entry.isread     = true;
-            o3rob_entry.mem_dep    = mem_dep;
-            o3rob_entry.instr_dep  = instr_dep;
-            o3rob_entry.branch_dep = branch_dep;
-            o3rob_entry.type       = mem_rd;
-            o3rob_entry.rr0        = -1;
-            o3rob_entry.rr1        = -1;
-            o3rob_entry.rr2        = -1;
-            o3rob_entry.rr3        = -1;
-            o3rob_entry.rw0        = -1;
-            o3rob_entry.rw1        = -1;
-            o3rob_entry.rw2        = -1;
-            o3rob_entry.rw3        = -1;
-            instr_dep              = rob_idx;
-            rob_idx = (rob_idx + 1) % o3rob_max_size;
-            o3rob_size++;
-          }
-            
+           
           O3ROB & o3rob_entry    = o3rob[rob_idx];
           o3rob_entry.state      = o3irs_issued;
           o3rob_entry.ready_time = curr_time + process_interval;
           o3rob_entry.ip         = o3queue_entry.ip;
-          int32_t mem_dep        = -1;
-              
+          int32_t mem_dep        = (o3rob_head + o3rob_size - 1) % o3rob_max_size;;
+          rr0 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 2) % o3rob_max_size;    
+          rr1 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 3) % o3rob_max_size;    
+          rr2 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 4) % o3rob_max_size;    
+          dependency_distance    = 1; 
           /*pei_instruction is dependend on the previously issued mem_rd*/   
-          mem_dep = (o3rob_head + o3rob_size - 1) % o3rob_max_size;
-          dependency_distance = 1;
-    
           o3rob_entry.memaddr    = o3queue_entry.raddr2;
           o3rob_entry.branch_miss = branch_miss;
           o3rob_entry.isread     = false;
-          o3rob_entry.mem_dep    = mem_dep;
+          o3rob_entry.mem_dep    = (o3rob[mem_dep].state == o3irs_issued || o3rob[mem_dep].state == o3irs_executing) ? mem_dep : -1;
           o3rob_entry.instr_dep  = instr_dep;
           o3rob_entry.branch_dep = branch_dep;
-          o3rob_entry.type       = o3queue_entry.type;
-          o3rob_entry.rr0        = (o3rob_head + o3rob_size - 2) % o3rob_max_size;
-          o3rob_entry.rr1        = (o3rob_head + o3rob_size - 3) % o3rob_max_size;
-          o3rob_entry.rr2        = (o3rob_head + o3rob_size - 4) % o3rob_max_size;
+          o3rob_entry.type       = ins_pei;
+          o3rob_entry.rr0        = (o3rob[rr0].state == o3irs_issued || o3rob[rr0].state == o3irs_executing) ? rr0 : -1;
+          o3rob_entry.rr1        = (o3rob[rr1].state == o3irs_issued || o3rob[rr1].state == o3irs_executing) ? rr1 : -1;
+          o3rob_entry.rr2        = (o3rob[rr2].state == o3irs_issued || o3rob[rr2].state == o3irs_executing) ? rr2 : -1;
           o3rob_entry.rr3        = -1;
           o3rob_entry.rw0        = -1;
           o3rob_entry.rw1        = -1;
