@@ -1,4 +1,4 @@
-mkdir -p dfly_log
+mkdir -p dram_log
 
 # benchmarks
 for bench in backprop lud pagerank spmv sgemm
