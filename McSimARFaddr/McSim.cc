@@ -187,6 +187,7 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   is_race_free_application(pts_->get_param_str("pts.is_race_free_application") == "false" ? false : true),
   max_acc_queue_size(pts_->get_param_uint64("pts.max_acc_queue_size", 1000)),
   hmc_topology(pts_->get_param_str("pts.hmc_top") == "DFLY" ? DFLY : MESH),
+  core_frequency(pts->get_param_uint64("pts.core_frequency", 2)),
   cores(), hthreads(), l1ds(), l1is(), l2s(), dirs(), rbols(), /*mcs(),*/ hmcs(),  tlbl1ds(), tlbl1is(), comps(),
   num_fetched_instrs(0), num_instrs_printed_last_time(0),
   num_destroyed_cache_lines_last_time(0), cache_line_life_time_last_time(0),
@@ -199,7 +200,8 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   is_asymmetric = pts->get_param_str("is_asymmetric") == "true" ? true : false;
   is_nuca       = pts->get_param_str("pts.is_nuca") == "true" ? true: false;  // Jiayi, 06/05/17
 
-  hmc_net = Network::New(4, hmc_topology);
+  double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
+  hmc_net = Network::New(4, hmc_topology, cpu_clk);
 
   uint32_t num_threads_per_l1_cache   = pts->get_param_uint64("pts.num_hthreads_per_l1$", 4);
   assert(use_o3core == false || num_threads_per_l1_cache == 1);

@@ -149,6 +149,7 @@ namespace PinPthread
       bool     is_asymmetric;
       bool     is_nuca;
       TOPOLOGY hmc_topology;
+      uint64_t core_frequency;
 
       vector<Core *>             cores;
       vector<Hthread *>          hthreads;

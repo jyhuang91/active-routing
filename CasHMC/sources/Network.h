@@ -33,6 +33,7 @@ namespace CasHMC
       Network(int dimension);
       virtual ~Network();
       static Network *New( int dimension, TOPOLOGY topology);
+      static Network *New( int dimension, TOPOLOGY topology, double cpu_clk = 0.5); // cpu_clk in ns
       bool ReceiveTran(TransactionType tranType, uint64_t addr, unsigned size, int cpu_id);
       bool ReceiveTran(Transaction *tran, int cpu_id);
       void Update();
