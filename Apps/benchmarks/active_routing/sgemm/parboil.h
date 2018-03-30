@@ -20,6 +20,7 @@ struct pb_Parameters {
 				 * computation.  The array and strings
 				 * are owned. */
   int  nthreads;    /* number of threads */
+  int  niteration;      /* start point of iteration */
 };
 
 /* Read command-line parameters.
