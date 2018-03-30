@@ -39,6 +39,8 @@ typedef struct
   int size; 
   float* shared_mat; 
   pthread_barrier_t* barrier;
+  float fraction;
+  int iteration;
 }thread_arg_t;
 
 thread_arg_t thread_arg[1024];
@@ -54,7 +56,10 @@ void* do_work(void* args){
   float* shared_mat = arg->shared_mat; 
   int i;
   double P_d = P; 
-  for(i=0;i<size;i++){
+
+  int start = arg->fraction * size;
+  int iteration = arg->iteration;
+  for(i = start; i < start + iteration ;i++) {
     //divide work amoung threads; 
     float local_sum = 0;
     
@@ -78,7 +83,7 @@ void* do_work(void* args){
   return NULL;
 }
 
-void lud_pthread(float *a, int size)
+void lud_pthread(float *a, int size, float fraction, int iteration)
 {
   int i = 0,j;
   //float sum;
@@ -95,6 +100,8 @@ void lud_pthread(float *a, int size)
       thread_arg[j].size        = size;
       thread_arg[j].shared_mat  = a;
       thread_arg[j].barrier     = &barrier;
+      thread_arg[j].fraction    = fraction;
+      thread_arg[j].iteration   = iteration;
     }
     roi_begin();
     for (j=1; j < num_threads; j++){

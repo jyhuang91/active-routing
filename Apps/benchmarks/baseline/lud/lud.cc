@@ -36,7 +36,7 @@ static struct option long_options[] = {
 };
 
 extern void
-lud_pthread(float *m, int matrix_dim);
+lud_pthread(float *m, int matrix_dim, float fraction, int iteration);
 
 extern void
 lud_omp(float *m, int matrix_dim);
@@ -51,8 +51,11 @@ main ( int argc, char *argv[] )
   float *m, *mm;
   stopwatch sw;
 
+  float fraction = 1.0;
+  int iteration = 1;
+
 	
-  while ((opt = getopt_long(argc, argv, "::vs:i:n:", 
+  while ((opt = getopt_long(argc, argv, "::vs:i:n:f:t:", 
                             long_options, &option_index)) != -1 ) {
     switch(opt){
     case 'n':
@@ -76,6 +79,14 @@ main ( int argc, char *argv[] )
       break;
     case ':':
       fprintf(stderr, "missing argument\n");
+      break;
+    case 'f':
+      fraction = atof(optarg);
+      printf("faction: %f\n", fraction);
+      break;
+    case 't':
+      iteration = atoi(optarg);
+      printf("iteration: %d\n", iteration);
       break;
     default:
       fprintf(stderr, "Usage: %s [-v] [-s matrix_size|-i input_file]\n",
@@ -121,7 +132,7 @@ main ( int argc, char *argv[] )
 
 
   stopwatch_start(&sw);
-  lud_pthread(m, matrix_dim);
+  lud_pthread(m, matrix_dim, fraction, iteration);
   //lud_omp(m, matrix_dim);
   stopwatch_stop(&sw);
   printf("Time consumed(ms): %lf\n", 1000*get_interval_by_sec(&sw));
