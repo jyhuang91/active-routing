@@ -153,12 +153,12 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   switch (transaction_type)
   {
-    case 1: tranType = DATA_READ;   data_size = 32;/* size can vary from 32 to 256 */  break;
-    case 2: tranType = DATA_WRITE;  data_size = 128; break;
-    case 3: tranType = DATA_WRITE;  data_size = 32;  break;
-    case 4: tranType = ACTIVE_GET;  data_size = 32;  break;
-    case 5: tranType = ACTIVE_ADD;  data_size = 32;  break;
-    case 6: tranType = ACTIVE_MULT; data_size = 32;  break;
+    case 1: tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
+    case 2: tranType = DATA_WRITE;  data_size = 64; break;
+    case 3: tranType = DATA_WRITE;  data_size = 64;  break;
+    case 4: tranType = ACTIVE_GET;  data_size = 8;  break;
+    case 5: tranType = ACTIVE_ADD;  data_size = 16;  break; // flit size is 16 bit, at least 1 flit
+    case 6: tranType = ACTIVE_MULT; data_size = 16;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
