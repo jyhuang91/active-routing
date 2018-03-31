@@ -524,8 +524,8 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
         CrossbarSwitch *xbar = xbarQ[0];
         cout << xbar->cubeID << ": ";
         bool children_found = false;
-        for (int c = 0; c < xbar->childrenTable[dest_addr].size(); ++c) {
-          if (xbar->childrenTable[dest_addr][c]) {
+        for (int c = 0; c < NUM_LINKS; ++c) {
+          if (xbar->flowTable[dest_addr].children_count[c]) {
             LinkSlave *clsp = dynamic_cast<LinkSlave *> (xbar->upBufferDest[c]->linkP->linkSlaveP);
             assert(clsp);
             InputBuffer *cinp_buf = dynamic_cast<InputBuffer *> (clsp->downBufferDest);
@@ -570,7 +570,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
         CrossbarSwitch *xbar = xbarQ[0];
         cout << xbar->cubeID << ": ";
         bool children_found = false;
-        for (int c = 0; c < xbar->childrenTable[dest_addr].size(); ++c) {
+        for (int c = 0; c < NUM_LINKS; ++c) {
           LinkSlave *clsp = dynamic_cast<LinkSlave *> (xbar->upBufferDest[c]->linkP->linkSlaveP);
           assert(clsp);
           InputBuffer *cinp_buf = dynamic_cast<InputBuffer *> (clsp->downBufferDest);
