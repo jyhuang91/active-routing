@@ -115,11 +115,50 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
     case 2:
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
       category = 130;
+      break;
     case 3:
       category = 131;
+      for(int i = 0; i < 4; i++) {
+        pthreadsim->process_ins(
+            context,
+            ip,
+            (ADDRINT) (a + 8*i), 0, 0,
+            0, 0,
+            false, false,
+            0,
+            0, 0, 0, 0,
+            0, 0, 0, 0);
+      }
+      break;
+    case 4:
+      category = 131;
+      for(int i = 0; i < 4; i++) {
+        pthreadsim->process_ins(
+            context,
+            ip,
+            (ADDRINT) ((void **)a)[i], 0, 0,
+            0, 0,
+            false, false,
+            0,
+            0, 0, 0, 0,
+            0, 0, 0, 0);
+      }      
+      break;
+    case 5:
+      category = 132;
+      pthreadsim->process_ins(
+         context,
+         ip,
+         (ADDRINT) (a), 0, 0,
+         0, 0,
+         false, false,
+         0,
+         0, 0, 0, 0,
+         0, 0, 0, 0);
       break;
     default: fprintf(stderr, "Unknown active operation: %d\n", function); exit(1);
   }
+    
   pthreadsim->process_ins(
       context,
       ip,

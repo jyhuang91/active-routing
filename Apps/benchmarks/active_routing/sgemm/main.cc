@@ -22,7 +22,7 @@
 #include "hooks.h"
 
 //extern void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc, int nthreads );
-extern void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, float *A, int lda, float *B, int ldb, float beta, float *C, int ldc, int nthreads );
+extern void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, float *A, int lda, float *B, int ldb, float beta, float *C, int ldc, int nthreads, int niteration);
 
 // I/O routines
 extern bool generateMajorMatrix(int &nr_row, int &nr_col, std::vector<float>&v);
@@ -100,7 +100,7 @@ main (int argc, char *argv[]) {
   roi_begin();
   basicSgemm('N', 'T', matArow, matBcol, matAcol, 1.0f,
       &matA.front(), matArow, &matBT.front(), matBcol, 0.0f, &matC.front(),
-      matArow, params->nthreads);
+      matArow, params->nthreads, params->niteration);
   roi_end();
 
   if (params->outFile) {

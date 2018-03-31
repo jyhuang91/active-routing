@@ -540,7 +540,7 @@ namespace CasHMC
       else if(upBuffers[0]->bufPopDelay == 0) {
 
         //Token count register represents the available space in link slave input buffer
-        if(linkRxTx.size() == 0 && !(upBuffers[0]->packetType != FLOW && upTokenCount < upBuffers[0]->LNG)) {
+        if (linkRxTx.size() == 0 && (upBuffers[0]->packetType == FLOW || upTokenCount >= upBuffers[0]->LNG)) {
           int tempWriteP = retBufWriteP + upBuffers[0]->LNG;
           if(retBufWriteP	>= retBufReadP) {
             if(tempWriteP - (int)retBufReadP < MAX_RETRY_BUF) {
@@ -575,7 +575,7 @@ namespace CasHMC
       else if(downBuffers[0]->bufPopDelay == 0) {
 
         //Token count register represents the available space in link slave input buffer
-        if(linkRxTx.size() == 0 && !(downBuffers[0]->packetType != FLOW && downTokenCount < downBuffers[0]->LNG)) {
+        if (linkRxTx.size() == 0 && (downBuffers[0]->packetType == FLOW || downTokenCount >= downBuffers[0]->LNG)) {
           int tempWriteP = retBufWriteP + downBuffers[0]->LNG;
           if(retBufWriteP	>= retBufReadP) {
             if(tempWriteP - (int)retBufReadP < MAX_RETRY_BUF) {
@@ -877,7 +877,7 @@ namespace CasHMC
       LinkSlave *lsp = dynamic_cast<LinkSlave *> (linkP->linkSlaveP);
       InputBuffer *to_ib = NULL;
       if (lsp) to_ib = dynamic_cast<InputBuffer *> (lsp->downBufferDest);
-      cout << CYCLE() << "push ACT_GET to link, ";
+      cout << CYCLE() << "push ACT_GET of flow " << hex << packet->DESTADRS << dec << " to link, ";
       if (ib && to_ib) {
         cout << "from cube#" << ((CrossbarSwitch *) ib->xbar)->cubeID << " to cube#" << ((CrossbarSwitch *) to_ib->xbar)->cubeID << endl;
       } else if (ib && !to_ib) {

@@ -142,6 +142,9 @@ O3Core::O3Core(
     cout << "as of now, it is assumed that o3rob_max_size >= 4" << endl;
     exit(1);
   }
+
+  num_rd = 0;
+  num_wr = 0;
 }
 
 
@@ -164,12 +167,16 @@ O3Core::~O3Core()
          << ", x87_ops= " << num_x87_ops
          << ", call_ops= " << num_call_ops
          << ", latest_ip= 0x" << hex << latest_ip << dec
+         << ", num_read= " << num_rd
+         << ", num_write= " << num_wr
          << ", tot_mem_wr_time= " << total_mem_wr_time
          << ", tot_mem_rd_time= " << total_mem_rd_time
          << ", tot_dep_dist= " << total_dependency_distance<< endl;
   }
 
   delete bp;
+  delete [] o3queue;
+  delete [] o3rob;
 }
 
 
@@ -752,10 +759,12 @@ void O3Core::add_rep_event(
     O3ROB & o3rob_entry    = o3rob[local_event->rob_entry];
     if (o3rob_entry.isread)
     {
+      num_rd++;
       total_mem_rd_time += (aligned_event_time - o3rob_entry.ready_time);
     }
     else
     {
+      num_wr++;
       total_mem_wr_time += (aligned_event_time - o3rob_entry.ready_time);
     }
     o3rob_entry.state      = o3irs_completed;

@@ -189,9 +189,10 @@ namespace CasHMC
           newPacket->active = true;
           newPacket->DESTADRS = retCMD->destAddr;
           newPacket->SRCADRS1 = retCMD->srcAddr1;
-          newPacket->LNG = 2;
+          newPacket->operandBufID = retCMD->operandBufID;
+          //newPacket->LNG = 2; // comment it, LNG is calculated from dataSize/16+1
 #ifdef DEBUG_UPDATE
-          cout << "Active ADD packet " << newPacket->TAG << " is returned" << endl;
+          cout << "Active ADD packet " << *newPacket << " is returned for (ADD) operand addr " << hex << newPacket->SRCADRS1 << dec << endl;
 #endif
 
         } else if(retCMD->packetCMD == PEI_DOT) {
@@ -214,15 +215,13 @@ namespace CasHMC
           if (newPacket->SRCADRS1) {
             assert(newPacket->SRCADRS2 == 0);
             cout << " for operand 1 is returned, src_cube: " << newPacket->SRCCUB << ", dest_cube: " << newPacket->DESTCUB
-              << endl;
-              //<<" (srcAddr1: 0x" << hex << newPacket->SRCADRS1
-              //<< ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
+              << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
+              << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
           } else {
             assert(newPacket->SRCADRS1 == 0 && newPacket->SRCADRS2);
             cout << " for operand 2 is returned, src_cube: " << newPacket->SRCCUB << ", dest_cube: " << newPacket->DESTCUB
-              << endl;
-              //<<" (srcAddr1: 0x" << hex << newPacket->SRCADRS1
-              //<< ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
+              << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
+              << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
           }
 #endif 
         }
@@ -236,15 +235,15 @@ namespace CasHMC
     newPacket->orig_addr = retCMD->addr;
     newPacket->tran_tag = retCMD->tran_tag;
     newPacket->segment = retCMD->segment;
-    if(newPacket->CMD != PEI_DOT){
-    ReceiveUp(newPacket);
-    }else{
-       if(pcuPacket.empty()){ 
-         newPacket->bufPopDelay = PCU_DELAY;
-       }else{
-         newPacket->bufPopDelay = max(PCU_DELAY,(pcuPacket.back())->bufPopDelay + 1);
-       }
-       pcuPacket.push_back(newPacket);
+    if (newPacket->CMD != PEI_DOT) {
+      ReceiveUp(newPacket);
+    } else {
+      if (pcuPacket.empty()) { 
+        newPacket->bufPopDelay = PCU_DELAY;
+      } else {
+        newPacket->bufPopDelay = max(PCU_DELAY,(pcuPacket.back())->bufPopDelay + 1);
+      }
+      pcuPacket.push_back(newPacket);
     }
   }
 
@@ -581,11 +580,11 @@ namespace CasHMC
         if(tempCMD == READ || tempCMD == READ_P) {
           pendingReadData.push_back(packet->TAG);
           // Jiayi, active, 02/06, 03/24
-          //if (packet->active) {
           if (packet->CMD == ACT_ADD) {
             assert(packet->SRCADRS1 && !packet->SRCADRS2);
             rwCMD->srcAddr1 = packet->SRCADRS1;
             rwCMD->destAddr = packet->DESTADRS;
+            rwCMD->operandBufID = packet->operandBufID;
           } else if (packet->CMD == ACT_MULT) {
             assert((!packet->SRCADRS1 && packet->SRCADRS2) || (packet->SRCADRS1 && !packet->SRCADRS2));
             if (packet->SRCADRS1 != 0) {
@@ -597,7 +596,6 @@ namespace CasHMC
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
           }
-          //}
         }
         rwCMD->addr = packet->orig_addr;//packet->ADRS; // Jiayi, 03/27/17
         rwCMD->tran_tag = packet->tran_tag;
@@ -742,7 +740,7 @@ namespace CasHMC
         cout << (upBuffers[i]->packetType == REQUEST ? "    Request " : "    Response ")
           << *upBuffers[i] << " from current cube " << xbar->cubeID << " to next cube " << next_cube
           << " (src_cube: " << upBuffers[i]->SRCCUB << ", dest_cube: " << upBuffers[i]->DESTCUB
-          << ", packet length: " << upBuffers[i]->LNG << endl;
+          << ", packet length: " << upBuffers[i]->LNG;
         if (upBuffers[i]->CMD == ACT_MULT) {
           if (upBuffers[i]->SRCADRS1 && upBuffers[i]->SRCADRS2) {
             cout << ", full pkt, dest_cube1: " << upBuffers[i]->DESTCUB1 << ", dest_cube2: " << upBuffers[i]->DESTCUB2

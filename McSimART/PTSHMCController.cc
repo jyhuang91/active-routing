@@ -152,13 +152,13 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   switch (transaction_type)
   {
-    case 1: tranType = DATA_READ;   data_size = 32;/* size can vary from 32 to 256 */  break;
-    case 2: tranType = DATA_WRITE;  data_size = 128; break;
-    case 3: tranType = DATA_WRITE;  data_size = 32;  break;
-    case 4: tranType = ACTIVE_GET;  data_size = 32;  break;
-    case 5: tranType = ACTIVE_ADD;  data_size = 32;  break;
-    case 6: tranType = ACTIVE_MULT; data_size = 32;  break;
-    case 7: tranType = PIMINS_DOT; data_size = 32;  break;
+    case 1: tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
+    case 2: tranType = DATA_WRITE;  data_size = 64; break;
+    case 3: tranType = DATA_WRITE;  data_size = 64;  break;
+    case 4: tranType = ACTIVE_GET;  data_size = 8;  break;
+    case 5: tranType = ACTIVE_ADD;  data_size = 16;  break; // flit size is 16 bit, at least 1 flit
+    case 6: tranType = ACTIVE_MULT; data_size = 16;  break;
+    case 7: tranType = PIMINS_DOT;  data_size = 32;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -248,6 +248,20 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
 {
 
   assert(curr_time % process_interval == 0);
+
+  // synchronize memory clock with cpu clock
+  if (last_process_time + process_interval < curr_time)
+  {
+#ifdef CASHMC_FASTSYNC
+    uint64_t c = (curr_time - last_process_time - process_interval) / process_interval;
+    update_hmc(c);
+#else
+    for (uint64_t c = last_process_time+process_interval; c < curr_time; c = c + process_interval)
+    {
+      update_hmc(c);
+    }
+#endif
+  }
 
   if (tran_buf.empty() == false && tran_buf.begin()->first <= curr_time)
   {
@@ -415,31 +429,6 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     served_trans.erase(served_trans.begin());
   }
 
-  if (!req_event.empty() || !outstanding_req.empty() ||
-      !tran_buf.empty() || !active_update_event.empty() ||
-      //!tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
-      !active_gather_event.empty() || !resp_queue.empty())
-  {
-    geq->add_event(curr_time+process_interval, this);
-  }
-  else
-  {
-    assert(req_event.empty() && resp_queue.empty());
-  }
-
-  if (last_process_time < curr_time)
-  {
-#ifdef CASHMC_FASTSYNC
-    uint64_t c = (curr_time - last_process_time) / process_interval;
-    update_hmc(c);
-#else
-    for (uint64_t c = last_process_time+process_interval; c <= curr_time; c = c + process_interval)
-    {
-      update_hmc(c);
-    }
-#endif
-  }
-
   vector<LocalQueueElement *>::iterator iter;
   for (iter = resp_queue.begin(); iter != resp_queue.end(); ++iter)
   {
@@ -482,7 +471,21 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     break; //as of now process only one in one cycle 
   }
 
-  last_process_time = curr_time; //last response time 
+  update_hmc(1);
+  last_process_time = curr_time; //last response time
+
+  if (!req_event.empty() || !outstanding_req.empty() ||
+      !tran_buf.empty() || !active_update_event.empty() ||
+      //!tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
+      !active_gather_event.empty() || !resp_queue.empty())
+  {
+    geq->add_event(curr_time+process_interval, this);
+  }
+  else
+  {
+    assert(req_event.empty() && resp_queue.empty());
+  }
+
   return 0;
 }
 

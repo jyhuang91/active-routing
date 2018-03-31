@@ -424,7 +424,13 @@ namespace CasHMC
   {
     string header;
     stringstream id;
-    id << f.TAG;
+    id << f.TAG << "-";
+    switch(f.packetType) {
+      case REQUEST:   id << "REQ";  break;
+      case RESPONSE:  id << "REP";  break;
+      case FLOW:      id << "FLOW"; break;
+      default: ERROR("ERROR Packet Type"); exit(0);
+    }
 
     switch(f.CMD) {
       //Request commands
@@ -479,6 +485,22 @@ namespace CasHMC
     }
     out<<header;
     return out;
+  }
+
+  void Packet::Display()
+  {
+    string header;
+    stringstream id;
+    switch(packetType) {
+      case REQUEST:   id << "REQ";  break;
+      case RESPONSE:  id << "REP";  break;
+      case FLOW:      id << "FLOW"; break;
+      default: ERROR("ERROR Packet Type"); exit(0);
+    }
+    id << "-" << TAG << "-(LNG " << LNG << ", utk " << URTC << ", dtk " << DRTC << ")";
+    header = "[" + id.str() + "]";
+
+    cout << header << endl;
   }
 
 } //namespace CasHMC

@@ -81,6 +81,7 @@ namespace CasHMC
       void MakeCRCtable(uint32_t *table, uint32_t id);
       uint32_t CalcCRC(const unsigned char *mem, signed int size, uint32_t crc, uint32_t *table);
       void ReductGlobalTAG();
+      void Display();
 
       //Fields
       TranTrace *trace;

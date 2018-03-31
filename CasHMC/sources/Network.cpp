@@ -202,9 +202,10 @@ namespace CasHMC
     }
   }
 
-  Network *Network::New(int dimension, TOPOLOGY topology)
+  Network *Network::New(int dimension, TOPOLOGY topology, double cpu_clk)
   {
     SIM_TOPOLOGY = topology;
+    CPU_CLK_PERIOD = cpu_clk;
     Network *result;
     switch (topology) {
       case DUAL_HMC:
@@ -228,6 +229,9 @@ namespace CasHMC
         break;
     }
 
+    for (int i = 0; i < result->hmcs.size(); i++) {
+      result->hmcs[i]->crossbarSwitch->transtat = result;
+    }
     return result;
   }
 
