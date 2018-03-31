@@ -229,6 +229,9 @@ namespace CasHMC
         break;
     }
 
+    for (int i = 0; i < result->hmcs.size(); i++) {
+      result->hmcs[i]->crossbarSwitch->transtat = result;
+    }
     return result;
   }
 

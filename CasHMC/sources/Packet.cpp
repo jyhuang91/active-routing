@@ -424,7 +424,13 @@ namespace CasHMC
   {
     string header;
     stringstream id;
-    id << f.TAG;
+    id << f.TAG << "-";
+    switch(f.packetType) {
+      case REQUEST:   id << "REQ";  break;
+      case RESPONSE:  id << "REP";  break;
+      case FLOW:      id << "FLOW"; break;
+      default: ERROR("ERROR Packet Type"); exit(0);
+    }
 
     switch(f.CMD) {
       //Request commands

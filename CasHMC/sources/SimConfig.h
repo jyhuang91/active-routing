@@ -57,7 +57,7 @@ static int PCU_DELAY = 4;
 //
 //Memory transaction setting
 //
-static double CPU_CLK_PERIOD = 0.25; //0.5;	//(ns) CPU clock period in nanoseconds
+static double CPU_CLK_PERIOD = 0.25;	//(ns) CPU clock period in nanoseconds
 static int TRANSACTION_SIZE = 32; 	//(byte) Data size of DRAM request (the internal 32-byte granularity of the DRAM data bus within each vault in the HMC)
 static int TRANSACTION_SIZE_ACTIVE = 32; //(byte) Data size of transaction excluding 1FLIT Control information TBD
 static int TRANSACTION_SIZE_GET = 0; //(byte) Data size of transaction excluding 1FLIT Control information TBD
@@ -82,7 +82,7 @@ static int MAX_OPERAND_BUF = 128;
 //
 //Link(SerDes) setting
 //
-static int NUM_LINKS = 4;			//The number of links
+static const int NUM_LINKS = 4;			//The number of links
 static int HMC_NUM_LINKS = 64;      //The number of HMC-HMC links
 static int TOTAL_NUM_LINKS = 68;    //The number of HMC links 4*dim^2 = 64
 static int LINK_WIDTH = 16;			//Full-Width(16-lane), Half-width(8-lane), and quarter-width link(4-lane)

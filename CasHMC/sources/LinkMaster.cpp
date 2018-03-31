@@ -540,7 +540,6 @@ namespace CasHMC
       else if(upBuffers[0]->bufPopDelay == 0) {
 
         //Token count register represents the available space in link slave input buffer
-        //if(linkRxTx.size() == 0 && !(upBuffers[0]->packetType != FLOW && upTokenCount < upBuffers[0]->LNG)) {
         if (linkRxTx.size() == 0 && (upBuffers[0]->packetType == FLOW || upTokenCount >= upBuffers[0]->LNG)) {
           int tempWriteP = retBufWriteP + upBuffers[0]->LNG;
           if(retBufWriteP	>= retBufReadP) {
@@ -576,7 +575,6 @@ namespace CasHMC
       else if(downBuffers[0]->bufPopDelay == 0) {
 
         //Token count register represents the available space in link slave input buffer
-        //if(linkRxTx.size() == 0 && !(downBuffers[0]->packetType != FLOW && downTokenCount < downBuffers[0]->LNG)) {
         if (linkRxTx.size() == 0 && (downBuffers[0]->packetType == FLOW || downTokenCount >= downBuffers[0]->LNG)) {
           int tempWriteP = retBufWriteP + downBuffers[0]->LNG;
           if(retBufWriteP	>= retBufReadP) {
