@@ -203,15 +203,16 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   is_asymmetric = pts->get_param_str("is_asymmetric") == "true" ? true : false;
   is_nuca       = pts->get_param_str("pts.is_nuca") == "true" ? true: false;  // Jiayi, 06/05/17
 
-  double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
-  hmc_net = Network::New(4, hmc_topology, cpu_clk);
-
   uint32_t num_threads_per_l1_cache   = pts->get_param_uint64("pts.num_hthreads_per_l1$", 4);
   assert(use_o3core == false || num_threads_per_l1_cache == 1);
   uint32_t num_l1_caches_per_l2_cache = pts->get_param_uint64("pts.num_l1$_per_l2$", 2);
   uint32_t num_mcs                    = pts->get_param_uint64("pts.num_mcs", 2);
   print_interval                      = pts->get_param_uint64("pts.print_interval", 1000000);
   string   noc_type(pts->get_param_str("pts.noc_type"));
+  string   benchname(pts->get_param_str("pts.benchname"));
+
+  double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
+  hmc_net = Network::New(4, hmc_topology, benchname, cpu_clk);
 
   // for stats
   if (use_o3core)

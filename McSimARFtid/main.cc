@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
     }
   }
 
-  PthreadTimingSimulator * pts = new PthreadTimingSimulator(mdfile);
+  PthreadTimingSimulator * pts = new PthreadTimingSimulator(mdfile, benchname);
   string pin_name;
   string pintool_name;
   string ld_library_path_full;
@@ -104,7 +104,6 @@ int main(int argc, char * argv[])
     cerr << argv[0] << " -mdfile mdfile -runfile runfile -run_manually -remapfile remapfile -remap_interval instrs -benchname benchname" << endl;
     exit(0);
   }
-  pts->mcsim->hmc_net->benchname.assign(benchname);
 
 
   ifstream fin(runfile.c_str());
