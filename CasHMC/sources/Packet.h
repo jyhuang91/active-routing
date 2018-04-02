@@ -120,6 +120,7 @@ namespace CasHMC
   };
 
   ostream& operator<<(ostream &out, const Packet &t);
+  ostream& operator<<(ostream &out, PacketCommandType cmd);
 }
 
 #endif

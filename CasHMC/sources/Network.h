@@ -30,9 +30,9 @@ namespace CasHMC
       //
       //Functions
       //
-      Network(int dimension);
+      Network(int dimension, string benchname);
       virtual ~Network();
-      static Network *New( int dimension, TOPOLOGY topology, double cpu_clk = 0.5); // cpu_clk in ns
+      static Network *New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk = 0.5); // cpu_clk in ns
       bool ReceiveTran(TransactionType tranType, uint64_t addr, unsigned size, int cpu_id);
       bool ReceiveTran(Transaction *tran, int cpu_id);
       void Update();
@@ -113,19 +113,19 @@ namespace CasHMC
   class DualHMC : public Network
   {
     public:
-      DualHMC(int dimension);
+      DualHMC(int dimension, string benchname);
   };
 
   class MeshNet : public Network
   {
     public:
-      MeshNet(int dimension); 
+      MeshNet(int dimension, string benchname);
   };
 
   class DFly : public Network
   {
     public:
-      DFly(int dimension); 
+      DFly(int dimension, string benchname);
   };
 
   class DefaultHMC : public Network

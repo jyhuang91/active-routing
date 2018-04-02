@@ -217,8 +217,10 @@ namespace CasHMC
               } else {
                 assert("ACT_MULT: both src1 and src2 addr are non zero, ERROR ..." == 0);
               }
-              if (operandEntry.op1_ready && operandEntry.op2_ready)
+              if (operandEntry.op1_ready && operandEntry.op2_ready) {
                 operandEntry.ready = true;
+                delete curUpBuffers[i]->trace;
+              }
               int pktLNG = curUpBuffers[i]->LNG;
               delete curUpBuffers[i];
               curUpBuffers.erase(curUpBuffers.begin() + i, curUpBuffers.begin() + i + pktLNG);

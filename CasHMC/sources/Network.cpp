@@ -11,7 +11,7 @@ extern string traceFileName;			//Trace file name
 namespace CasHMC
 {
 
-  Network::Network(int dimension)
+  Network::Network(int dimension, string bench)
   {
     //
     //Class variable initialization
@@ -41,6 +41,7 @@ namespace CasHMC
     int status = 1;
     status = mkdir("result", S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH);
     benchname.clear();
+    benchname = bench;
 
     time_t now;
     struct tm t;
@@ -159,7 +160,7 @@ namespace CasHMC
     logName.erase(logName.find("_s"));
 */
     logNum = 0;
-    PrintEpochHeader();
+    //PrintEpochHeader();
   }
 
   Network::~Network()
@@ -202,22 +203,22 @@ namespace CasHMC
     }
   }
 
-  Network *Network::New(int dimension, TOPOLOGY topology, double cpu_clk)
+  Network *Network::New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk)
   {
     SIM_TOPOLOGY = topology;
     CPU_CLK_PERIOD = cpu_clk;
     Network *result;
     switch (topology) {
       case DUAL_HMC:
-        result = new DualHMC(dimension);
+        result = new DualHMC(dimension, benchname);
         break;
       case MESH:
         cout << "Created a Mesh topology with dimension " << dimension << endl;
-        result = new MeshNet(dimension);
+        result = new MeshNet(dimension, benchname);
         break;
       case DFLY:
         cout << "Created a DragonFly topology with dimension " << dimension << endl;
-        result = new DFly(dimension);
+        result = new DFly(dimension, benchname);
         break;
       case DEFAULT:
         cout << "Createtd Default HMC" << endl;
@@ -232,6 +233,7 @@ namespace CasHMC
     for (int i = 0; i < result->hmcs.size(); i++) {
       result->hmcs[i]->crossbarSwitch->transtat = result;
     }
+    result->PrintEpochHeader();
     return result;
   }
 
@@ -348,8 +350,8 @@ namespace CasHMC
     }
   }
 
-  DualHMC::DualHMC(int dimension)
-    : Network(dimension)
+  DualHMC::DualHMC(int dimension, string benchname)
+    : Network(dimension, benchname)
   {
     ncpus = 2;
     nodes = 2*dimension; //Shall be changend to dim*dim
@@ -386,8 +388,8 @@ namespace CasHMC
     }
   }
 
-  DFly::DFly(int dimension)
-    : Network(dimension)
+  DFly::DFly(int dimension, string benchname)
+    : Network(dimension, benchname)
   {
     ncpus = 4;//dimension;
     nodes = dimension * dimension;
@@ -489,8 +491,8 @@ namespace CasHMC
 #endif
   }
 
-  MeshNet::MeshNet(int dimension)
-    : Network(dimension)
+  MeshNet::MeshNet(int dimension, string benchname)
+    : Network(dimension, benchname)
   {
     ncpus = dimension * 4;
     nodes = dimension * dimension;
@@ -574,7 +576,7 @@ namespace CasHMC
   }
 
   DefaultHMC::DefaultHMC()
-    : Network(0)
+    : Network(0, string())
   {
     ncpus = 1;
     nodes = 1;

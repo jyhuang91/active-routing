@@ -44,8 +44,11 @@ SRCS = PTSCache.cc \
 OBJS = $(patsubst %.cc,obj_$(TAG)/%.o,$(SRCS))
 HMCOBJS = $(wildcard ../CasHMC/sources/obj/*.o)
 
-all: obj_$(TAG)/mcsim
+all: remove obj_$(TAG)/mcsim
 	cp -f obj_$(TAG)/mcsim mcsim
+
+remove:
+	rm -f obj_$(TAG)/mcsim mcsim
 
 obj_$(TAG)/mcsim : $(OBJS) main.cc
 	$(CXX) $(CXXFLAGS) $(INCS) -o obj_$(TAG)/mcsim $(OBJS) $(HMCOBJS) main.cc
