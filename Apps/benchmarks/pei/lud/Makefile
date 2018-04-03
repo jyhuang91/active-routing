@@ -9,10 +9,10 @@ DEBUG          := YES
 PROFILE        := NO
 
 # ------------  name of the executable  ----------------------------------------
-EXECUTABLE      := lud_omp
+EXECUTABLE      := lud
 
 # ------------  list of all source files  --------------------------------------
-SOURCES         := lud.cc lud_omp.cc common.cc 
+SOURCES         := lud.cc lud_kernel.cc common.cc 
 
 # ------------  compiler  ------------------------------------------------------
 CC              := gcc
