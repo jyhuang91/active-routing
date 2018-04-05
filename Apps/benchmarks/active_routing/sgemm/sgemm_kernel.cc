@@ -30,6 +30,7 @@ struct thread_arg_t {
   int nthreads;
   int tid;
   int niteration;
+  int niteration2;
   pthread_barrier_t *barrier;
 };
 
@@ -59,11 +60,12 @@ void* work_func(void *thread_arg)
   int start = start_d;
   int stop = stop_d;
   int niteration = arg->niteration;
+  int niteration2 = arg->niteration2;
 
   pthread_barrier_wait(arg->barrier);
 
   for (int mm = start; mm < start + niteration; mm++) {
-    for (int nn = 0; nn < n; nn++) {
+    for (int nn = 0; nn < niteration2; nn++) {
       //float c = 0.0f;
       uint64_t flowID = mm+nn*ldc;
       for (int i = 0; i < k; i++) {
@@ -82,7 +84,7 @@ void* work_func(void *thread_arg)
 }
 
 //void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc, int nthreads )
-void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, float *A, int lda, float *B, int ldb, float beta, float *C, int ldc, int nthreads, int niteration)
+void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, float *A, int lda, float *B, int ldb, float beta, float *C, int ldc, int nthreads, int niteration, int niteration2)
 {
   if ((transa != 'N') && (transa != 'n')) {
     std::cerr << "unsupported value of 'transa' in regtileSgemm()" << std::endl;
@@ -118,6 +120,7 @@ void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, flo
     thread_arg[i].tid = i;
     thread_arg[i].barrier = &barrier;
     thread_arg[i].niteration = niteration;
+    thread_arg[i].niteration2 = niteration2;
   }
 
   for (int i = 1; i < nthreads; i++) {

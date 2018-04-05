@@ -192,6 +192,14 @@ pb_ReadParameters(int *_argc, char **argv)
           }
           ret->niteration = atoi(consume_argument(&ap));
           break;
+        case 't':
+          if (is_end_of_arguments(&ap))
+          {
+            err_message = "Expecting number of threads after '-i'\n";
+            goto error;
+          }
+          ret->niteration2 = atoi(consume_argument(&ap));
+          break;
         case '-':			/* End of options */
           goto end_of_options;
         default:
