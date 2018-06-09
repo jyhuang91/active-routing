@@ -1061,6 +1061,7 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     cout << setw(6) << num_gather_acc - num_gather_acc_last << " gather accs, ";
     num_mem_acc_last    = num_mem_acc;
     num_used_pages_last = num_used_pages;
+    num_gather_acc_last = num_gather_acc;
 
     if (o3cores.size() > 0)
     {
