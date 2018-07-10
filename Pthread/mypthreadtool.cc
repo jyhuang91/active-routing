@@ -940,6 +940,7 @@ VOID FlagRtn(RTN rtn, VOID* v)
 
 VOID FlagTrace(TRACE trace, VOID* v) 
 {
+  bool unnecessary_art_call = false;
   if (TRACE_Address(trace) == (ADDRINT)pthread_exit) 
   {
     TRACE_InsertCall(trace, IPOINT_BEFORE, (AFUNPTR)CallPthreadExit,
@@ -967,15 +968,20 @@ VOID FlagTrace(TRACE trace, VOID* v)
           ADDRINT target = INS_DirectBranchOrCallTargetAddress(ins);
           RTN src_rtn = INS_Rtn(ins);
           RTN dest_rtn = RTN_FindByAddress(target);
-          if (INS_IsCall(ins) || (src_rtn != dest_rtn)) 
+
+          if (INS_IsCall(ins) || (src_rtn != dest_rtn))
           {
-            BOOL tailcall = !INS_IsCall(ins);
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessCall,
-                IARG_ADDRINT, target,
-                IARG_G_ARG0_CALLER,
-                IARG_G_ARG1_CALLER,
-                IARG_BOOL, tailcall,
-                IARG_END);
+            if (INS_IsCall(ins) && RTN_Valid(dest_rtn) && (RTN_Name(dest_rtn) == "UPDATE" || RTN_Name(dest_rtn) == "GATHER")) {
+              unnecessary_art_call = true;
+            } else {
+              BOOL tailcall = !INS_IsCall(ins);
+              INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessCall,
+                  IARG_ADDRINT, target,
+                  IARG_G_ARG0_CALLER,
+                  IARG_G_ARG1_CALLER,
+                  IARG_BOOL, tailcall,
+                  IARG_END);
+            }
           }
         }
         else if (INS_IsRet(ins))                                          // return
@@ -987,6 +993,10 @@ VOID FlagTrace(TRACE trace, VOID* v)
                 IARG_PTR, new string(RTN_Name(rtn)),
                 IARG_END);
           }
+        }
+
+        if (unnecessary_art_call) {
+          return;
         }
 
         if (((INS_Address(ins) - (ADDRINT)StartThreadFunc) < 0) ||
