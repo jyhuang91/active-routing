@@ -52,3 +52,7 @@ void GATHER(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads)
   //magic_op(MAGIC_OP_GATHER);
 }
 
+int testFunc(int tid)
+{
+  return 1;
+}

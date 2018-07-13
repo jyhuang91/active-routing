@@ -61,6 +61,7 @@ void mcsim_spinning_end();
 void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, int op);
 void GATHER(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads);
 
+int testFunc(int tid);
 #ifdef __cplusplus
 }
 #endif

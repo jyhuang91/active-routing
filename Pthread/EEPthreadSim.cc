@@ -12,7 +12,11 @@ using namespace std;
 
 PthreadSim::PthreadSim(uint32_t argc, char** argv) :
   new_thread_id(0), scheduler(NULL), skip_first(0), first_instrs(0), port_num(0),
+#ifdef RUNTIME_KNOB
+  trace_name(), trace_skip_first(0), agile_bank_th(0.0), run_roi(false), active_mode(1)
+#else
   trace_name(), trace_skip_first(0), agile_bank_th(0.0), run_roi(false)
+#endif
 {
   for (uint32_t i = 0; i < argc; i++)
   {
@@ -59,6 +63,13 @@ PthreadSim::PthreadSim(uint32_t argc, char** argv) :
     {
       i++;
       run_roi = (argv[i] == string("true"));
+#ifdef RUNTIME_KNOB
+    }
+    else if (argv[i] == string("-active_mode"))
+    {
+      i++;
+      active_mode = atoi(argv[i]);//(argv[i] == string("true"));
+#endif
     }
   }
 

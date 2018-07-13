@@ -122,6 +122,9 @@ namespace PinPthread
       double            agile_bank_th;
       string            agile_page_list_file_name;
       bool              run_roi;             // capture and only run the ROI
+#ifdef RUNTIME_KNOB
+      int               active_mode;
+#endif
       void  initiate(CONTEXT * ctxt);
 
     private:
