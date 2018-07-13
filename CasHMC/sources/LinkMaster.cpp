@@ -236,17 +236,21 @@ namespace CasHMC
     Packet *pkt = NULL;
     // first find packets upbuffers (response has higher priority, flow packets are sent through upbuffers)
     for (i = 0; i < upBuffers.size(); i++) {
-      if (upBuffers[i] != NULL && upBuffers[i]->CMD != PRET && upBuffers[i]->CMD != IRTRY && upBuffers[i]->LNG <= upTokenCount) {
-        findUpPacket = true;
-        pkt = upBuffers[i];
+      if (upBuffers[i] != NULL && upBuffers[i]->CMD != PRET && upBuffers[i]->CMD != IRTRY) {
+        if (upBuffers[i]->LNG <= upTokenCount) {
+          findUpPacket = true;
+          pkt = upBuffers[i];
+        }
         break;
       }
     }
     // second find packets downbuffers
     for (j = 0; j < downBuffers.size() && !findUpPacket; j++) {
-      if (downBuffers[j] != NULL && downBuffers[j]->CMD != PRET && downBuffers[j]->CMD != IRTRY && downBuffers[j]->LNG <= downTokenCount) {
-        findDownPacket = true;
-        pkt = downBuffers[j];
+      if (downBuffers[j] != NULL && downBuffers[j]->CMD != PRET && downBuffers[j]->CMD != IRTRY) {
+        if (downBuffers[j]->LNG <= downTokenCount) {
+          findDownPacket = true;
+          pkt = downBuffers[j];
+        }
         break;
       }
     }
