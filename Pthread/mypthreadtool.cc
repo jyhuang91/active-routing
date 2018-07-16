@@ -101,6 +101,110 @@ VOID NewPthreadSim(CONTEXT* ctxt)
 /* ------------------------------------------------------------------ */
 /* Active-Routing Callback Routines                                   */
 /* ------------------------------------------------------------------ */
+#ifdef RUNTIME_KNOB
+int gathers[] = {
+    18877
+    ,155543
+    ,1906
+    ,1919
+    ,2492
+    ,1252
+    ,2444
+    ,1840
+    ,2389
+    ,1799
+    ,2339
+    ,1179
+    ,2300
+    ,1732
+    ,2258
+    ,2255
+    ,2210
+    ,1662
+    ,2169
+    ,1636
+    ,2127
+    ,1606
+    ,2622
+    ,1576
+    ,2055
+    ,2066
+    ,2018
+    ,2027
+    ,1982
+    ,1993
+    ,1953
+    ,1962
+    ,1919
+    ,1928
+    ,2363
+    ,1896
+    ,1859
+    ,1868
+    ,2288
+    ,1836
+    ,2255
+    ,1808
+    ,1772
+    ,2223
+    ,1753
+    ,2190
+    ,1726
+    ,2159
+    ,2122
+    ,1707
+    ,420
+    ,415
+    ,1255
+    ,2100
+    ,1653
+    ,2069
+    ,2033
+    ,1633
+    ,2414
+    ,2015
+    ,792
+    ,392
+    ,794
+    ,1588
+    ,2348
+    ,1962
+    ,1925
+    ,1937
+    ,1897
+    ,1914
+    ,2252
+    ,1891
+    ,1850
+    ,1863
+    ,2201
+    ,1470
+    ,2537
+    ,1453
+    ,723
+    ,357
+    ,1429
+    ,1435
+};
+int testFunc(int tid)
+{
+  static int phase = 0;
+  static int num = 0;
+  static bool active = true;
+
+  if (pthreadsim->active_mode != 2) return pthreadsim->active_mode;
+
+  if (phase >= 82) return -1;
+
+  if (num++ >= gathers[phase]) {
+    fprintf(stderr, "[debug] change from %d to %d\n", active, !active);
+    num = 0;
+    phase++;
+    active = !active;
+  }
+  return active;
+}
+#endif
 
 // Jiayi, 01/29/2018
 VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int function)
@@ -279,6 +383,15 @@ VOID RandIndexCall(int *index, int start, int stop)
 VOID FlagImg(IMG img, VOID* v) 
 {
   RTN rtn;
+#ifdef RUNTIME_KNOB
+  rtn = RTN_FindByName(img, "testFunc");
+  if (rtn != RTN_Invalid()) {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)testFunc,
+        IARG_G_ARG0_CALLEE,
+        IARG_RETURN_REGS, REG_GAX,
+        IARG_END);
+  }
+#endif
 
   rtn = RTN_FindByName(img, "roi_begin");
   if (rtn != RTN_Invalid()) {

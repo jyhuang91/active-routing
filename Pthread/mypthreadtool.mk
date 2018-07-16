@@ -51,6 +51,9 @@ INCS += -I/usr/local/include
 ifeq ($(TAG),dbg)
   DBG = -Wall
   OPT = -ggdb -g -O0
+else ifeq ($(TAG),rb)
+	DBG = -DNDEBUG -DRUNTIME_KNOB
+	OPT = -O3 -g
 else
   DBG = -DNDEBUG
   OPT = -O3 -g
