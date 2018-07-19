@@ -619,7 +619,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
         else if (mshr_indices.size() == num_mshrs)
         {
 #ifdef DEBUG_MSHR
-          display(); cout << " MSHR full, no entry for line "  << hex << line_addr << dec << ", nack request [" << req_lqee << "]"; req_lqe->display();
+          display(); cout << " MSHR full, no entry for line "  << hex << line_addr << dec << ", nack request [" << req_lqe << "]"; req_lqe->display();
 #endif
           req_lqe->type = et_nack;
           add_event_to_lsu(curr_time, req_lqe);

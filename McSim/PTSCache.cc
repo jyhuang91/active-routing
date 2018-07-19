@@ -116,6 +116,11 @@ CacheL1::CacheL1(
   }
 
   num_mshrs = get_param_uint64("num_mshrs", 32);  // Jiayi, MSHR
+  mshrs = new MSHREntry * [num_mshrs];
+  for (uint32_t i = 0; i < num_mshrs; i++)
+  {
+    mshrs[i] = new MSHREntry();
+  }
 }
 
 
@@ -182,6 +187,26 @@ CacheL1::~CacheL1()
          << setw(10) << num_ev_coherency << ", " << setw(10) << num_coherency_access << ", "
          << setw(10) << num_bypass << ")" << endl;
   }
+
+  for (uint32_t i = 0; i < num_sets; i++)
+  {
+    for (uint32_t j = 0; j < num_ways; j++)
+    {
+      delete tags[i][j];
+    }
+    delete [] tags[i];
+  }
+  delete [] tags;
+  for (uint32_t i = 0; i < num_pre_entries; i++)
+  {
+    delete pres[i];
+  }
+  delete [] pres;
+  for (uint32_t i = 0; i < num_mshrs; i++)
+  {
+    delete mshrs[i];
+  }
+  delete [] mshrs;
 }
 
 
@@ -286,6 +311,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
       uint64_t address = ((rep_lqe->address>>l2_set_lsb)<<l2_set_lsb) +
         (rep_lqe->address + index*(1 << set_lsb))%(1 << l2_set_lsb);
       //uint64_t address = rep_lqe->address;
+      uint64_t line_addr = (rep_lqe->address >> set_lsb) << set_lsb;
       uint32_t set = (address >> set_lsb) % num_sets;
       uint64_t tag = (address >> set_lsb) / num_sets;
       event_type etype = rep_lqe->type;
@@ -312,6 +338,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
         }
       }
 
+      uint32_t mshr_idx = num_mshrs;
       switch (etype)
       {
         case et_nack:
@@ -325,9 +352,16 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
           num_bypass++;
           rep_lqe->from.pop();
           /* Jiayi, deal with MSHRs begin */
-          assert(mshrs.find(tag) != mshrs.end());
-          //display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-          mshrs.erase(tag);
+#ifdef DEBUG_MSHR
+          display(); cout << " MSHR erase line addr: " << hex << line_addr << dec << " for reply [" << rep_lqe << "] "; rep_lqe->display();
+#endif
+          assert(mshr_indices.find(line_addr) != mshr_indices.end());
+          mshr_idx = mshr_indices[line_addr];
+          assert(mshrs[mshr_idx]->valid);
+          assert(mshrs[mshr_idx]->line_addr == line_addr);
+          assert(mshrs[mshr_idx]->target == rep_lqe);
+          mshrs[mshr_idx]->release();
+          mshr_indices.erase(line_addr);
           /* MSHRs end */
           add_event_to_lsu(curr_time, rep_lqe);
           break;
@@ -469,9 +503,16 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
           //tags[set].push_back(*set_iter);
           //tags[set].erase(set_iter);
           /* Jiayi, deal with MSHRs begin */
-          assert(mshrs.find(tag) != mshrs.end());
-          //display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-          mshrs.erase(tag);
+#ifdef DEBUG_MSHR
+          display(); cout << " MSHR erase line addr: " << hex << line_addr << dec << " for reply [" << rep_lqe << "] "; rep_lqe->display();
+#endif
+          assert(mshr_indices.find(line_addr) != mshr_indices.end());
+          mshr_idx = mshr_indices[line_addr];
+          assert(mshrs[mshr_idx]->valid);
+          assert(mshrs[mshr_idx]->line_addr == line_addr);
+          assert(mshrs[mshr_idx]->target == rep_lqe);
+          mshrs[mshr_idx]->release();
+          mshr_indices.erase(line_addr);
           /* MSHRs end */
           add_event_to_lsu(curr_time, rep_lqe);
           break;
@@ -500,6 +541,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
       req_qs[/*i*/0].pop();
       // process the first request event
       uint64_t address = req_lqe->address;
+      uint64_t line_addr = (req_lqe->address>>l2_set_lsb)<<l2_set_lsb;
       uint32_t set = (address >> set_lsb) % num_sets;
       uint64_t tag = (address >> set_lsb) / num_sets;
       event_type etype = req_lqe->type;
@@ -507,28 +549,6 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
       bool is_coherence_miss = false;
       //list< pair< uint64_t, coherence_state_type > > & curr_set = tags[set];
 
-      // Jiayi, MSHRs
-      if (mshrs.find(tag) != mshrs.end()) {
-        // found in MSHRs, nack it
-        //display(); cout << "MSHR tag " << tag << " found, nack request "; req_lqe->display();
-        switch (etype)
-        {
-          case et_read:
-            num_rd_access++;
-            num_wr_access--;
-          case et_write:
-            num_wr_access++;
-            req_lqe->type = et_nack;
-            add_event_to_lsu(curr_time, req_lqe);
-            break;
-          default:
-            display();  req_lqe->display();  geq->display();  ASSERTX(0);
-        }
-        break;
-      } else {
-        //display(); cout << "MSHR insert tag " << tag << " for request "; req_lqe->display();
-        mshrs.insert(make_pair(tag, req_lqe));
-      }
 #ifdef DEBUG_CACHE
       display_event(curr_time, req_lqe, "Q");
 #endif
@@ -586,24 +606,53 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
 
       if (hit == false)
       {
+        /* Jiayi, deal with MSHRs begin */
+        if (mshr_indices.find(line_addr) != mshr_indices.end())
+        {
+          // found in MSHRs, nack it
+#ifdef DEBUG_MSHR
+          display(); cout << " MSHR line addr " << hex << line_addr << dec << " found, nack request [" << req_lqe << "] "; req_lqe->display();
+#endif
+          req_lqe->type = et_nack;
+          add_event_to_lsu(curr_time, req_lqe);
+        }
+        else if (mshr_indices.size() == num_mshrs)
+        {
+#ifdef DEBUG_MSHR
+          display(); cout << " MSHR full, no entry for line "  << hex << line_addr << dec << ", nack request [" << req_lqe << "]"; req_lqe->display();
+#endif
+          req_lqe->type = et_nack;
+          add_event_to_lsu(curr_time, req_lqe);
+        }
+        else
+        {
+#ifdef DEBUG_MSHR
+          display(); cout << " MSHR insert line addr " << hex << line_addr << dec << " for request [" << req_lqe << "] "; req_lqe->display();
+#endif
+          uint32_t mshr_idx = num_mshrs;
+          for (mshr_idx = 0; mshr_idx < num_mshrs; mshr_idx++)
+          {
+            if (mshrs[mshr_idx]->valid == false) break;
+          }
+          assert(mshr_idx < num_mshrs);
+          mshr_indices.insert(make_pair(line_addr, mshr_idx));
+          mshrs[mshr_idx]->allocate(line_addr, req_lqe);
+          req_lqe->from.push(this);
+          if (!geq->is_nuca || (geq->is_nuca && geq->which_l2(req_lqe->address) == cachel2->num)) {
+            cachel2->add_req_event(curr_time + l1_to_l2_t, req_lqe);
+          } else {
+            noc->add_req_event(curr_time + l1_to_xbar_t, req_lqe, this);// Jiayi, if top() is l1 and from is l1, it is for l2 in noc
+          }
+        }
+        /* MSHRs end */
+
         if (is_coherence_miss == false)
         {
           (etype == et_write) ? num_wr_miss++ : num_rd_miss++;
         }
-        req_lqe->from.push(this);
-        if (!geq->is_nuca || (geq->is_nuca && geq->which_l2(req_lqe->address) == cachel2->num)) {
-          cachel2->add_req_event(curr_time + l1_to_l2_t, req_lqe);
-        } else {
-          noc->add_req_event(curr_time + l1_to_xbar_t, req_lqe, this);// Jiayi, if top() is l1 and from is l1, it is for l2 in noc
-        }
       }
       else
       {
-        /* Jiayi, deal with MSHRs begin */
-        assert(mshrs.find(tag) != mshrs.end());
-        // display(); cout << "MSHR erase tag " << tag << " for request (hit) "; req_lqe->display();
-        mshrs.erase(tag);
-        /* MSHRs end */
         add_event_to_lsu(curr_time, req_lqe);
       }
 
@@ -793,6 +842,13 @@ CacheL2::CacheL2(
       tags[i][j] = new L2Entry();
     }
   }
+
+  num_mshrs = get_param_uint64("num_mshrs", 32);  // Jiayi, MSHR
+  mshrs = new MSHREntry * [num_mshrs];
+  for (uint32_t i = 0; i < num_mshrs; i++)
+  {
+    mshrs[i] = new MSHREntry();
+  }
 }
 
 
@@ -891,6 +947,21 @@ CacheL2::~CacheL2()
       << 1.0 * time_between_last_access_and_cache_destroy / (process_interval * num_destroyed_cache_lines)
       << ") L2$ cycles" << endl;
   }
+  // free the memory
+  for (uint32_t i = 0; i < num_sets; i++)
+  {
+    for (uint32_t j = 0; j < num_ways; j++)
+    {
+      delete tags[i][j];
+    }
+    delete [] tags[i];
+  }
+  delete [] tags;
+  for (uint32_t i = 0; i < num_mshrs; i++)
+  {
+    delete mshrs[i];
+  }
+  delete [] mshrs;
 }
 
 
@@ -993,6 +1064,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
 #endif
     // reply events have a higher priority than request events
     uint64_t address = rep_lqe->address;
+    uint64_t line_addr = (address >> set_lsb) << set_lsb;
     uint32_t set = (address >> set_lsb) % num_sets;
     uint64_t tag = (address >> set_lsb) / num_sets;
     event_type etype = rep_lqe->type;
@@ -1019,13 +1091,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
       if (idx == num_ways || set_iter->type != cs_tr_to_m)
       {
         rep_lqe->type = et_nack;
-        /* Jiayi, deal with MSHRs begin */
-        assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-        display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-        mshrs.erase(tag);
-        /* MSHRs end */
         if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
           (rep_lqe->from.top())->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
         } else {
@@ -1066,13 +1131,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
         //tags[set].erase(set_iter);
 
         rep_lqe->type = et_write;
-        /* Jiayi, deal with MSHRs begin */
-        assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-        display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-        mshrs.erase(tag);
-        /* MSHRs end */
         if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
           (rep_lqe->from.top())->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
         } else {
@@ -1083,6 +1141,18 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
         lqe->th_id = rep_lqe->th_id;
         add_event_to_LL(curr_time, lqe, false);
       }
+      /* Jiayi, deal with MSHRs begin */
+#ifdef DEBUG_MSHR
+      display(); cout << " MSHR erase line addr: " << hex << line_addr << dec << " for reply [" << rep_lqe << "] "; rep_lqe->display();
+#endif
+      assert(mshr_indices.find(line_addr) != mshr_indices.end());
+      uint32_t mshr_idx = mshr_indices[line_addr];
+      assert(mshrs[mshr_idx]->valid);
+      assert(mshrs[mshr_idx]->line_addr == line_addr);
+      assert(mshrs[mshr_idx]->target == rep_lqe);
+      mshrs[mshr_idx]->release();
+      mshr_indices.erase(line_addr);
+      /* MSHRs end */
     }
     else if (etype == et_e_rd || etype == et_s_rd || etype == et_write)
     {
@@ -1099,17 +1169,12 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
         if (set_iter->type == cs_tr_to_s || set_iter->type == cs_tr_to_m || 
             set_iter->type == cs_tr_to_e || set_iter->type == cs_tr_to_i)
         {
+          // Jiayi, no space for replacement, nack it.
+          // TODO: keep it in mshr, make space for it and drain it
           bypass = true; 
           if (rep_lqe->from.size() > 1)
           {
             rep_lqe->type = et_nack;
-            /* Jiayi, deal with MSHRs begin */
-            assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-            display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-            mshrs.erase(tag);
-            /* MSHRs end */
             if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
               (rep_lqe->from.top())->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
             } else {
@@ -1186,13 +1251,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
             if (rep_lqe->from.size() > 1)
             {
               rep_lqe->type = et_rd_bypass;
-              /* Jiayi, deal with MSHRs begin */
-              assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-              display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-              mshrs.erase(tag);
-              /* MSHRs end */
               if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
                 (rep_lqe->from.top())->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
               } else {
@@ -1210,6 +1268,19 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
           }
         }
       }
+
+      /* Jiayi, deal with MSHRs begin */
+#ifdef DEBUG_MSHR
+      display(); cout << " MSHR erase line addr: " << hex << line_addr << dec << " for reply [" << rep_lqe << "] "; rep_lqe->display();
+#endif
+      assert(mshr_indices.find(line_addr) != mshr_indices.end());
+      uint32_t mshr_idx = mshr_indices[line_addr];
+      assert(mshrs[mshr_idx]->valid);
+      assert(mshrs[mshr_idx]->line_addr == line_addr);
+      assert(mshrs[mshr_idx]->target == rep_lqe);
+      mshrs[mshr_idx]->release();
+      mshr_indices.erase(line_addr);
+      /* MSHRs end */
 
       if (idx == num_ways)
       {
@@ -1241,13 +1312,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
         rep_lqe->type = (etype == et_write) ? et_write : et_read;
         if (rep_lqe->from.size() > 1)
         {
-          /* Jiayi, deal with MSHRs begin */
-          assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-          display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-          mshrs.erase(tag);
-          /* MSHRs end */
           if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
             (rep_lqe->from.top())->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
           } else {
@@ -1279,13 +1343,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
             break;
           case cs_tr_to_m:
             rep_lqe->type = et_nack;
-            /* Jiayi, deal with MSHRs begin */
-            assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-            display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-            mshrs.erase(tag);
-            /* MSHRs end */
             if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
               rep_lqe->from.top()->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
             } else {
@@ -1294,13 +1351,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
             break;
           default: // set_iter->type_l1l2 == cs_tr_to_s
             rep_lqe->type = et_nack;
-            /* Jiayi, deal with MSHRs begin */
-            assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-            display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-            mshrs.erase(tag);
-            /* MSHRs end */
             if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
               rep_lqe->from.top()->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
             } else {
@@ -1346,13 +1396,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
         set_iter->sharedl1.insert(rep_lqe->from.top());
         rep_lqe->type = (etype == et_m_to_s) ? et_read : 
           (set_iter->pending == NULL) ? et_write : et_nack;
-        /* Jiayi, deal with MSHRs begin */
-        assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-        display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
-#endif
-        mshrs.erase(tag);
-        /* MSHRs end */
         if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
           rep_lqe->from.top()->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
         } else {
@@ -1500,11 +1543,16 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
       if (rep_lqe->from.size() > 1)
       {
         /* Jiayi, deal with MSHRs begin */
-        assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-        display(); cout << "MSHR erase tag: " << tag << " for reply "; rep_lqe->display();
+#ifdef DEBUG_MSHR
+        display(); cout << " MSHR erase line addr: " << hex << line_addr << dec << " for reply [" << rep_lqe << "] at tick " << curr_time << " "; rep_lqe->display();
 #endif
-        mshrs.erase(tag);
+        assert(mshr_indices.find(line_addr) != mshr_indices.end());
+        uint32_t mshr_idx = mshr_indices[line_addr];
+        assert(mshrs[mshr_idx]->valid);
+        assert(mshrs[mshr_idx]->line_addr == line_addr);
+        assert(mshrs[mshr_idx]->target == rep_lqe);
+        mshrs[mshr_idx]->release();
+        mshr_indices.erase(line_addr);
         /* MSHRs end */
         if (!geq->is_nuca || (geq->is_nuca && (rep_lqe->from.top())->num == num)) {  // Jiayi, same tile
           (rep_lqe->from.top())->add_rep_event(curr_time + l2_to_l1_t, rep_lqe);
@@ -1658,6 +1706,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
 #endif
       // process the first request event
       uint64_t address = req_lqe->address;
+      uint64_t line_addr = (address >> set_lsb) << set_lsb;
       uint32_t set = (address >> set_lsb) % num_sets;
       uint64_t tag = (address >> set_lsb) / num_sets;
       event_type etype = req_lqe->type;
@@ -1666,44 +1715,6 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
 
       bool hit = always_hit;
       bool enter_intermediate_state = false;
-
-      // Jiayi, MSHRs
-      if (mshrs.find(tag) != mshrs.end()) {
-        // found in MSHRs, nack it
-#ifdef PRINT_MSHR
-        display(); cout << "MSHR tag " << tag << " found, nack request "; req_lqe->display();
-#endif
-        switch (etype)
-        {
-          case et_read:
-            num_rd_access++;
-            num_wr_access--;
-          case et_write:
-            num_wr_access++;
-            req_lqe->type = et_nack;
-            if (req_lqe->from.size() > 1)
-            {
-              if (geq->is_nuca && req_lqe->from.top()->num == num) {
-                req_lqe->from.top()->add_rep_event(curr_time + l2_to_l1_t, req_lqe);
-              } else {
-                crossbar->add_rep_event(curr_time + l2_to_xbar_t, req_lqe, this);// to l1 (from.top()) and from is L2, l2 to l1
-                }
-            }
-            else
-            {
-              display();  req_lqe->display();  geq->display();  ASSERTX(0);
-            }
-            break;
-          default:
-            display();  req_lqe->display();  geq->display();  ASSERTX(0);
-        }
-        break;
-      } else {
-#ifdef PRINT_MSHR
-        display(); cout << "MSHR insert tag " << tag << " for request "; req_lqe->display();
-#endif
-        mshrs.insert(make_pair(tag, req_lqe));
-      }
 
       if (etype == et_read)
       {
@@ -1976,35 +1987,72 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
         req_lqe->display();  geq->display();  ASSERTX(0);
       }
 
-      if (enter_intermediate_state == false)
+      if (enter_intermediate_state == false) // real miss, not coherence miss
       {
         if (hit == false)
         {
+          // Jiayi, MSHRs
+          if (mshr_indices.find(line_addr) != mshr_indices.end() ||
+              mshr_indices.size() == num_mshrs)
+          {
+            if (mshr_indices.size() == num_mshrs)
+            {
+#ifdef DEBUG_MSHR
+              display(); cout << " MSHR full, no entry for line " << hex << line_addr << dec << ", nack request [" << req_lqe << "] at time " << curr_time << " "; req_lqe->display();
+#endif
+            }
+            else // found in MSHRs, nack it
+            {
+#ifdef DEBUG_MSHR
+              display(); cout << " MSHR line addr " << hex << line_addr << dec << " found, nack request [" << req_lqe << "] at time " << curr_time << " "; req_lqe->display();
+#endif
+            }
+            req_lqe->type = et_nack;
+            if (req_lqe->from.size() > 1)
+            {
+              if (geq->is_nuca && req_lqe->from.top()->num == num) {
+                req_lqe->from.top()->add_rep_event(curr_time + l2_to_l1_t, req_lqe);
+              } else {
+                crossbar->add_rep_event(curr_time + l2_to_xbar_t, req_lqe, this);// to l1 (from.top()) and from is L2, l2 to l1
+              }
+            }
+            else
+            {
+              display();  req_lqe->display();  geq->display();  ASSERTX(0);
+            }
+          }
+          else
+          {
+#ifdef DEBUG_MSHR
+            display(); cout << " MSHR insert line addr " << hex << line_addr << dec << " for request [" << req_lqe << "] "; req_lqe->display();
+#endif
+            uint32_t mshr_idx = num_mshrs;
+            for (mshr_idx = 0; mshr_idx < num_mshrs; mshr_idx++)
+            {
+              if (mshrs[mshr_idx]->valid == false) break;
+            }
+            assert(mshr_idx < num_mshrs);
+            mshr_indices.insert(make_pair(line_addr, mshr_idx));
+            mshrs[mshr_idx]->allocate(line_addr, req_lqe);
+            req_lqe->from.push(this);
+            if (directory && ( (geq->is_nuca && geq->which_mc(address) == directory->num) ||
+                  (geq->is_asymmetric == false && geq->which_mc(address) == directory->num) ))
+            {
+              directory->add_req_event(curr_time + l2_to_dir_t, req_lqe);
+            }
+            else
+            {
+              crossbar->add_req_event(curr_time + l2_to_xbar_t, req_lqe, this);// Jiayi, from.top() and from is L2, to dir
+            }
+          }
+
           if (is_coherence_miss == false)
           {
             (etype == et_write) ? num_wr_miss++ : num_rd_miss++;
           }
-
-          req_lqe->from.push(this);
-          if (directory && ( (geq->is_nuca && geq->which_mc(address) == directory->num) ||
-                (geq->is_asymmetric == false && geq->which_mc(address) == directory->num) ))
-          {
-            directory->add_req_event(curr_time + l2_to_dir_t, req_lqe);
-          }
-          else
-          {
-            crossbar->add_req_event(curr_time + l2_to_xbar_t, req_lqe, this);// Jiayi, from.top() and from is L2, to dir
-          }
         }
         else if (req_lqe->from.size() > 1)
         {
-          /* Jiayi, deal with MSHRs begin */
-          assert(mshrs.find(tag) != mshrs.end());
-#ifdef PRINT_MSHR
-          display(); cout << "MSHR erase tag " << tag << " for request (hit) "; req_lqe->display();
-#endif
-          mshrs.erase(tag);
-          /* MSHRs end */
           if (!geq->is_nuca || (geq->is_nuca && req_lqe->from.top()->num == num)) {
             req_lqe->from.top()->add_rep_event(curr_time + l2_to_l1_t, req_lqe);
           } else {
