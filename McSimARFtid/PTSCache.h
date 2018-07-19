@@ -42,6 +42,30 @@ using namespace std;
 namespace PinPthread
 {
 
+  class MSHREntry
+  {
+    public:
+      bool valid;
+      uint64_t line_addr;
+      LocalQueueElement *target;
+      list<LocalQueueElement *> target_list;
+
+      MSHREntry() : valid(false), line_addr(0), target(NULL), target_list() {}
+      void release()
+      {
+        valid = false;
+        line_addr = 0;
+        target = NULL;
+        target_list.clear();
+      }
+      void allocate(uint64_t addr, LocalQueueElement *req)
+      {
+        valid = true;
+        line_addr = addr;
+        target = req;
+      }
+  };
+
   class Cache : public Component
   {
     public:
@@ -74,8 +98,9 @@ namespace PinPthread
 
       NoC * noc;
 
-      std::multimap<uint64_t, LocalQueueElement *> mshrs;
       uint32_t num_mshrs;
+      std::map<uint64_t, uint32_t> mshr_indices; // line_addr -> entry id
+      MSHREntry **mshrs;
 
       virtual void show_state(uint64_t) = 0;
       void display_event(uint64_t curr_time, LocalQueueElement *, const string &);
