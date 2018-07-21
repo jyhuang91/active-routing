@@ -975,7 +975,7 @@ void Mesh2D::process_qs(
             etype != et_hmc_pei)
         {
           num_req_done++;
-          req_noc_latency = (req_noc_latency * (num_req_done - 1) + curr_time - curr_q.first->issue_time) / (num_req_done++);
+          req_noc_latency = (req_noc_latency * (num_req_done - 1) + curr_time - curr_q.first->issue_time) / num_req_done;
         }
       }
       else
