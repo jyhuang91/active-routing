@@ -47,22 +47,30 @@ namespace PinPthread
     public:
       bool valid;
       uint64_t line_addr;
+      event_type etype;
       LocalQueueElement *target;
       list<LocalQueueElement *> target_list;
 
-      MSHREntry() : valid(false), line_addr(0), target(NULL), target_list() {}
+      MSHREntry() : valid(false), line_addr(0), target(NULL), etype(et_nop), target_list() {}
       void release()
       {
-        valid = false;
+        valid     = false;
         line_addr = 0;
-        target = NULL;
+        etype     = et_nop;
+        target    = NULL;
         target_list.clear();
       }
-      void allocate(uint64_t addr, LocalQueueElement *req)
+      void allocate(uint64_t addr, LocalQueueElement *req, event_type et)
       {
         valid = true;
         line_addr = addr;
-        target = req;
+        etype     = et;
+        target    = req;
+      }
+      void add(LocalQueueElement *req)
+      {
+        assert(req->type == et_read); // only read will add
+        target_list.push_back(req);
       }
   };
 

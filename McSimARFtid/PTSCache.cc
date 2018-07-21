@@ -621,6 +621,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
         if (mshr_indices.find(line_addr) != mshr_indices.end())
         {
           uint32_t mshr_idx = mshr_indices[line_addr];
+          assert(mshrs[mshr_idx]->valid);
           if (req_lqe->type == et_read && mshrs[mshr_idx]->etype == et_read)
           {
 #ifdef DEBUG_MSHR
@@ -2068,6 +2069,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
           if (mshr_indices.find(line_addr) != mshr_indices.end())
           {
             uint32_t mshr_idx = mshr_indices[line_addr];
+            assert(mshrs[mshr_idx]->valid);
             if (req_lqe->type == et_read && mshrs[mshr_idx]->etype == et_read)
             {
 #ifdef DEBUG_MSHR
