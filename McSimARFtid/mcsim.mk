@@ -8,15 +8,15 @@ LIBS = ../../../extras/xed2-intel64/lib/libxed.a
 INCS = -I${PIN_HOME}/extras/xed2-intel64/include -I${MCSIM_PARENT_DIR}/CasHMC/sources
 
 ifeq ($(TAG),dbg)
-  DBG = -Wall
-  OPT = -ggdb -g -O0
-else ifeq($(TAG),rb)
-  DBG = -DRUNTIME_KNOB
-  OPT = -O3 -g
+	DBG = -Wall
+	OPT = -ggdb -g -O0
+else ifeq ($(TAG),rb)
+	DBG += -DRUNTIME_KNOB
+	OPT = -O3 -g
 else
-  #DBG = -DNDEBUG
-  DBG =
-  OPT = -O3 -g
+	#DBG = -DNDEBUG
+	DBG =
+	OPT = -O3 -g
 endif
 
 #DBG += -DDEBUG_CACHE
