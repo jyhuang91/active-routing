@@ -21,6 +21,7 @@ struct pb_Parameters {
 				 * are owned. */
   int  nthreads;    /* number of threads */
   int  niteration;      /* start point of iteration */
+  int  niteration2;      /* number of second iteration do_work*/
 };
 
 /* Read command-line parameters.

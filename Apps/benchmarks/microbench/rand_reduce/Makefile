@@ -1,5 +1,5 @@
 
-TRGS = rand_reduce ar_rand_reduce
+TRGS = rand_reduce ar_rand_reduce pei_rand_reduce
 
 LIB_DEPEND = hooks
 
@@ -24,6 +24,8 @@ $(LIB_DEPEND):
 rand_reduce: main.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_rand_reduce: main_ar.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+pei_rand_reduce: main_pei.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 
 clean:
