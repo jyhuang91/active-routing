@@ -62,7 +62,7 @@ namespace PinPthread
       }
       void allocate(uint64_t addr, LocalQueueElement *req, event_type et)
       {
-        valid = true;
+        valid     = true;
         line_addr = addr;
         etype     = et;
         target    = req;
@@ -112,6 +112,7 @@ namespace PinPthread
 
       virtual void show_state(uint64_t) = 0;
       void display_event(uint64_t curr_time, LocalQueueElement *, const string &);
+      void display_mshr_event(uint64_t curr_time, LocalQueueElement *, const string &, const string &);
 
 
     public:

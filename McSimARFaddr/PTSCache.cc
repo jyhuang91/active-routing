@@ -72,6 +72,20 @@ void Cache::display_event(uint64_t curr_time, LocalQueueElement * lqe, const str
 }
 
 
+void Cache::display_mshr_event(uint64_t curr_time, LocalQueueElement *lqe, const string &state, const string &action)
+{
+#ifdef DEBUG_CACHE
+  if (lqe->address >= ((search_addr >> set_lsb) << set_lsb) &&
+      lqe->address <  (((search_addr >> set_lsb) + 1) << set_lsb))
+#endif
+  {
+    uint64_t line_addr = (lqe->address >> set_lsb) << set_lsb;
+    cout << "  -- [" << setw(7) << curr_time << "] " << type << " [" << num << "] "
+      << state << hex << line_addr << action << " [" << lqe << "] " << dec;
+    lqe->display();
+  }
+}
+
 CacheL1::CacheL1(
     component_type type_,
     uint32_t num_,
@@ -353,7 +367,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
           rep_lqe->from.pop();
           /* Jiayi, deal with MSHRs begin */
 #ifdef DEBUG_MSHR
-          display(); cout << " MSHR erase line addr: " << hex << line_addr << " for reply [" << rep_lqe << "] " << dec; rep_lqe->display();
+          display_mshr_event(curr_time, rep_lqe, "MSHR erase line addr: ", " for reply");
 #endif
           assert(mshr_indices.find(line_addr) != mshr_indices.end());
           mshr_idx = mshr_indices[line_addr];
@@ -510,7 +524,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
           //tags[set].erase(set_iter);
           /* Jiayi, deal with MSHRs begin */
 #ifdef DEBUG_MSHR
-          display(); cout << " MSHR erase line addr: " << hex << line_addr << " for reply [" << rep_lqe << "] " << dec; rep_lqe->display();
+          display_mshr_event(curr_time, rep_lqe, "MSHR erase line addr: ", " for reply");
 #endif
           assert(mshr_indices.find(line_addr) != mshr_indices.end());
           mshr_idx = mshr_indices[line_addr];
@@ -625,14 +639,14 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
           if (req_lqe->type == et_read && mshrs[mshr_idx]->etype == et_read)
           {
 #ifdef DEBUG_MSHR
-            display(); cout << " MSHR line addr " << hex << line_addr << " matched and is read, add to target list for request [" << req_lqe << "]" << dec; req_lqe->display();
+            display_mshr_event(curr_time, req_lqe, "MSHR line addr ", " matched and is read, add to target list for request");
 #endif
             mshrs[mshr_idx]->add(req_lqe);
           }
           else
           {
 #ifdef DEBUG_MSHR
-            display(); cout << " MSHR line addr " << hex << line_addr << " read/write conflict, nack request [" << req_lqe << "]" << dec; req_lqe->display();
+            display_mshr_event(curr_time, req_lqe, "MSHR line addr ", " read/write conflict, nack request");
 #endif
             req_lqe->type = et_nack;
             add_event_to_lsu(curr_time, req_lqe);
@@ -641,7 +655,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
         else if (mshr_indices.size() == num_mshrs)
         {
 #ifdef DEBUG_MSHR
-          display(); cout << " MSHR full, no entry for line "  << hex << line_addr << ", nack request [" << req_lqe << "]" << dec; req_lqe->display();
+          display_mshr_event(curr_time, req_lqe, "MSHR full, no entry for line ", ", nack request");
 #endif
           req_lqe->type = et_nack;
           add_event_to_lsu(curr_time, req_lqe);
@@ -649,7 +663,7 @@ uint32_t CacheL1::process_event(uint64_t curr_time)
         else
         {
 #ifdef DEBUG_MSHR
-          display(); cout << " MSHR insert line addr " << hex << line_addr << " for request [" << req_lqe << "] " << dec; req_lqe->display();
+          display_mshr_event(curr_time, req_lqe, "MSHR insert line addr ", " for request");
 #endif
           uint32_t mshr_idx = num_mshrs;
           for (mshr_idx = 0; mshr_idx < num_mshrs; mshr_idx++)
@@ -1165,7 +1179,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
       }
       /* Jiayi, deal with MSHRs begin */
 #ifdef DEBUG_MSHR
-      display(); cout << " MSHR erase line addr: " << hex << line_addr << " for reply [" << rep_lqe << "] " << dec; rep_lqe->display();
+      display_mshr_event(curr_time, rep_lqe, "MSHR erase line addr: ", " for reply");
 #endif
       assert(mshr_indices.find(line_addr) != mshr_indices.end());
       uint32_t mshr_idx = mshr_indices[line_addr];
@@ -1295,7 +1309,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
 
       /* Jiayi, deal with MSHRs begin */
 #ifdef DEBUG_MSHR
-      display(); cout << " MSHR erase line addr: " << hex << line_addr << " for reply [" << rep_lqe << "] " << dec; rep_lqe->display();
+      display_mshr_event(curr_time, rep_lqe, "MSHR erase line addr: ", " for reply");
 #endif
       assert(mshr_indices.find(line_addr) != mshr_indices.end());
       uint32_t mshr_idx = mshr_indices[line_addr];
@@ -1602,7 +1616,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
       {
         /* Jiayi, deal with MSHRs begin */
 #ifdef DEBUG_MSHR
-        display(); cout << " MSHR erase line addr: " << hex << line_addr << " for reply [" << rep_lqe << dec << "] at tick " << curr_time << " "; rep_lqe->display();
+        display_mshr_event(curr_time, rep_lqe, "MSHR erase line addr: ", " for reply");
 #endif
         assert(mshr_indices.find(line_addr) != mshr_indices.end());
         uint32_t mshr_idx = mshr_indices[line_addr];
@@ -1906,7 +1920,11 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
                   (*(set_iter->sharedl1.begin()) == req_lqe->from.top()))
               {
                 set_iter->last_access_time = curr_time;
-                set_iter->type = cs_tr_to_m;
+                if (mshr_indices.find(line_addr) == mshr_indices.end() &&
+                    mshr_indices.size() < num_mshrs)
+                {
+                  set_iter->type = cs_tr_to_m;
+                }
               }
               else
               {
@@ -2073,14 +2091,14 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
             if (req_lqe->type == et_read && mshrs[mshr_idx]->etype == et_read)
             {
 #ifdef DEBUG_MSHR
-              display(); cout << " MSHR line addr " << hex << line_addr << " matched and is read, add to target list for request [" << req_lqe << "]" << dec; req_lqe->display();
+              display_mshr_event(curr_time, req_lqe, "MSHR line addr ", " matched and is read, add to target list for request");
 #endif
               mshrs[mshr_idx]->add(req_lqe);
             }
             else
             {
 #ifdef DEBUG_MSHR
-              display(); cout << " MSHR line addr " << hex << line_addr << " read/write conflict, nack request [" << req_lqe << "]" << dec; req_lqe->display();
+              display_mshr_event(curr_time, req_lqe, "MSHR line addr ", " read/write conflict, nack request");
 #endif
               req_lqe->type = et_nack;
               if (req_lqe->from.size() > 1)
@@ -2100,7 +2118,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
           else if (mshr_indices.size() == num_mshrs)
           {
 #ifdef DEBUG_MSHR
-            display(); cout << " MSHR full, no entry for line " << hex << line_addr << ", nack request [" << req_lqe << dec << "] at time " << curr_time << " "; req_lqe->display();
+            display_mshr_event(curr_time, req_lqe, "MSHR full, no entry for line ", ", nack request");
 #endif
             req_lqe->type = et_nack;
             if (req_lqe->from.size() > 1)
@@ -2119,7 +2137,7 @@ uint32_t CacheL2::process_event(uint64_t curr_time)
           else
           {
 #ifdef DEBUG_MSHR
-            display(); cout << " MSHR insert line addr " << hex << line_addr << " for request [" << req_lqe << dec << "] "; req_lqe->display();
+            display_mshr_event(curr_time, req_lqe, "MSHR insert line addr ", " for request");
 #endif
             uint32_t mshr_idx = num_mshrs;
             for (mshr_idx = 0; mshr_idx < num_mshrs; mshr_idx++)
