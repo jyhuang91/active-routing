@@ -97,20 +97,25 @@ void* do_work(void* args)
     {
       if(dangling[v]==1)
       {
-        dp_tid[tid] = dp_tid[tid] + d*(PR[v]/N_real);
+        //dp_tid[tid] = dp_tid[tid] + d*(PR[v]/N_real);
         //printf("\n %f %f %f %f",dp,d,D[uu],N_real);
         //UPDATE(&PR[v], NULL, &dp, ADD);
+        UPDATE(&PR[v], NULL, &dp, PEI);
       }
     }
-    pthread_mutex_lock(&lock);
-    dp = dp + dp_tid[tid];
-    pthread_mutex_unlock(&lock);
+    //pthread_mutex_lock(&lock);
+    //dp = dp + dp_tid[tid];
+    //pthread_mutex_unlock(&lock);
     //printf("\n Outlinks Done %f",dp);
 
     //GATHER(&dp, &dp_tid[tid], &dp, arg->P);//gather behaves as implecit barrier 
                                         //so barrier needed after that 
-    pthread_barrier_wait(arg->barrier);
+    //pthread_barrier_wait(arg->barrier);
     
+    if (tid == 0) {
+      dp = dp * d / N_real;
+    }
+
     v=0;
 
     //Calculate Pageranks
@@ -118,23 +123,27 @@ void* do_work(void* args)
     {
       if(exist[v]==1)   //if vertex exists
       {
-        pgtmp[v] = r;//dp + (r)/N_real;     //dangling pointer usage commented out
-        double delta = d*PR[v]/outlinks[v]; 
+        //pgtmp[v] = r;//dp + (r)/N_real;     //dangling pointer usage commented out
+        double local_sum = r;
         //printf("\n pgtmp:%f test:%d",pgtmp[uu],test[uu]);
-        for(int j=0;j<test2[v];j++)
+        for(int j=0;j<test[v];j++)
         {
           //if inlink
           //printf("\nuu:%d id:%d",uu,W_index[uu][j]);
           //pgtmp[v] = pgtmp[v] + (d*PR[W_index[v][j]]/outlinks[W_index[v][j]]);  //replace d with dp if dangling PRs required
-          UPDATE((void *) &delta, (void *) &pgtmp[W_index[v][j]], (void *) &pgtmp[W_index[v][j]], PEI);
+          //UPDATE(&PR[W_index[v][j]], &outlinks[W_index[v][j]], &pgtmp[v], MULT);
+          local_sum += (d*PR[W_index[v][j]]/outlinks[W_index[v][j]]);  //replace d with dp if dangling PRs required
         }
-        //if (test[v] > 0) {
-        //  GATHER(&PR[W_index[0][0]], &outlinks[W_index[0][0]], &pgtmp[v], 1);
-        //  pgtmp[v] *= d;
-        //}
+        if (test[v] > 0) {
+          //GATHER(&PR[W_index[0][0]], &outlinks[W_index[0][0]], &pgtmp[v], 1);
+          //pgtmp[v] *= d;
+          if(local_sum>=1.0)
+            local_sum = 1.0;
+          UPDATE(&local_sum, NULL, &pgtmp[v], PEI);
+        }
       }
-      if(pgtmp[v]>=1.0)
-        pgtmp[v] = 1.0;
+      //if(pgtmp[v]>=1.0)
+      //  pgtmp[v] = 1.0;
     }
     //printf("\n Ranks done");
     //pthread_barrier_wait(arg->barrier);
@@ -543,7 +552,7 @@ void pr_graph_first_scan(FILE *fp, int *inlinks, int *outlinks, int *exist, int 
     outlinks[number0]++;
     exist[number0] = 1;
     exist[number1] = 1;
-    test2[number0] = 0;
+    test2[number0] = 1;
     dangling[number1] = 1;
   }
 }
@@ -578,18 +587,13 @@ void pr_graph_second_scan(FILE *fp, int N, double ***W, int ***W_index, int *inl
 
     inter = test[number1];
 
-    //(*W_index)[number1][inter] = number0;
+    (*W_index)[number1][inter] = number0;
     test[number1]++;
-
-    inter = test2[number0];
-
-    (*W_index)[number0][inter] = number1;
-    test2[number0]++;
   }
 
   for(int i=0;i<N;i++)
   { 
-    if(test2[i] != 0 && dangling[i]==1)
+    if(test2[i]==1 && dangling[i]==1)
       dangling[i]=0;
   }
 
