@@ -976,6 +976,11 @@ void O3Core::add_rep_event(
   }
   else
   {
+    if (local_event->type == et_hmc_pei)
+    {
+      num_update_ins++;
+      total_update_roundtrip_time += geq->curr_time - local_event->issue_time;
+    }
     uint64_t aligned_event_time = event_time;
     if (aligned_event_time%process_interval != 0)
     {

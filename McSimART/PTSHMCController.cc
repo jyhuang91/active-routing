@@ -214,6 +214,11 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     req_event.insert(pair<uint64_t, LocalQueueElement *>(req_id, lqele));
     num_reqs++;
+    if (lqele->type == et_hmc_pei)
+    {
+      num_update++;
+      total_update_req_time += geq->curr_time - lqele->issue_time;
+    }
   }
 
   uint64_t page_num = (lqele->address >> page_sz_base_bit);
@@ -327,6 +332,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         else
         {
           assert(tran->transactionType == PIMINS_DOT);
+          total_update_stall_time += curr_time - tran_buf.begin()->first;
         }
         outstanding_req.insert(make_pair(req_id, curr_time));
       }
