@@ -1,0 +1,59 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+CC	./Makefile	/^CC = gcc$/;"	m
+COMMON_SRC	./Makefile	/^COMMON_SRC := $(wildcard $(CURDIR)\/*.c)$/;"	m
+COMPILE_C	./Makefile	/^COMPILE_C = $(CC) $(CFLAGS) -O2 $(INCLUDES)$/;"	m
+C_SRC	./Makefile	/^C_SRC := $(wildcard $(CURDIR)\/includes\/*.c)$/;"	m
+DEBUG	./main.c	14;"	d	file:
+INCLUDES	./Makefile	/^INCLUDES = -I$(CURDIR)\/includes -I$(CURDIR)$/;"	m
+K	./main.c	15;"	d	file:
+LDFLAGS	./Makefile	/^LDFLAGS = -lm$/;"	m
+LEARN_RATE	./main.c	16;"	d	file:
+LOWER_MASK	./twister.c	51;"	d	file:
+M	./twister.c	48;"	d	file:
+MATRIX_A	./twister.c	49;"	d	file:
+N	./twister.c	47;"	d	file:
+NUM_HIDDEN	./main.c	17;"	d	file:
+NUM_VISIBLE	./main.c	21;"	d	file:
+OUTPUT_FILE	./main.c	11;"	d	file:
+RAND	./main.c	18;"	d	file:
+TEST_FILE	./main.c	10;"	d	file:
+TRAIN_FILE	./main.c	9;"	d	file:
+UPPER_MASK	./twister.c	50;"	d	file:
+activateHiddenUnits	./main.c	/^void activateHiddenUnits(int visible[], int stochastic, int hidden[])$/;"	f
+activateVisibleUnits	./main.c	/^void activateVisibleUnits(int hidden[], int stochastic, int visible[])$/;"	f
+edges	./main.c	/^double edges[NUM_VISIBLE + 1][NUM_HIDDEN + 1]; \/\/ edges[v][h] = the edge between visible unit v and hidden unit h$/;"	v
+genrand_int31	./twister.c	/^long genrand_int31(void)$/;"	f
+genrand_int32	./twister.c	/^unsigned long genrand_int32(void)$/;"	f
+genrand_real1	./twister.c	/^double genrand_real1(void)$/;"	f
+genrand_real2	./twister.c	/^double genrand_real2(void)$/;"	f
+genrand_real3	./twister.c	/^double genrand_real3(void)$/;"	f
+genrand_res53	./twister.c	/^double genrand_res53(void)$/;"	f
+init_by_array	./twister.c	/^void init_by_array(unsigned long init_key[], int key_length)$/;"	f
+init_genrand	./twister.c	/^void init_genrand(unsigned long s)$/;"	f
+magic_timing_begin	./includes/timingUtils.h	26;"	d
+magic_timing_begin	./includes/timingUtils.h	2;"	d
+magic_timing_begin	./includes/timingUtils.h	69;"	d
+magic_timing_end	./includes/timingUtils.h	37;"	d
+magic_timing_end	./includes/timingUtils.h	6;"	d
+magic_timing_end	./includes/timingUtils.h	73;"	d
+magic_timing_report	./includes/timingUtils.h	15;"	d
+magic_timing_report	./includes/timingUtils.h	49;"	d
+magic_timing_report	./includes/timingUtils.h	77;"	d
+main	./main.c	/^int main(int argc, char *argv[])$/;"	f
+mt	./twister.c	/^static unsigned long mt[N]; \/* the array for the state vector  *\/$/;"	v	file:
+mti	./twister.c	/^static int mti=N+1; \/* mti==N+1 means mt[N] is not initialized *\/$/;"	v	file:
+photonEndTiming	./includes/photonTiming.c	/^unsigned int * photonEndTiming()$/;"	f
+photonPrintTiming	./includes/photonTiming.c	/^void photonPrintTiming(unsigned int * elapsed)$/;"	f
+photonReportTiming	./includes/photonTiming.c	/^unsigned int * photonReportTiming(unsigned int* startCycles,unsigned int* endCycles)$/;"	f
+photonStartTiming	./includes/photonTiming.c	/^unsigned int* photonStartTiming()$/;"	f
+processLine	./main.c	/^void processLine(int target[], FILE * stream, int optActual[])$/;"	f
+rand_twister	./twister.c	/^double rand_twister(void)$/;"	f
+testActuals	./main.c	/^int testActuals[TEST_USERS][MOVIES];$/;"	v
+testPredictions	./main.c	/^int testPredictions[TEST_USERS][MOVIES];$/;"	v
+train	./main.c	/^void train()$/;"	f
+trainingData	./main.c	/^int trainingData[USERS][NUM_VISIBLE];$/;"	v
