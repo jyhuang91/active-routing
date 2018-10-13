@@ -41,15 +41,18 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 		// Get the sum of energies
 		double sum = 0;
 		int v;
+    int count = 0;
 		for (v = 0; v < NUM_VISIBLE + 1; v++) // remove the +1 if you want to skip the bias
 		{
 			if (visible[v] != -1) {
+        ++count;
 				//sum += (double) visible[v] * edges[v][h];
         UPDATE(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
       }
 		}
 		//hiddenEnergies[h] = sum;
-    GATHER(NULL, NULL, &hiddenEnergies[h], 1);
+    if (count != 0)
+      GATHER(NULL, NULL, &hiddenEnergies[h], 1);
 	}
 
 	// Activate hidden units
