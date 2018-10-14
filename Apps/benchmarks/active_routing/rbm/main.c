@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hooks.h>
+#include <pthread.h>
 
 #include "rbm.h"
 
@@ -21,6 +21,17 @@
 // Fixed constants
 #define NUM_VISIBLE (MOVIES * K)
 
+#define NUM_THREADS 10
+typedef struct
+{
+  int tid; 
+  int P;
+  pthread_barrier_t* barrier;
+  pthread_mutex_t*   mutex;
+}thread_arg_t;
+
+thread_arg_t thread_arg[1024];
+pthread_t   thread_handle[1024];   //MAX threads and pthread handlers
 
 
 double edges[NUM_VISIBLE + 1][NUM_HIDDEN + 1]; // edges[v][h] = the edge between visible unit v and hidden unit h
@@ -28,7 +39,6 @@ int trainingData[USERS][NUM_VISIBLE];
 
 int testActuals[TEST_USERS][MOVIES];
 int testPredictions[TEST_USERS][MOVIES];
-
 
 
 void activateHiddenUnits(int visible[], int stochastic, int hidden[])
@@ -84,17 +94,21 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	// Calculate activation energy for visible units
 	double visibleEnergies[NUM_VISIBLE];
 	int v;
+  int count;
 	for (v = 0; v < NUM_VISIBLE; v++)
 	{
 		// Get the sum of energies
 		double sum = 0;
 		int h;
+    count = 0;
 		for (h = 0; h < NUM_HIDDEN + 1; h++) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
+      ++count;
       UPDATE(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
     }
 		//visibleEnergies[v] = sum;
-    GATHER(NULL, NULL, &visibleEnergies[v], 1);
+    if (count != 0)
+      GATHER(NULL, NULL, &visibleEnergies[v], 1);
 	}
 
 	// Activate visible units, handles K visible units at a time
@@ -104,13 +118,16 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		double sumOfExps = 0.0; // this is the denominator
 
 		int j;
+    count = 0;
 		for (j = 0; j < K; j++)
 		{
 			exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
+      ++count;
       UPDATE( &exps[j], NULL, &sumOfExps, ADD);
 		}
-    GATHER(NULL, NULL, &sumOfExps, 1);
+    if (count != 0)
+      GATHER(NULL, NULL, &sumOfExps, 1);
 
 		// Getting the probabilities
 
@@ -134,12 +151,15 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		else // used for prediction: uses expectation
 		{
 
+      count = 0;
 			double expectation = 0.0;
 			for (j = 0; j < K; j++) {
 				//expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
+        ++count;
         UPDATE(&j, &probs[j], &expectation, MULT);
       }
-      GATHER(NULL, NULL, &expectation, 1);
+      if (count != 0)
+        GATHER(NULL, NULL, &expectation, 1);
 
 			long prediction = round(expectation);
 
@@ -154,62 +174,6 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	}
 
 	visible[NUM_VISIBLE] = 1; // turn on bias
-}
-
-void train()
-{
-	int user;
-	for (user = 0; user < USERS; user++)
-	{
-		// ==> Phase 1: Activate hidden units
-
-		int data[NUM_VISIBLE + 1];
-		memcpy(data, trainingData[user], NUM_VISIBLE * sizeof(int)); // copy entire array
-		data[NUM_VISIBLE] = 1; // turn on bias
-
-		// Activate hidden units
-		int hidden[NUM_HIDDEN + 1];
-		activateHiddenUnits(data, 1, hidden);
-
-		// Get positive association
-		int pos[NUM_VISIBLE + 1][NUM_HIDDEN + 1];
-		int v;
-		for (v = 0; v < NUM_VISIBLE + 1; v++)
-		{
-			if (data[v] != -1)
-			{
-				int h;
-				for (h = 0; h < NUM_HIDDEN + 1; h++)
-					pos[v][h] = data[v] * hidden[h];
-			}
-		}
-
-		// ==> Phase 2: Reconstruction (activate visible units)
-
-		// Activate visible units
-		int visible[NUM_VISIBLE + 1];
-		activateVisibleUnits(hidden, 1, visible);
-
-		// Get negative association
-		int neg[NUM_VISIBLE + 1][NUM_HIDDEN + 1];
-		for (v = 0; v < NUM_VISIBLE + 1; v++)
-		{
-			if (data[v] != -1)
-			{
-				int h;
-				for (h = 0; h < NUM_HIDDEN + 1; h++)
-					neg[v][h] = hidden[h] * visible[v];
-			}
-		}
-
-		// ==> Phase 3: Update the weights
-		for (v = 0; v < NUM_VISIBLE + 1; v++)
-		{
-			int h;
-			for (h = 0; h < NUM_HIDDEN + 1; h++)
-				edges[v][h] = edges[v][h] + LEARN_RATE * (pos[v][h] - neg[v][h]);
-		}
-	}
 }
 
 void processLine(int target[], FILE * stream, int optActual[])
@@ -237,6 +201,82 @@ void processLine(int target[], FILE * stream, int optActual[])
 	}
 }
 
+void* do_work(void* args) {
+  volatile thread_arg_t* arg = (thread_arg_t*) args;
+  int tid = arg->tid;
+  int P   = arg->P;
+  pthread_barrier_t* barrier = arg->barrier;
+  pthread_mutex_t*   mutex   = arg->mutex;
+
+	int loop;
+	for (loop = 0; loop < LOOPS; loop++)
+  {
+    pthread_barrier_wait(barrier);
+    if (DEBUG) printf("LOOP %d\n", loop);
+
+    int user;
+    for (user = tid; user < USERS; user += P)
+    {
+      // ==> Phase 1: Activate hidden units
+
+      int data[NUM_VISIBLE + 1];
+      memcpy(data, trainingData[user], NUM_VISIBLE * sizeof(int)); // copy entire array
+      data[NUM_VISIBLE] = 1; // turn on bias
+
+      // Activate hidden units
+      int hidden[NUM_HIDDEN + 1];
+      activateHiddenUnits(data, 1, hidden);
+
+      // Get positive association
+      int pos[NUM_VISIBLE + 1][NUM_HIDDEN + 1];
+      int v;
+      for (v = 0; v < NUM_VISIBLE + 1; v++)
+      {
+        if (data[v] != -1)
+        {
+          int h;
+          for (h = 0; h < NUM_HIDDEN + 1; h++)
+            pos[v][h] = data[v] * hidden[h];
+        }
+      }
+
+      // ==> Phase 2: Reconstruction (activate visible units)
+
+      // Activate visible units
+      int visible[NUM_VISIBLE + 1];
+      activateVisibleUnits(hidden, 1, visible);
+
+      // Get negative association
+      int neg[NUM_VISIBLE + 1][NUM_HIDDEN + 1];
+      for (v = 0; v < NUM_VISIBLE + 1; v++)
+      {
+        if (data[v] != -1)
+        {
+          int h;
+          for (h = 0; h < NUM_HIDDEN + 1; h++)
+            neg[v][h] = hidden[h] * visible[v];
+        }
+      }
+
+      // ==> Phase 3: Update the weights
+      
+      //if (DEBUG) printf("tid[%d]: start updating the weights for user %d\n", tid, user);
+      for (v = 0; v < NUM_VISIBLE + 1; v++)
+      {
+        int h;
+        for (h = 0; h < NUM_HIDDEN + 1; h++) {
+          pthread_mutex_lock(mutex);
+          edges[v][h] = edges[v][h] + LEARN_RATE * (pos[v][h] - neg[v][h]);
+          pthread_mutex_unlock(mutex);
+        }
+      }
+
+      pthread_barrier_wait(barrier);
+    }
+  }
+  return NULL;
+}
+
 int main(int argc, char *argv[])
 {
   //**Timing**/
@@ -255,17 +295,33 @@ int main(int argc, char *argv[])
 
 	// -------- Training ---------
 
-    
-  roi_begin(); 
-	int loop;
-	for (loop = 0; loop < LOOPS; loop++)
-	{
-		if (DEBUG)
-		    printf("Loop: %d\n", loop);
-		train();
-	}
-  roi_end(); 
 
+  pthread_barrier_t   barrier;
+  pthread_mutex_t     mutex;
+
+  pthread_mutex_init(&mutex, NULL);
+  pthread_barrier_init(&barrier, NULL, NUM_THREADS);
+
+  for (i = 0; i < NUM_THREADS; i++) {
+    thread_arg[i].tid     = i;
+    thread_arg[i].P       = NUM_THREADS;
+    thread_arg[i].barrier = &barrier;
+    thread_arg[i].mutex   = &mutex;
+  }
+
+  roi_begin(); 
+  for (i = 1; i < NUM_THREADS; i++) {
+    pthread_create(thread_handle + i,
+        NULL,
+        do_work,
+        (void*) &thread_arg[i]);
+  }
+  do_work((void*) &thread_arg[0]);
+
+  for (i = 1; i < NUM_THREADS; i++) {
+    pthread_join(thread_handle[i], NULL);
+  }
+  roi_end(); 
 
 	if (DEBUG)
 	{

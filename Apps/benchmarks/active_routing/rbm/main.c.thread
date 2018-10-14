@@ -51,15 +51,18 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 		// Get the sum of energies
 		double sum = 0;
 		int v;
+    int count = 0;
 		for (v = 0; v < NUM_VISIBLE + 1; v++) // remove the +1 if you want to skip the bias
 		{
 			if (visible[v] != -1) {
+        ++count;
 				//sum += (double) visible[v] * edges[v][h];
         UPDATE(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
       }
 		}
 		//hiddenEnergies[h] = sum;
-    GATHER(NULL, NULL, &hiddenEnergies[h], 1);
+    if (count != 0)
+      GATHER(NULL, NULL, &hiddenEnergies[h], 1);
 	}
 
 	// Activate hidden units
@@ -91,17 +94,21 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	// Calculate activation energy for visible units
 	double visibleEnergies[NUM_VISIBLE];
 	int v;
+  int count;
 	for (v = 0; v < NUM_VISIBLE; v++)
 	{
 		// Get the sum of energies
 		double sum = 0;
 		int h;
+    count = 0;
 		for (h = 0; h < NUM_HIDDEN + 1; h++) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
+      ++count;
       UPDATE(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
     }
 		//visibleEnergies[v] = sum;
-    GATHER(NULL, NULL, &visibleEnergies[v], 1);
+    if (count != 0)
+      GATHER(NULL, NULL, &visibleEnergies[v], 1);
 	}
 
 	// Activate visible units, handles K visible units at a time
@@ -111,13 +118,16 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		double sumOfExps = 0.0; // this is the denominator
 
 		int j;
+    count = 0;
 		for (j = 0; j < K; j++)
 		{
 			exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
+      ++count;
       UPDATE( &exps[j], NULL, &sumOfExps, ADD);
 		}
-    GATHER(NULL, NULL, &sumOfExps, 1);
+    if (count != 0)
+      GATHER(NULL, NULL, &sumOfExps, 1);
 
 		// Getting the probabilities
 
@@ -141,12 +151,15 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		else // used for prediction: uses expectation
 		{
 
+      count = 0;
 			double expectation = 0.0;
 			for (j = 0; j < K; j++) {
 				//expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
+        ++count;
         UPDATE(&j, &probs[j], &expectation, MULT);
       }
-      GATHER(NULL, NULL, &expectation, 1);
+      if (count != 0)
+        GATHER(NULL, NULL, &expectation, 1);
 
 			long prediction = round(expectation);
 

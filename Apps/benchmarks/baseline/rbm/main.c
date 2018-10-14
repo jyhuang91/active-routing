@@ -11,7 +11,7 @@
 #define OUTPUT_FILE "out.txt"
 
 // Free parameters
-#define DEBUG 0
+#define DEBUG 1
 #define K 5
 #define LEARN_RATE 0.1
 #define NUM_HIDDEN (3*MOVIES)
@@ -40,10 +40,13 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 		// Get the sum of energies
 		double sum = 0;
 		int v;
+    int count = 0;
 		for (v = 0; v < NUM_VISIBLE + 1; v++) // remove the +1 if you want to skip the bias
 		{
-			if (visible[v] != -1)
+			if (visible[v] != -1) {
+        ++count;
 				sum += (double) visible[v] * edges[v][h];
+      }
 		}
 		hiddenEnergies[h] = sum;
 	}
@@ -77,13 +80,17 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	// Calculate activation energy for visible units
 	double visibleEnergies[NUM_VISIBLE];
 	int v;
+  int count;
 	for (v = 0; v < NUM_VISIBLE; v++)
 	{
 		// Get the sum of energies
 		double sum = 0;
 		int h;
-		for (h = 0; h < NUM_HIDDEN + 1; h++) // remove the +1 if you want to skip the bias
+    count = 0;
+		for (h = 0; h < NUM_HIDDEN + 1; h++) { // remove the +1 if you want to skip the bias
+      ++count;
 			sum += (double) hidden[h] * edges[v][h];
+    }
 		visibleEnergies[v] = sum;
 	}
 
@@ -94,9 +101,11 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		double sumOfExps = 0.0; // this is the denominator
 
 		int j;
+    count = 0;
 		for (j = 0; j < K; j++)
 		{
 			exps[j] = exp(visibleEnergies[v + j]);
+      ++count;
 			sumOfExps += exps[j];
 		}
 
@@ -122,9 +131,12 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		else // used for prediction: uses expectation
 		{
 
+      count = 0;
 			double expectation = 0.0;
-			for (j = 0; j < K; j++)
+			for (j = 0; j < K; j++) {
+        ++count;
 				expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
+      }
 
 			long prediction = round(expectation);
 
