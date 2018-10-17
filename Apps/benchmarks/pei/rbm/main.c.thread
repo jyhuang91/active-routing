@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <hooks.h>
 
 #include "rbm.h"
 
@@ -306,9 +307,8 @@ int main(int argc, char *argv[])
   for (i = 1; i < NUM_THREADS; i++) {
     pthread_join(thread_handle[i], NULL);
   }
-  roi_end(); 
 
-	if (DEBUG)
+	if (0)
 	{
 		// Print weights
 
@@ -368,6 +368,7 @@ int main(int argc, char *argv[])
 			testPredictions[user][i / K] = prediction;
 		}
 	}
+  roi_end(); 
 
 	fclose(testFile);
 	// -------- Writing result ---------
