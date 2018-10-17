@@ -332,6 +332,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         else
         {
           assert(tran->transactionType == PIMINS_DOT);
+          num_update_sent++;
           total_update_stall_time += curr_time - tran_buf.begin()->first;
         }
         outstanding_req.insert(make_pair(req_id, curr_time));
