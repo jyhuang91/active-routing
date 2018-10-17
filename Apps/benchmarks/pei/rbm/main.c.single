@@ -259,7 +259,6 @@ int main(int argc, char *argv[])
 		    printf("Loop: %d\n", loop);
 		train();
 	}
-  roi_end(); 
 
 
 	if (DEBUG)
@@ -323,6 +322,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+  roi_end(); 
 	fclose(testFile);
 	// -------- Writing result ---------
 
