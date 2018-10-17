@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <hooks.h>
 
 #include "rbm.h"
 
@@ -52,7 +53,7 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 		double sum = 0;
 		int v;
     int count = 0;
-		for (v = 0; v < NUM_VISIBLE + 1; v++) // remove the +1 if you want to skip the bias
+		for (v = 0; v < NUM_VISIBLE + 1; v+=8) // remove the +1 if you want to skip the bias
 		{
 			if (visible[v] != -1) {
         ++count;
@@ -101,7 +102,7 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		double sum = 0;
 		int h;
     count = 0;
-		for (h = 0; h < NUM_HIDDEN + 1; h++) { // remove the +1 if you want to skip the bias
+		for (h = 0; h < NUM_HIDDEN + 1; h+=8) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
       ++count;
       UPDATE(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
@@ -119,7 +120,7 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 
 		int j;
     count = 0;
-		for (j = 0; j < K; j++)
+		for (j = 0; j < K; j+=8)
 		{
 			exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
@@ -153,7 +154,7 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 
       count = 0;
 			double expectation = 0.0;
-			for (j = 0; j < K; j++) {
+			for (j = 0; j < K; j+=8) {
 				//expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
         ++count;
         UPDATE(&j, &probs[j], &expectation, MULT);
@@ -321,9 +322,8 @@ int main(int argc, char *argv[])
   for (i = 1; i < NUM_THREADS; i++) {
     pthread_join(thread_handle[i], NULL);
   }
-  roi_end(); 
 
-	if (DEBUG)
+	if (0)
 	{
 		// Print weights
 
@@ -383,6 +383,7 @@ int main(int argc, char *argv[])
 			testPredictions[user][i / K] = prediction;
 		}
 	}
+  roi_end(); 
 
 	fclose(testFile);
 	// -------- Writing result ---------
