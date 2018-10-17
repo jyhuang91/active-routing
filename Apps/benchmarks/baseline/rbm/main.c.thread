@@ -297,7 +297,6 @@ int main(int argc, char *argv[])
   for (i = 1; i < NUM_THREADS; i++) {
     pthread_join(thread_handle[i], NULL);
   }
-  roi_end(); 
 
 	if (DEBUG)
 	{
@@ -360,6 +359,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+  roi_end(); 
 	fclose(testFile);
 	// -------- Writing result ---------
 
