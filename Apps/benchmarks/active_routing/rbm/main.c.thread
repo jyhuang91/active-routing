@@ -122,13 +122,13 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
     count = 0;
 		for (j = 0; j < K; j+=8)
 		{
-			exps[j] = exp(visibleEnergies[v + j]);
+			//exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
       ++count;
-      UPDATE( &exps[j], NULL, &sumOfExps, ADD);
+      UPDATE( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
 		}
     if (count != 0)
-      GATHER(NULL, NULL, &sumOfExps, 1);
+      GATHER(NULL, NULL, &sumOfExps, 1); //TODO: this may have problem in CasHMC, since sumOfExps is reuse for differnt flows
 
 		// Getting the probabilities
 

@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <hooks.h>
 
 #include "rbm.h"
 
@@ -53,17 +52,13 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 		double sum = 0;
 		int v;
     int count = 0;
-		for (v = 0; v < NUM_VISIBLE + 1; v+=8) // remove the +1 if you want to skip the bias
+		for (v = 0; v < NUM_VISIBLE + 1; v++) // remove the +1 if you want to skip the bias
 		{
 			if (visible[v] != -1) {
-        ++count;
-				//sum += (double) visible[v] * edges[v][h];
-        UPDATE(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
+				sum += (double) visible[v] * edges[v][h];
       }
 		}
-		//hiddenEnergies[h] = sum;
-    if (count != 0)
-      GATHER(NULL, NULL, &hiddenEnergies[h], 1);
+		hiddenEnergies[h] = sum;
 	}
 
 	// Activate hidden units
@@ -100,16 +95,14 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	{
 		// Get the sum of energies
 		double sum = 0;
+    double partial_sum = 0;
 		int h;
-    count = 0;
-		for (h = 0; h < NUM_HIDDEN + 1; h+=8) { // remove the +1 if you want to skip the bias
+		for (h = 0; h < NUM_HIDDEN + 1; h += 4) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
-      ++count;
-      UPDATE(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
+      UPDATE(&hidden[h], &edges[v][h], &partial_sum, PEI_DOT);
+      sum += partial_sum;
     }
-		//visibleEnergies[v] = sum;
-    if (count != 0)
-      GATHER(NULL, NULL, &visibleEnergies[v], 1);
+		visibleEnergies[v] = sum;
 	}
 
 	// Activate visible units, handles K visible units at a time
@@ -119,16 +112,11 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		double sumOfExps = 0.0; // this is the denominator
 
 		int j;
-    count = 0;
-		for (j = 0; j < K; j+=8)
+		for (j = 0; j < K; j++)
 		{
-			//exps[j] = exp(visibleEnergies[v + j]);
-			//sumOfExps += exps[j];
-      ++count;
-      UPDATE( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
+			exps[j] = exp(visibleEnergies[v + j]);
+			sumOfExps += exps[j];
 		}
-    if (count != 0)
-      GATHER(NULL, NULL, &sumOfExps, 1); //TODO: this may have problem in CasHMC, since sumOfExps is reuse for differnt flows
 
 		// Getting the probabilities
 
@@ -154,13 +142,9 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 
       count = 0;
 			double expectation = 0.0;
-			for (j = 0; j < K; j+=8) {
-				//expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
-        ++count;
-        UPDATE(&j, &probs[j], &expectation, MULT);
+			for (j = 0; j < K; j++) {
+				expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
       }
-      if (count != 0)
-        GATHER(NULL, NULL, &expectation, 1);
 
 			long prediction = round(expectation);
 
@@ -322,8 +306,9 @@ int main(int argc, char *argv[])
   for (i = 1; i < NUM_THREADS; i++) {
     pthread_join(thread_handle[i], NULL);
   }
+  roi_end(); 
 
-	if (0)
+	if (DEBUG)
 	{
 		// Print weights
 
@@ -383,7 +368,6 @@ int main(int argc, char *argv[])
 			testPredictions[user][i / K] = prediction;
 		}
 	}
-  roi_end(); 
 
 	fclose(testFile);
 	// -------- Writing result ---------
