@@ -26,7 +26,7 @@ namespace CasHMC
 
     inServiceLink = -1;
 
-    switch (SIM_TOPOLOGY) {
+    switch (gTopology) {
       case DUAL_HMC:
       case MESH:
       case DFLY:
@@ -36,7 +36,7 @@ namespace CasHMC
         CPU_LINKS = 4;
         break;
       default:
-        ERROR(header << "topology " << SIM_TOPOLOGY << " not defined");
+        ERROR(header << "topology " << gTopology << " not defined");
         exit(0);
     }
 
@@ -62,7 +62,7 @@ namespace CasHMC
 
     inServiceLink = -1;
 
-    switch (SIM_TOPOLOGY) {
+    switch (gTopology) {
       case DUAL_HMC:
       case MESH:
       case DFLY:
@@ -72,7 +72,7 @@ namespace CasHMC
         CPU_LINKS = 4;
         break;
       default:
-        ERROR(header << "topology " << SIM_TOPOLOGY << " not defined");
+        ERROR(header << "topology " << gTopology << " not defined");
         exit(0);
     }
 
@@ -155,7 +155,7 @@ namespace CasHMC
       if(link == -1) {
         for(int l=0; l<CPU_LINKS; l++) {
           link = FindAvailableLink(inServiceLink, downLinkMasters);
-          if (SIM_TOPOLOGY == DFLY || SIM_TOPOLOGY == MESH) {
+          if (gTopology == DFLY || gTopology == MESH) {
             assert(CPU_LINKS == 1);
             assert(link == 0);
           }

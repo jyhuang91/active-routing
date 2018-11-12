@@ -25,14 +25,28 @@ namespace CasHMC
     downLinkSlaves.reserve(NUM_LINKS);
     upLinkMasters.reserve(NUM_LINKS);
     for(int l=0; l<NUM_LINKS; l++) {
-      if (SIM_TOPOLOGY == DFLY) {
+      if (gTopology == DFLY) {
         downLinkSlaves.push_back(new LinkSlave(debugOut, stateOut, l, true, classID.str()));
-        if (cubeID % 5 == 0 && cubeID / 5 == l) {
-          upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, false, classID.str()));
-        } else {
-          upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, true, classID.str()));
+
+        switch (gDim) {
+          case 4:
+            if (cubeID % 5 == 0 && cubeID / 5 == l) {
+              upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, false, classID.str()));
+            } else {
+              upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, true, classID.str()));
+            }
+            break;
+          case 8:
+            if (cubeID % 21 == 0 && cubeID / 21 == l) {
+              upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, false, classID.str()));
+            } else {
+              upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, true, classID.str()));
+            }
+            break;
+          default:
+            assert(0);
         }
-      } else if(SIM_TOPOLOGY == MESH){
+      } else if(gTopology == MESH){
         downLinkSlaves.push_back(new LinkSlave(debugOut, stateOut, l, true));
         if(cubeID%4 == 0 || cubeID%4 == 3 || cubeID/4 == 0 || cubeID/4 == 3){
           upLinkMasters.push_back(new LinkMaster(debugOut, stateOut, l, false, classID.str()));

@@ -423,8 +423,8 @@ namespace CasHMC
             assert(dataBus->packetCMD != PEI_DOT); 
           }
           else if(dataBus->trace != NULL && dataBus->posted) {
-            dataBus->trace->tranFullLat = ceil(currentClockCycle * (double)tCK/CPU_CLK_PERIOD) - dataBus->trace->tranTransmitTime;
-            dataBus->trace->linkFullLat = ceil(currentClockCycle * (double)tCK/CPU_CLK_PERIOD) - dataBus->trace->linkTransmitTime;
+            dataBus->trace->tranFullLat = ceil(currentClockCycle * (double)tCK/gCpuClkPeriod) - dataBus->trace->tranTransmitTime;
+            dataBus->trace->linkFullLat = ceil(currentClockCycle * (double)tCK/gCpuClkPeriod) - dataBus->trace->linkTransmitTime;
             dataBus->trace->vaultFullLat = currentClockCycle - dataBus->trace->vaultIssueTime;
             delete dataBus->trace;
           }
