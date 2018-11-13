@@ -28,6 +28,10 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   cube_interleave_base_bit = get_param_uint64("cube_interleave_base_bit", 32);
   num_mcs_log2 = log2(mcsim->pts->get_param_uint64("pts.num_mcs", 2));
 
+  uint32_t num_mcs = get_param_uint64("num_mcs", "pts.", 4);
+  uint32_t net_dim = get_param_uint64("net_dim", "pts.", 4);
+  cubes_per_mc = net_dim * net_dim / num_mcs;
+
   hmc_net = hmc_net_;
 
   if (mcsim->hmc_topology == DFLY)
@@ -636,7 +640,17 @@ void PTSHMCController::update_hmc(uint64_t cycles)
 
 int PTSHMCController::get_src_cubeID(int num)
 {
-  int src_cube = num * 5;
+  int src_cube = -1;
+  switch (cubes_per_mc) {
+    case 4:
+      src_cube = num * 5;
+      break;
+    case 16:
+      src_cube = num * 21;
+      break;
+    default:
+      break;
+  }
   if (hmc_top == MESH) //Works only for 4x4;
   {
     switch (num)

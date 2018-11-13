@@ -30,35 +30,35 @@ namespace CasHMC
   {
     public:
       TranStatistic() {
-        readPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        writePerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        atomicPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        reqPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        resPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        flowPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        errorPerLink = vector<unsigned>(TOTAL_NUM_LINKS, 0);
-        retryFailPerLink = vector<unsigned>(TOTAL_NUM_LINKS, 0);
+        readPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        writePerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        atomicPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        reqPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        resPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        flowPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        errorPerLink = vector<unsigned>(gTotalNumLinks, 0);
+        retryFailPerLink = vector<unsigned>(gTotalNumLinks, 0);
 
         hmcTransmitSize = 0;
-        linkActTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        linkPasTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        linkFlowTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        downLinkTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        upLinkTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        downLinkDataSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        upLinkDataSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
+        linkActTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        linkPasTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        linkFlowTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        downLinkTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        upLinkTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        downLinkDataSize = vector<uint64_t>(gTotalNumLinks, 0);
+        upLinkDataSize = vector<uint64_t>(gTotalNumLinks, 0);
 
         tranFullSum = 0;	linkFullSum = 0;	vaultFullSum = 0;	errorRetrySum = 0;
         totalTranCount = 0;		totalErrorCount = 0;
         totalTranFullSum = 0;	totalLinkFullSum = 0;	totalVaultFullSum = 0;	totalErrorRetrySum = 0;
 
-        totalReadPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalWritePerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalAtomicPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalReqPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalResPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalFlowPerLink = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalErrorPerLink = vector<unsigned>(TOTAL_NUM_LINKS, 0);
+        totalReadPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        totalWritePerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        totalAtomicPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        totalReqPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        totalResPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        totalFlowPerLink = vector<uint64_t>(gTotalNumLinks, 0);
+        totalErrorPerLink = vector<unsigned>(gTotalNumLinks, 0);
 
         totalTranFullMax = 0;	totalTranFullMin = -1;
         totalLinkFullMax = 0;	totalLinkFullMin = -1;
@@ -68,13 +68,13 @@ namespace CasHMC
 
         totalHmcTransmitSize = 0;
         totalhmcCtrlLinkTransmitSize = vector<uint64_t>(NUM_LINKS, 0);
-        totalLinkActTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalLinkPasTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalLinkFlowTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalDownLinkTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalUpLinkTransmitSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalDownLinkDataSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
-        totalUpLinkDataSize = vector<uint64_t>(TOTAL_NUM_LINKS, 0);
+        totalLinkActTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        totalLinkPasTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        totalLinkFlowTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        totalDownLinkTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        totalUpLinkTransmitSize = vector<uint64_t>(gTotalNumLinks, 0);
+        totalDownLinkDataSize = vector<uint64_t>(gTotalNumLinks, 0);
+        totalUpLinkDataSize = vector<uint64_t>(gTotalNumLinks, 0);
       }
       ~TranStatistic() {
         tranFullLat.clear();

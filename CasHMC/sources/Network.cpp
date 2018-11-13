@@ -8,10 +8,18 @@ extern double memUtil;					//Frequency of requests - 0.0 = no requests, 1.0 = as
 extern double rwRatio;					//(%) The percentage of reads in request stream
 extern string traceFileName;			//Trace file name
 
+int gDim = -1;
+double gCpuClkPeriod = 0;
+TOPOLOGY gTopology = DFLY;
+int gHmcNumLinks = -1;
+int gTotalNumLinks = -1;
+
+
 namespace CasHMC
 {
 
   Network::Network(int dimension, string bench)
+    : TranStatistic()
   {
     //
     //Class variable initialization
@@ -29,9 +37,9 @@ namespace CasHMC
     computeFinishCycle = 0;
 
     //Check CPU clock cycle and link speed
-    if(CPU_CLK_PERIOD < linkPeriod) {	//Check CPU clock cycle and link speed
-      ERROR(" == Error - WRONG CPU clock cycle or link speed (CPU_CLK_PERIOD should be bigger than (1/LINK_SPEED))");
-      ERROR(" == Error - CPU_CLK_PERIOD : "<<CPU_CLK_PERIOD<<"  1/LINK_SPEED : "<<linkPeriod);
+    if(gCpuClkPeriod < linkPeriod) {	//Check CPU clock cycle and link speed
+      ERROR(" == Error - WRONG CPU clock cycle or link speed (gCpuClkPeriod should be bigger than (1/LINK_SPEED))");
+      ERROR(" == Error - gCpuClkPeriod : "<<gCpuClkPeriod<<"  1/LINK_SPEED : "<<linkPeriod);
       exit(0);
     }
 
@@ -165,7 +173,7 @@ namespace CasHMC
 
   Network::~Network()
   {
-    double elapsedTime = (double)(currentClockCycle*CPU_CLK_PERIOD*1E-9);
+    double elapsedTime = (double)(currentClockCycle*gCpuClkPeriod*1E-9);
     cout << " ## VLTCtrller DRAM_rd_bw:"<<(double)VaultController::DRAM_rd_data/elapsedTime/(1<<30)<< "GBps DRAM_wr_bw:"<<(double)VaultController::DRAM_wr_data/elapsedTime/(1<<30)<<"GBps DRAM_act_bw:" << (double)VaultController::DRAM_act_data/elapsedTime/(1<<30)<<"GBps"<<endl;
     PrintEpochStatistic();
     PrintFinalStatistic();
@@ -205,8 +213,38 @@ namespace CasHMC
 
   Network *Network::New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk)
   {
-    SIM_TOPOLOGY = topology;
-    CPU_CLK_PERIOD = cpu_clk;
+    // initialize static and global variables
+    gDim = dimension;
+    gTopology = topology;
+    gCpuClkPeriod = cpu_clk;
+    int ncpus = 0;
+    int nodes = 0;
+    switch (topology) {
+      case DUAL_HMC:
+        ncpus = 2;
+        nodes = 2;
+        break;
+      case MESH:
+        ncpus = 4;
+        nodes = dimension * dimension;
+        break;
+      case DFLY:
+        ncpus = 4;
+        nodes = dimension * dimension;
+        break;
+      case DEFAULT:
+        ncpus = 1;
+        nodes = 1;
+        break;
+      default:
+        cout << "This mode not yet implemented, create the default one" << endl;
+        ncpus = 1;
+        nodes = 1;
+        break;
+    }
+    gHmcNumLinks = nodes * 4;
+    gTotalNumLinks = gHmcNumLinks + ncpus;
+
     Network *result;
     switch (topology) {
       case DUAL_HMC:
@@ -250,9 +288,9 @@ namespace CasHMC
     dramTuner.resize(nodes, 1);
     //hmcLinks.resize(nodes);
     //hmcs.resize(nodes);
-    rf = RoutingFunction::New(nodes, SIM_TOPOLOGY);
+    rf = RoutingFunction::New(nodes, gTopology);
 
-    switch (SIM_TOPOLOGY) {
+    switch (gTopology) {
       case DUAL_HMC:
       case MESH:
         CPU_LINKS = 1;
@@ -309,10 +347,23 @@ namespace CasHMC
             //hmcLinks[i].push_back(new Link(debugOut, stateOut, l, false, this));
             stringstream headerPrefix;
             headerPrefix << "HMC" << i;
-            if (i % 5 == 0 && i / 5 == l) {
-              hmcLinks[i].push_back(new Link(debugOut, stateOut, l, false, this, headerPrefix.str()));
-            } else {
-              hmcLinks[i].push_back(new Link(debugOut, stateOut, l, true, this, headerPrefix.str()));
+            switch (nodes) {
+              case 16:
+                if (i % 5 == 0 && i / 5 == l) {
+                  hmcLinks[i].push_back(new Link(debugOut, stateOut, l, false, this, headerPrefix.str()));
+                } else {
+                  hmcLinks[i].push_back(new Link(debugOut, stateOut, l, true, this, headerPrefix.str()));
+                }
+                break;
+              case 64:
+                if (i % 21 == 0 && i / 21 == l) {
+                  hmcLinks[i].push_back(new Link(debugOut, stateOut, l, false, this, headerPrefix.str()));
+                } else {
+                  hmcLinks[i].push_back(new Link(debugOut, stateOut, l, true, this, headerPrefix.str()));
+                }
+                break;
+              default:
+                assert(0);
             }
             hmcLinks[i][l]->linkID = 4*i + l;
             allLinks.push_back(hmcLinks[i][l]);
@@ -354,7 +405,7 @@ namespace CasHMC
     : Network(dimension, benchname)
   {
     ncpus = 2;
-    nodes = 2*dimension; //Shall be changend to dim*dim
+    nodes = 2;
 
     Alloc();
 
@@ -391,7 +442,7 @@ namespace CasHMC
   DFly::DFly(int dimension, string benchname)
     : Network(dimension, benchname)
   {
-    ncpus = 4;//dimension;
+    ncpus = 4;
     nodes = dimension * dimension;
 
     Alloc();
@@ -494,7 +545,7 @@ namespace CasHMC
   MeshNet::MeshNet(int dimension, string benchname)
     : Network(dimension, benchname)
   {
-    ncpus = dimension * 4;
+    ncpus = 4;
     nodes = dimension * dimension;
 
     Alloc();
@@ -731,10 +782,10 @@ namespace CasHMC
     }
 
     //Downstream links update at CPU clock cycle (depending on ratio of CPU cycle to Link cycle)
-    while(CPU_CLK_PERIOD*downLinkTuner > linkPeriod*(downLinkClock + 1)) {
+    while(gCpuClkPeriod*downLinkTuner > linkPeriod*(downLinkClock + 1)) {
       DownLinkUpdate(false);
     }
-    if(CPU_CLK_PERIOD*downLinkTuner == linkPeriod*(downLinkClock + 1)) {
+    if(gCpuClkPeriod*downLinkTuner == linkPeriod*(downLinkClock + 1)) {
       DownLinkUpdate(false);
       downLinkTuner = 0;
       downLinkClock = 0;
@@ -743,21 +794,21 @@ namespace CasHMC
 
     //HMC update at CPU clock cycle, modifed by Jiayi, 02/28/17
     for(int i = 0; i < hmcs.size(); ++i){
-      if(CPU_CLK_PERIOD <= tCK) {
-        if(CPU_CLK_PERIOD*dramTuner[i] > tCK*hmcs[i]->clockTuner) {
+      if(gCpuClkPeriod <= tCK) {
+        if(gCpuClkPeriod*dramTuner[i] > tCK*hmcs[i]->clockTuner) {
           hmcs[i]->Update();
         }
-        else if(CPU_CLK_PERIOD*dramTuner[i] == tCK*hmcs[i]->clockTuner) {
+        else if(gCpuClkPeriod*dramTuner[i] == tCK*hmcs[i]->clockTuner) {
           dramTuner[i] = 0;
           hmcs[i]->clockTuner = 0;
           hmcs[i]->Update();
         }
       }
       else {
-        while(CPU_CLK_PERIOD*dramTuner[i] > tCK*(hmcs[i]->clockTuner + 1)) {
+        while(gCpuClkPeriod*dramTuner[i] > tCK*(hmcs[i]->clockTuner + 1)) {
           hmcs[i]->Update();
         }
-        if(CPU_CLK_PERIOD*dramTuner[i] == tCK*(hmcs[i]->clockTuner + 1)) {
+        if(gCpuClkPeriod*dramTuner[i] == tCK*(hmcs[i]->clockTuner + 1)) {
           hmcs[i]->Update();
           dramTuner[i] = 0;
           hmcs[i]->clockTuner = 0;
@@ -767,10 +818,10 @@ namespace CasHMC
     }
 
     //Upstream links update at CPU clock cycle (depending on ratio of CPU cycle to Link cycle)
-    while(CPU_CLK_PERIOD*upLinkTuner > linkPeriod*(upLinkClock + 1)) {
+    while(gCpuClkPeriod*upLinkTuner > linkPeriod*(upLinkClock + 1)) {
       UpLinkUpdate(false);
     }
-    if(CPU_CLK_PERIOD*upLinkTuner == linkPeriod*(upLinkClock + 1)) {
+    if(gCpuClkPeriod*upLinkTuner == linkPeriod*(upLinkClock + 1)) {
       UpLinkUpdate(false);
       upLinkTuner = 0;
       upLinkClock = 0;
@@ -855,7 +906,7 @@ namespace CasHMC
     // downstream links update
     downLinkTuner += cycles;
     uint64_t oldDownLinkClock = downLinkClock;
-    downLinkClock = (int) (CPU_CLK_PERIOD * (double) downLinkTuner / linkPeriod);
+    downLinkClock = (int) (gCpuClkPeriod * (double) downLinkTuner / linkPeriod);
     uint64_t downLinkCycles = downLinkClock - oldDownLinkClock;
     for (int l = 0; l < hmcCntLinks.size(); l++) {
       hmcCntLinks[l]->MultiStep(downLinkCycles);
@@ -864,11 +915,11 @@ namespace CasHMC
 
     // HMC update
     for (int i = 0; i < hmcs.size(); i++) {
-      if (CPU_CLK_PERIOD <= tCK) {
+      if (gCpuClkPeriod <= tCK) {
         dramTuner[i] += cycles;
-        if (CPU_CLK_PERIOD * dramTuner[i] > tCK * hmcs[i]->clockTuner) {
+        if (gCpuClkPeriod * dramTuner[i] > tCK * hmcs[i]->clockTuner) {
           uint64_t oldClockTuner = hmcs[i]->clockTuner;
-          hmcs[i]->clockTuner = (int) (CPU_CLK_PERIOD * (double) dramTuner[i] / tCK);
+          hmcs[i]->clockTuner = (int) (gCpuClkPeriod * (double) dramTuner[i] / tCK);
           uint64_t hmcCycles = hmcs[i]->clockTuner - oldClockTuner;
           hmcs[i]->MultiStep(hmcCycles);
           for (int l = 0; l < NUM_LINKS; l++) {
@@ -887,7 +938,7 @@ namespace CasHMC
       else {
         dramTuner[i] += cycles;
         uint64_t oldClockTuner = hmcs[i]->clockTuner;
-        hmcs[i]->clockTuner = (int) (CPU_CLK_PERIOD * (double) dramTuner[i] / tCK);
+        hmcs[i]->clockTuner = (int) (gCpuClkPeriod * (double) dramTuner[i] / tCK);
         uint64_t hmcCycles = hmcs[i]->clockTuner - oldClockTuner;
         hmcs[i]->MultiStep(hmcCycles);
         for (int l = 0; l < NUM_LINKS; l++) {
@@ -907,7 +958,7 @@ namespace CasHMC
     // upstream links update
     upLinkTuner += cycles;
     uint64_t oldUpLinkClock = upLinkClock;
-    upLinkClock = (int) (CPU_CLK_PERIOD * (double) upLinkTuner / linkPeriod);
+    upLinkClock = (int) (gCpuClkPeriod * (double) upLinkTuner / linkPeriod);
     uint64_t upLinkCycles = upLinkClock - oldUpLinkClock;
     for (int i = 0; i < hmcLinks.size(); i++) {
       for (int l = 0; l < NUM_LINKS; l++) {
@@ -1072,7 +1123,7 @@ namespace CasHMC
 
     settingOut<<endl<<"        ==== Memory transaction setting ===="<<endl;
     settingOut<<ALI(36)<<" CPU cycles to be simulated : "<<numSimCycles<<endl;
-    settingOut<<ALI(36)<<" CPU clock period [ns] : "<<CPU_CLK_PERIOD<<endl;
+    settingOut<<ALI(36)<<" CPU clock period [ns] : "<<gCpuClkPeriod<<endl;
     settingOut<<ALI(36)<<" Data size of DRAM request [byte] : "<<TRANSACTION_SIZE<<endl;
     settingOut<<ALI(36)<<" Request buffer max size : "<<MAX_REQ_BUF<<endl;
     settingOut<<ALI(36)<<" Trace type : "<<traceType<<endl;
@@ -1144,7 +1195,7 @@ namespace CasHMC
   //
   void Network::MakePlotData()
   {
-    double elapsedPlotTime = (double)(PLOT_SAMPLING*CPU_CLK_PERIOD*1E-9);
+    double elapsedPlotTime = (double)(PLOT_SAMPLING*gCpuClkPeriod*1E-9);
 
     //Effective link bandwidth
     vector<double> downLinkEffecPlotBandwidth = vector<double>(NUM_LINKS, 0);
@@ -1191,7 +1242,7 @@ namespace CasHMC
     uint64_t epochFlow = 0;
     unsigned epochError = 0;
 
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       epochReads	+= readPerLink[i];
       epochWrites	+= writePerLink[i];
       epochAtomics+= atomicPerLink[i];
@@ -1260,19 +1311,19 @@ namespace CasHMC
     errorRetryLat.clear();
 
     //Bandwidth calculation
-    double elapsedTime = (double)(elapsedCycles*CPU_CLK_PERIOD*1E-9);
+    double elapsedTime = (double)(elapsedCycles*gCpuClkPeriod*1E-9);
     double hmcBandwidth = hmcTransmitSize/elapsedTime/(1<<30);
     double linkBandwidthMax = LINK_SPEED * LINK_WIDTH / 8;
     vector<double> hmcCtrlLinkBandwidth = vector<double>(NUM_LINKS, 0);
-    vector<double> downLinkBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> upLinkBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> linkBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
+    vector<double> downLinkBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> upLinkBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> linkBandwidth = vector<double>(gTotalNumLinks, 0);
     double linkBandwidthSum = 0;
-    vector<double> downLinkEffecBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> upLinkEffecBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> linkEffecBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
+    vector<double> downLinkEffecBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> upLinkEffecBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> linkEffecBandwidth = vector<double>(gTotalNumLinks, 0);
     double linkEffecBandwidthSum = 0;
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       downLinkBandwidth[i] = downLinkTransmitSize[i] / elapsedTime / (1<<30);
       upLinkBandwidth[i] = upLinkTransmitSize[i] / elapsedTime / (1<<30);
       linkBandwidth[i] = downLinkBandwidth[i] + upLinkBandwidth[i];
@@ -1295,22 +1346,22 @@ namespace CasHMC
     STATE("     Link utilization : "<<ALI(7)<<linkBandwidthSum/(linkBandwidthMax*NUM_LINKS*2)*100
         <<" %     (Link max bandwidth : "<<linkBandwidthMax*NUM_LINKS*2<<" GB/S)"<<endl);
 
-    STATE("    Tran latency mean : "<<tranFullMean*CPU_CLK_PERIOD<<" ns");
-    STATE("                 std  : "<<tranStdDev*CPU_CLK_PERIOD<<" ns");
-    STATE("                 max  : "<<tranFullMax*CPU_CLK_PERIOD<<" ns");
-    STATE("                 min  : "<<(tranFullMin!=-1 ? tranFullMin : 0)*CPU_CLK_PERIOD<<" ns");
-    STATE("    Link latency mean : "<<linkFullMean*CPU_CLK_PERIOD<<" ns");
-    STATE("                 std  : "<<linkStdDev*CPU_CLK_PERIOD<<" ns");
-    STATE("                 max  : "<<linkFullMax*CPU_CLK_PERIOD<<" ns");
-    STATE("                 min  : "<<(linkFullMin!=-1 ? linkFullMin : 0)*CPU_CLK_PERIOD<<" ns");
+    STATE("    Tran latency mean : "<<tranFullMean*gCpuClkPeriod<<" ns");
+    STATE("                 std  : "<<tranStdDev*gCpuClkPeriod<<" ns");
+    STATE("                 max  : "<<tranFullMax*gCpuClkPeriod<<" ns");
+    STATE("                 min  : "<<(tranFullMin!=-1 ? tranFullMin : 0)*gCpuClkPeriod<<" ns");
+    STATE("    Link latency mean : "<<linkFullMean*gCpuClkPeriod<<" ns");
+    STATE("                 std  : "<<linkStdDev*gCpuClkPeriod<<" ns");
+    STATE("                 max  : "<<linkFullMax*gCpuClkPeriod<<" ns");
+    STATE("                 min  : "<<(linkFullMin!=-1 ? linkFullMin : 0)*gCpuClkPeriod<<" ns");
     STATE("   Vault latency mean : "<<vaultFullMean*tCK<<" ns");
     STATE("                 std  : "<<vaultStdDev*tCK<<" ns");
     STATE("                 max  : "<<vaultFullMax*tCK<<" ns");
     STATE("                 min  : "<<(vaultFullMin!=-1 ? vaultFullMin : 0)*tCK<<" ns");
-    STATE("   Retry latency mean : "<<errorRetryMean*CPU_CLK_PERIOD<<" ns");
-    STATE("                 std  : "<<errorRetryDev*CPU_CLK_PERIOD<<" ns");
-    STATE("                 max  : "<<errorRetryMax*CPU_CLK_PERIOD<<" ns");
-    STATE("                 min  : "<<(errorRetryMin!=-1 ? errorRetryMin : 0)*CPU_CLK_PERIOD<<" ns"<<endl);
+    STATE("   Retry latency mean : "<<errorRetryMean*gCpuClkPeriod<<" ns");
+    STATE("                 std  : "<<errorRetryDev*gCpuClkPeriod<<" ns");
+    STATE("                 max  : "<<errorRetryMax*gCpuClkPeriod<<" ns");
+    STATE("                 min  : "<<(errorRetryMin!=-1 ? errorRetryMin : 0)*gCpuClkPeriod<<" ns"<<endl);
 
     STATE("           Read count : "<<epochReads);
     STATE("          Write count : "<<epochWrites);
@@ -1322,7 +1373,7 @@ namespace CasHMC
     STATE("    Error abort count : "<<epochError);
     STATE("    Error retry count : "<<errorCount<<endl);
 
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       STATE("  ┌─────────────  [Link "<<i<<"]");
       STATE("  │              Read per link : "<<readPerLink[i]);
       STATE("  │             Write per link : "<<writePerLink[i]);
@@ -1377,7 +1428,7 @@ namespace CasHMC
     totalHmcTransmitSize += hmcTransmitSize;
     hmcTransmitSize = 0;
     //for(int i=0; i<NUM_LINKS; i++) {
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       totalDownLinkTransmitSize[i] += downLinkTransmitSize[i];
       totalUpLinkTransmitSize[i] += upLinkTransmitSize[i];
       downLinkTransmitSize[i] = 0;
@@ -1403,7 +1454,7 @@ namespace CasHMC
     vaultFullSum = 0;
     errorRetrySum = 0;
 
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       totalReadPerLink[i] += readPerLink[i];		readPerLink[i] = 0;
       totalWritePerLink[i] += writePerLink[i];	writePerLink[i] = 0;
       totalAtomicPerLink[i] += atomicPerLink[i];	atomicPerLink[i] = 0;
@@ -1458,23 +1509,23 @@ namespace CasHMC
     cout<<"  [ "<<resName<<" ] is generated"<<endl<<endl;
     //cout << "sim compute time: " << computeFinishCycle << endl;
 
-    double elapsedTime = (double)(currentClockCycle*CPU_CLK_PERIOD*1E-9);
+    double elapsedTime = (double)(currentClockCycle*gCpuClkPeriod*1E-9);
     double hmcBandwidth = totalHmcTransmitSize/elapsedTime/(1<<30);
     double linkBandwidthMax = LINK_SPEED * LINK_WIDTH / 8;
-    vector<double> downLinkActBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> downLinkPasBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> downLinkFlowBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> downLinkBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> upLinkBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> linkBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
+    vector<double> downLinkActBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> downLinkPasBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> downLinkFlowBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> downLinkBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> upLinkBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> linkBandwidth = vector<double>(gTotalNumLinks, 0);
     double linkHCBandwidthSum = 0;
     double linkBandwidthSum = 0;
-    vector<double> downLinkEffecBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> upLinkEffecBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
-    vector<double> linkEffecBandwidth = vector<double>(TOTAL_NUM_LINKS, 0);
+    vector<double> downLinkEffecBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> upLinkEffecBandwidth = vector<double>(gTotalNumLinks, 0);
+    vector<double> linkEffecBandwidth = vector<double>(gTotalNumLinks, 0);
     double linkHCEffecBandwidthSum = 0;
     double linkEffecBandwidthSum = 0;
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       downLinkActBandwidth[i] = totalLinkActTransmitSize[i] / elapsedTime / (1<<30);
       downLinkPasBandwidth[i] = totalLinkPasTransmitSize[i] / elapsedTime / (1<<30);
       downLinkFlowBandwidth[i] = totalLinkFlowTransmitSize[i] / elapsedTime / (1<<30);
@@ -1507,7 +1558,7 @@ namespace CasHMC
     uint64_t epochRes = 0;
     uint64_t epochFlow = 0;
     unsigned epochError = 0;
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       epochReads	+= totalReadPerLink[i];
       epochWrites	+= totalWritePerLink[i];
       epochAtomics+= totalAtomicPerLink[i];
@@ -1545,25 +1596,25 @@ namespace CasHMC
     resultOut<<"       Link bandwidth : "<<ALI(7)<<linkBandwidthSum<<" GB/s  (Sum of bandwidth over " << ncpus + nodes*4<<" Links, Included flow packet)"<<endl;
     resultOut<<" Effec Link bandwidth : "<<ALI(7)<<linkEffecBandwidthSum<<" GB/s  (Data bandwidth(sum) regardless of packet header and tail over "<< ncpus + nodes*4 <<" Links)"<<endl;
     resultOut<<" Ef Link HC bandwidth : "<<ALI(7)<<linkHCEffecBandwidthSum<<" GB/s  (Data bandwidth(sum) regardless of packet header and tail over CPU links injecting into HMCNET)"<<endl;
-    resultOut<<"     Link utilization : "<<ALI(7)<<linkBandwidthSum/(linkBandwidthMax*TOTAL_NUM_LINKS)*100
+    resultOut<<"     Link utilization : "<<ALI(7)<<linkBandwidthSum/(linkBandwidthMax*gTotalNumLinks)*100
       <<" %     (Max link bandwidth : "<<linkBandwidthMax*NUM_LINKS*2<<" GB/S)"<<endl<<endl;
 
-    resultOut<<"    Tran latency mean : "<<tranFullMean*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 std  : "<<tranStdDev*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 max  : "<<totalTranFullMax*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 min  : "<<(totalTranFullMin!=-1 ? totalTranFullMin : 0)*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"    Link latency mean : "<<linkFullMean*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 std  : "<<linkStdDev*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 max  : "<<totalLinkFullMax*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 min  : "<<(totalLinkFullMin!=-1 ? totalLinkFullMin : 0)*CPU_CLK_PERIOD<<" ns"<<endl;
+    resultOut<<"    Tran latency mean : "<<tranFullMean*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 std  : "<<tranStdDev*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 max  : "<<totalTranFullMax*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 min  : "<<(totalTranFullMin!=-1 ? totalTranFullMin : 0)*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"    Link latency mean : "<<linkFullMean*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 std  : "<<linkStdDev*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 max  : "<<totalLinkFullMax*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 min  : "<<(totalLinkFullMin!=-1 ? totalLinkFullMin : 0)*gCpuClkPeriod<<" ns"<<endl;
     resultOut<<"   Vault latency mean : "<<vaultFullMean*tCK<<" ns"<<endl;
     resultOut<<"                 std  : "<<vaultStdDev*tCK<<" ns"<<endl;
     resultOut<<"                 max  : "<<totalVaultFullMax*tCK<<" ns"<<endl;
     resultOut<<"                 min  : "<<(totalVaultFullMin!=-1 ? totalVaultFullMin : 0)*tCK<<" ns"<<endl;
-    resultOut<<"   Retry latency mean : "<<errorRetryMean*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 std  : "<<errorRetryDev*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 max  : "<<totalErrorRetryMax*CPU_CLK_PERIOD<<" ns"<<endl;
-    resultOut<<"                 min  : "<<(totalErrorRetryMin!=-1 ? totalErrorRetryMin : 0)*CPU_CLK_PERIOD<<" ns"<<endl<<endl;
+    resultOut<<"   Retry latency mean : "<<errorRetryMean*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 std  : "<<errorRetryDev*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 max  : "<<totalErrorRetryMax*gCpuClkPeriod<<" ns"<<endl;
+    resultOut<<"                 min  : "<<(totalErrorRetryMin!=-1 ? totalErrorRetryMin : 0)*gCpuClkPeriod<<" ns"<<endl<<endl;
 
     resultOut<<"           Read count : "<<epochReads<<endl;
     resultOut<<"          Write count : "<<epochWrites<<endl;
@@ -1575,7 +1626,7 @@ namespace CasHMC
     resultOut<<"    Error abort count : "<<epochError<<endl;
     resultOut<<"    Error retry count : "<<totalErrorCount<<endl<<endl;
 
-    for(int i=0; i<TOTAL_NUM_LINKS; i++) {
+    for(int i=0; i<gTotalNumLinks; i++) {
       resultOut<<"  ┌─────────────  [Link "<<i<<"]"<<allLinks[i]->header<<endl;
       resultOut<<"  │              Read per link : "<<totalReadPerLink[i]<<endl;
       resultOut<<"  │             Write per link : "<<totalWritePerLink[i]<<endl;

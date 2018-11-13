@@ -505,7 +505,7 @@ namespace CasHMC
       retryTime = retryTimer;
     }
     else {
-      retryTime = ceil(retryTimer * (double)tCK/CPU_CLK_PERIOD);
+      retryTime = ceil(retryTimer * (double)tCK/gCpuClkPeriod);
     }
     linkP->statis->errorRetryLat.push_back(retryTime);
     retryTimer = 0;
