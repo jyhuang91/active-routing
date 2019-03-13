@@ -102,7 +102,7 @@ void* matVecMul(void *args){
         addr_arr[1] = (inVec + spm->col_ind[j+1]);
         addr_arr[2] = (inVec + spm->col_ind[j+2]);
         addr_arr[3] = (inVec + spm->col_ind[j+3]);
-        UPDATE(addr_arr, spm->vals +j, outVec + i, PEI_DOT_2); 
+        UPDATE(addr_arr, spm->vals +j, outVec + i, PEI_RIDOT); 
         //outVec[i] += inVec[spm->col_ind[j]]*spm->vals[j];
    //   }
     }

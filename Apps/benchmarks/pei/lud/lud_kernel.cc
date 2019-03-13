@@ -73,7 +73,7 @@ void* do_work(void* args){
         addr_arr[1] = &shared_mat[(k+1)*size + j];
         addr_arr[2] = &shared_mat[(k+2)*size + j];
         addr_arr[3] = &shared_mat[(k+3)*size + j];
-        UPDATE(addr_arr, &shared_mat[i*size + k], &shared_mat[i*size + j], PEI_DOT_2);
+        UPDATE(addr_arr, &shared_mat[i*size + k], &shared_mat[i*size + j], PEI_RIDOT);
       }
       //if(i != 0) GATHER(NULL, NULL, &shared_mat[i*size + j], 1);
       //shared_mat[i*size + j] = local_sum;       //No lock required since j is different for each thread
@@ -91,7 +91,7 @@ void* do_work(void* args){
         addr_arr[1] = &shared_mat[(k+1)*size + i];
         addr_arr[2] = &shared_mat[(k+2)*size + i];
         addr_arr[3] = &shared_mat[(k+3)*size + i];
-        UPDATE(addr_arr, &shared_mat[j*size + k], &shared_mat[j*size + i], PEI_DOT_2);
+        UPDATE(addr_arr, &shared_mat[j*size + k], &shared_mat[j*size + i], PEI_RIDOT);
       }
       //if(i != 0) GATHER(NULL, NULL, &shared_mat[j*size + i], 1);
       shared_mat[j*size + i] = (local_sum - shared_mat[j*size + i]) / shared_mat[i*size + i];

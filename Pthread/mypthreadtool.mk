@@ -48,6 +48,10 @@ PIN_LDFLAGS +=  ${PIN_LPATHS}
 LIBS += -L/usr/local/lib -lsnappy
 INCS += -I/usr/local/include
 
+# add hooks
+LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+
 ifeq ($(TAG),dbg)
   DBG = -Wall
   OPT = -ggdb -g -O0

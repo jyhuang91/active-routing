@@ -26,7 +26,7 @@
 #define ADD         (1)
 #define MULT        (2)
 #define PEI_DOT     (3)
-#define PEI_DOT_2   (4)
+#define PEI_RIDOT   (4)
 #define PEI         (5)
 
 #ifdef __cplusplus

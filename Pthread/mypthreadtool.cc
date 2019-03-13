@@ -1,5 +1,6 @@
 #include "mypthreadtool.h"
 #include "stdio.h"
+#include <hooks.h>
 
 using namespace PinPthread;
 
@@ -212,16 +213,17 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
   uint32_t category = -1;
   switch (function)
   {
-    case 1:
+    case ADD:
       //* ((float *)c) += * ((float *)a);
       category = 128;
       break;
-    case 2:
+    case MULT:
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
       category = 130;
       break;
-    case 3:
+    case PEI_DOT:
       category = 131;
+      // load first half source operands on-chip
       for(int i = 0; i < 4; i++) {
         pthreadsim->process_ins(
             context,
@@ -234,8 +236,9 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
             0, 0, 0, 0);
       }
       break;
-    case 4:
+    case PEI_RIDOT:
       category = 131;
+      // load first half source operands on-chip
       for(int i = 0; i < 4; i++) {
         pthreadsim->process_ins(
             context,
@@ -248,8 +251,9 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
             0, 0, 0, 0);
       }      
       break;
-    case 5:
+    case PEI:
       category = 132;
+      // load source operand on-chip
       pthreadsim->process_ins(
          context,
          ip,
