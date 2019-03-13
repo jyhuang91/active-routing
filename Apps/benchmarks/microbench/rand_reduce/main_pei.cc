@@ -73,7 +73,7 @@ void *do_work(void *args)
 
   pthread_mutex_lock(&lock);
   //sum += local_sum;
-  UPDATE((void *) &local_sum, NULL, (void *) &sum, PEI);
+  UPDATE((void *) &local_sum, NULL, (void *) &sum, PEI_ATOMIC);
   pthread_mutex_unlock(&lock);
 
   pthread_barrier_wait(arg->barrier);

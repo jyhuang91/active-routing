@@ -43,7 +43,7 @@ void mcsim_spinning_end()
   magic_op(MAGIC_OP_SPIN_END);
 }
 
-void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, int op)
+void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op)
 {
   //magic_op(MAGIC_OP_UPDATE);
 }

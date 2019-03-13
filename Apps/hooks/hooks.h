@@ -22,12 +22,14 @@
 #define MAGIC_OP_INSTRS_COUNT      (1035)
 
 // Active operations
-#define GET         (0)
-#define ADD         (1)
-#define MULT        (2)
-#define PEI_DOT     (3)
-#define PEI_RIDOT   (4)
-#define PEI         (5)
+typedef enum eOpcode {
+  GET        = 0,
+  ADD        = 1,
+  MULT       = 2,
+  PEI_DOT    = 3,
+  PEI_RIDOT  = 4,
+  PEI_ATOMIC = 5
+} Opcode;
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +60,7 @@ void mcsim_skip_instrs_end();
 void mcsim_spinning_begin();
 void mcsim_spinning_end();
 
-void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, int op);
+void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
 void GATHER(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads);
 
 int testFunc(int tid);

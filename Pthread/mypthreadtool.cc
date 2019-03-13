@@ -208,10 +208,10 @@ int testFunc(int tid)
 #endif
 
 // Jiayi, 01/29/2018
-VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int function)
+VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode opcode)
 {
   uint32_t category = -1;
-  switch (function)
+  switch (opcode)
   {
     case ADD:
       //* ((float *)c) += * ((float *)a);
@@ -228,7 +228,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
         pthreadsim->process_ins(
             context,
             ip,
-            (ADDRINT) (a + 8*i), 0, 0,
+            (ADDRINT) ((ADDRINT) a + 8*i), 0, 0,
             0, 0,
             false, false,
             0,
@@ -251,7 +251,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
             0, 0, 0, 0);
       }      
       break;
-    case PEI:
+    case PEI_ATOMIC:
       category = 132;
       // load source operand on-chip
       pthreadsim->process_ins(
@@ -264,7 +264,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
          0, 0, 0, 0,
          0, 0, 0, 0);
       break;
-    default: fprintf(stderr, "Unknown active operation: %d\n", function); exit(1);
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
   }
     
   pthreadsim->process_ins(

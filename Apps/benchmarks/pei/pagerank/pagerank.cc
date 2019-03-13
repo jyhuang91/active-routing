@@ -100,7 +100,7 @@ void* do_work(void* args)
         //dp_tid[tid] = dp_tid[tid] + d*(PR[v]/N_real);
         //printf("\n %f %f %f %f",dp,d,D[uu],N_real);
         //UPDATE(&PR[v], NULL, &dp, ADD);
-        UPDATE(&PR[v], NULL, &dp, PEI);
+        UPDATE(&PR[v], NULL, &dp, PEI_ATOMIC);
       }
     }
     //pthread_mutex_lock(&lock);
@@ -139,7 +139,7 @@ void* do_work(void* args)
           //pgtmp[v] *= d;
           if(local_sum>=1.0)
             local_sum = 1.0;
-          UPDATE(&local_sum, NULL, &pgtmp[v], PEI);
+          UPDATE(&local_sum, NULL, &pgtmp[v], PEI_ATOMIC);
         }
       }
       //if(pgtmp[v]>=1.0)
