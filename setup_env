@@ -4,3 +4,4 @@ export MCSIM_PARENT_DIR=${PWD}
 export PINTOOL=${MCSIM_PARENT_DIR}/Pthread/mypthreadtool
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${PIN_HOME}/intel64/lib-ext:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${MCSIM_PARENT_DIR}/Apps/hooks/lib:$LD_LIBRARY_PATH
