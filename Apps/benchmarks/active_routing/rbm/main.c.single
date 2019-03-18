@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include <hooks.h>
 
 #include "rbm.h"
@@ -12,37 +13,49 @@
 #define OUTPUT_FILE "out.txt"
 
 // Free parameters
-#define DEBUG 1
+#define DEBUG 0
 #define K 5
 #define LEARN_RATE 0.1
-#define NUM_HIDDEN (3*MOVIES)
 #define RAND rand_twister()
 
 // Fixed constants
-#define NUM_VISIBLE (MOVIES * K)
 
 
 
-double edges[NUM_VISIBLE + 1][NUM_HIDDEN + 1]; // edges[v][h] = the edge between visible unit v and hidden unit h
-int trainingData[USERS][NUM_VISIBLE];
+double **edges; // edges[v][h] = the edge between visible unit v and hidden unit h
+int **trainingData;
 
-int testActuals[TEST_USERS][MOVIES];
-int testPredictions[TEST_USERS][MOVIES];
+int **testActuals;
+int **testPredictions;
 
+int users;
+int test_users;
+int movies;
+int loops;
+int num_hidden;
+int num_visible;
 
+static struct option long_options[] = {
+  /* name, has_arg, flag, val */
+  {"users", required_argument, NULL, 'u'},
+  {"test_users", required_argument, NULL, 't'},
+  {"movies", required_argument, NULL, 'm'},
+  {"loops", required_argument, NULL, 'l'},
+  {0,0,0,0}
+};
 
 void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 {
 	// Calculate activation energy for hidden units
-	double hiddenEnergies[NUM_HIDDEN];
+	double hiddenEnergies[num_hidden];
 	int h;
-	for (h = 0; h < NUM_HIDDEN; h++)
+	for (h = 0; h < num_hidden; h++)
 	{
 		// Get the sum of energies
 		double sum = 0;
 		int v;
     int count = 0;
-		for (v = 0; v < NUM_VISIBLE + 1; v+=8) // remove the +1 if you want to skip the bias
+		for (v = 0; v < num_visible + 1; v++) // remove the +1 if you want to skip the bias
 		{
 			if (visible[v] != -1) {
         ++count;
@@ -56,7 +69,7 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 	}
 
 	// Activate hidden units
-	for (h = 0; h < NUM_HIDDEN; h++)
+	for (h = 0; h < num_hidden; h++)
 	{
 		double prob = 1.0 / (1.0 + exp(-hiddenEnergies[h]));
 		if (stochastic)
@@ -75,23 +88,23 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 		}
 	}
 
-	hidden[NUM_HIDDEN] = 1; // turn on bias
+	hidden[num_hidden] = 1; // turn on bias
 }
 
 
 void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 {
 	// Calculate activation energy for visible units
-	double visibleEnergies[NUM_VISIBLE];
+	double visibleEnergies[num_visible];
 	int v;
   int count;
-	for (v = 0; v < NUM_VISIBLE; v++)
+	for (v = 0; v < num_visible; v++)
 	{
 		// Get the sum of energies
 		double sum = 0;
 		int h;
     count = 0;
-		for (h = 0; h < NUM_HIDDEN + 1; h+=8) { // remove the +1 if you want to skip the bias
+		for (h = 0; h < num_hidden + 1; h+=8) { // remove the +1 if you want to skip the bias
         ++count;
 			//sum += (double) hidden[h] * edges[v][h];
       UPDATE(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
@@ -102,7 +115,7 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	}
 
 	// Activate visible units, handles K visible units at a time
-	for (v = 0; v < NUM_VISIBLE; v += K)
+	for (v = 0; v < num_visible; v += K)
 	{
 		double exps[K]; // this is the numerator
 		double sumOfExps = 0.0; // this is the denominator
@@ -163,60 +176,118 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		}
 	}
 
-	visible[NUM_VISIBLE] = 1; // turn on bias
+	visible[num_visible] = 1; // turn on bias
 }
 
 void train()
 {
 	int user;
-	for (user = 0; user < USERS; user++)
+	for (user = 0; user < users; user++)
 	{
 		// ==> Phase 1: Activate hidden units
 
-		int data[NUM_VISIBLE + 1];
-		memcpy(data, trainingData[user], NUM_VISIBLE * sizeof(int)); // copy entire array
-		data[NUM_VISIBLE] = 1; // turn on bias
+		int data[num_visible + 1];
+		memcpy(data, trainingData[user], num_visible * sizeof(int)); // copy entire array
+		data[num_visible] = 1; // turn on bias
 
 		// Activate hidden units
-		int hidden[NUM_HIDDEN + 1];
+		int hidden[num_hidden + 1];
 		activateHiddenUnits(data, 1, hidden);
 
+    if (DEBUG) {
+      int i;
+      printf("user %d\n\tdata:\n\t", user);
+      for (i = 0; i < num_visible + 1; i++) {
+        printf("%d ", data[i]);
+      }
+      printf("\n\thidden:\n\t");
+      for (i = 0; i < num_hidden + 1; i++) {
+        printf("%d ", hidden[i]);
+      }
+    }
+
 		// Get positive association
-		int pos[NUM_VISIBLE + 1][NUM_HIDDEN + 1];
+		int pos[num_visible + 1][num_hidden + 1];
 		int v;
-		for (v = 0; v < NUM_VISIBLE + 1; v++)
+		for (v = 0; v < num_visible + 1; v++)
 		{
 			if (data[v] != -1)
 			{
 				int h;
-				for (h = 0; h < NUM_HIDDEN + 1; h++)
+				for (h = 0; h < num_hidden + 1; h++)
 					pos[v][h] = data[v] * hidden[h];
 			}
+      else
+      {
+				int h;
+				for (h = 0; h < num_hidden + 1; h++)
+					pos[v][h] = 0;
+      }
 		}
+
+    if (DEBUG) {
+      int i, j;
+      printf("\tpos:\n\t");
+      for (i = 0; i < num_visible + 1; i++) {
+        if (data[i] != -1) {
+          for (j = 0; j < num_hidden + 1; j++)
+            printf("%d ", pos[i][j]);
+          printf("\n");
+          if (i < num_visible)
+            printf("\t");
+        }
+      }
+    }
 
 		// ==> Phase 2: Reconstruction (activate visible units)
 
 		// Activate visible units
-		int visible[NUM_VISIBLE + 1];
+		int visible[num_visible + 1];
 		activateVisibleUnits(hidden, 1, visible);
 
+    if (DEBUG) {
+      int i;
+      printf("\tvisible:\n\t");
+      for (i = 0; i < num_visible + 1; i++)
+        printf("%d ", visible[i]);
+      printf("\n");
+    }
+
 		// Get negative association
-		int neg[NUM_VISIBLE + 1][NUM_HIDDEN + 1];
-		for (v = 0; v < NUM_VISIBLE + 1; v++)
+		int neg[num_visible + 1][num_hidden + 1];
+		for (v = 0; v < num_visible + 1; v++)
 		{
 			if (data[v] != -1)
 			{
 				int h;
-				for (h = 0; h < NUM_HIDDEN + 1; h++)
+				for (h = 0; h < num_hidden + 1; h++)
 					neg[v][h] = hidden[h] * visible[v];
 			}
+      else
+      {
+				int h;
+				for (h = 0; h < num_hidden + 1; h++)
+					neg[v][h] = 0;
+      }
 		}
 
+    if (DEBUG) {
+      int i, j;
+      printf("\tneg:\n\t");
+      for (i = 0; i < num_visible + 1; i++) {
+        for (j = 0; j < num_hidden + 1; j++)
+          printf("%d ", neg[i][j]);
+        printf("\n");
+        if (i < num_visible)
+          printf("\t");
+      }
+    }
+
 		// ==> Phase 3: Update the weights
-		for (v = 0; v < NUM_VISIBLE + 1; v++)
+		for (v = 0; v < num_visible + 1; v++)
 		{
 			int h;
-			for (h = 0; h < NUM_HIDDEN + 1; h++)
+			for (h = 0; h < num_hidden + 1; h++)
 				edges[v][h] = edges[v][h] + LEARN_RATE * (pos[v][h] - neg[v][h]);
 		}
 	}
@@ -225,7 +296,7 @@ void train()
 void processLine(int target[], FILE * stream, int optActual[])
 {
 	int j;
-	for (j = 0; j < NUM_VISIBLE; j += K)
+	for (j = 0; j < num_visible; j += K)
 	{
 		int rating = 0;
 		if(fscanf(stream, "%d", &rating) != 1 ) {
@@ -249,13 +320,80 @@ void processLine(int target[], FILE * stream, int optActual[])
 
 int main(int argc, char *argv[])
 {
+  // parse options
+  int opt, option_index = 0;
+  while((opt = getopt_long(argc, argv, "u:t:m:l:",
+                        long_options, &option_index)) != -1) {
+    switch (opt) {
+      case 'u':
+        users = atoi(optarg);
+        break;
+      case 't':
+        test_users = atoi(optarg);
+        break;
+      case 'm':
+        movies = atoi(optarg);
+        break;
+      case 'l':
+        loops = atoi(optarg);
+        break;
+      case ':':
+        fprintf(stderr, "missing argument\n");
+        break;
+      case '?':
+        fprintf(stderr, "invalid option\n");
+        break;
+      default:
+        fprintf(stderr,
+                "Usage: %s -u #users -t #test_users -m #movies -l #loops\n",
+                argv[0]);
+        fprintf(stderr,
+                "   OR: %s -users #users -test_users #test_users -movies #movies -loops #loops\n",
+                argv[0]);
+        exit(1);
+    }
+  }
+  num_hidden = 3 * movies;
+  num_visible = K * movies;
+  fprintf(stderr, "users: %d, test_users: %d, movies: %d, loops: %d, num_hidden: %d, num_visible: %d\n",
+          users, test_users, movies, loops, num_hidden, num_visible);
+
+  if ((optind < argc) || (optind == 1)) {
+    fprintf(stderr,
+            "Usage: %s -u #users -t #test_users -m #movies -l #loops\n",
+            argv[0]);
+    fprintf(stderr,
+            "   OR: %s -users #users -test_users #test_users -movies #movies -loops #loops\n",
+            argv[0]);
+    exit(1);
+  }
+
+  // allocate memory for global arrays
+  int u;
+  edges = (double **) calloc(num_visible + 1, sizeof(double *));
+  for (u = 0; u < num_visible + 1; u++) {
+    edges[u] = (double *) calloc(num_hidden + 1, sizeof(double));
+  }
+  trainingData = (int **) calloc(users, sizeof(int *));
+  for (u = 0; u < users; u++) {
+    trainingData[u] = (int *) calloc(num_visible, sizeof(int));
+  }
+  testActuals = (int **) calloc(test_users, sizeof(int *));
+  for (u = 0; u < test_users; u++) {
+    testActuals[u] = (int *) calloc(movies, sizeof(int));
+  }
+  testPredictions = (int **) calloc(test_users, sizeof(int *));
+  for (u = 0; u < test_users; u++) {
+    testPredictions[u] = (int *) calloc(movies, sizeof(int));
+  }
+
   //**Timing**/
   unsigned int* start, *stop, *elapsed;
 	// -------- Preparing training data ---------
 
 	FILE *trainingFile = fopen(TRAIN_FILE, "r");
 	int i, j, k;
-	for (i = 0; i < USERS; i++)
+	for (i = 0; i < users; i++)
 	{
 		processLine(trainingData[i], trainingFile, NULL);
 	}
@@ -268,7 +406,7 @@ int main(int argc, char *argv[])
     
   roi_begin(); 
 	int loop;
-	for (loop = 0; loop < LOOPS; loop++)
+	for (loop = 0; loop < loops; loop++)
 	{
 		if (DEBUG)
 		    printf("Loop: %d\n", loop);
@@ -279,9 +417,9 @@ int main(int argc, char *argv[])
 	{
 		// Print weights
 
-		for (i = 0; i < NUM_VISIBLE + 1; i++)
+		for (i = 0; i < num_visible + 1; i++)
 		{
-			for (j = 0; j < NUM_HIDDEN + 1; j++)
+			for (j = 0; j < num_hidden + 1; j++)
 				printf("%5.2f ", edges[i][j]);
 
 			printf("\n");
@@ -296,20 +434,20 @@ int main(int argc, char *argv[])
 
 
 	int user;
-	for (user = 0; user < TEST_USERS; user++)
+	for (user = 0; user < test_users; user++)
 	{
-		int data[NUM_VISIBLE + 1];
+		int data[num_visible + 1];
 		processLine(data, testFile, testActuals[user]);
-		data[NUM_VISIBLE] = 1; // turn on bias
+		data[num_visible] = 1; // turn on bias
 
-		int tmp[NUM_HIDDEN + 1];
+		int tmp[num_hidden + 1];
 		activateHiddenUnits(data, 0, tmp);
-		int result[NUM_VISIBLE + 1];
+		int result[num_visible + 1];
 		activateVisibleUnits(tmp, 0, result);
 
 
 		// Go through K visible units at a time
-		for (i = 0; i < NUM_VISIBLE; i += K)
+		for (i = 0; i < num_visible; i += K)
 		{
 			int prediction = 0;
 
@@ -341,14 +479,28 @@ int main(int argc, char *argv[])
 	// -------- Writing result ---------
 
 
-	for (i = 0; i < TEST_USERS; i++)
+	for (i = 0; i < test_users; i++)
 	{
-		for (j = 0; j < MOVIES; j++)
+		for (j = 0; j < movies; j++)
 			fprintf(outputFile, "%d ", testPredictions[i][j]);
 		fprintf(outputFile, "\n");
 	}
 
 	fclose(outputFile);
+
+  // free allocated memory
+  for (i = 0; i < num_visible + 1; i++)
+   free(edges[i]);
+  free(edges);
+  for (i = 0; i < users; i++)
+    free(trainingData[i]);
+  free(trainingData);
+  for (i = 0; i < test_users; i++) {
+    free(testActuals[i]);
+    free(testPredictions[i]);
+  }
+  free(testActuals);
+  free(testPredictions);
 
 	return 0;
 
