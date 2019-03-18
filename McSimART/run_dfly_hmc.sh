@@ -1,10 +1,13 @@
 mkdir -p dfly_log
 
 # benchmarks
-./mcsim -mdfile ../Apps/md/md-16o3core-mesh-hmc.py -runfile ../Apps/list/run-pagerank.py -benchname dfly_hmc_pagerank > dfly_log/hmc_pagerank.log 2>&1 &
+for bench in backprop_2097152 lud_4096_0.75_1 pagerank_web-Google spmv_4096_0.3 sgemm_4096_1
+do
+  ./mcsim -mdfile ../Apps/md/md-16o3core2GHz-mesh-hmc.py -runfile ../Apps/list/run-${bench}.py -benchname dfly_hmc_${bench} > dfly_log/hmc_${bench}.log 2>&1 &
+done
 
-#microbenchmarks
-./mcsim -mdfile ../Apps/md/md-16o3core-mesh-hmc.py -runfile ../Apps/list/run-reduce.py -benchname dfly_hmc_reduce > dfly_log/hmc_reduce.log 2>&1 &
-./mcsim -mdfile ../Apps/md/md-16o3core-mesh-hmc.py -runfile ../Apps/list/run-rand_reduce.py -benchname dfly_hmc_rand_reduce > dfly_log/hmc_rand_reduce.log 2>&1 &
-./mcsim -mdfile ../Apps/md/md-16o3core-mesh-hmc.py -runfile ../Apps/list/run-mac.py -benchname dfly_hmc_mac > dfly_log/hmc_mac.log 2>&1 &
-./mcsim -mdfile ../Apps/md/md-16o3core-mesh-hmc.py -runfile ../Apps/list/run-rand_mac.py -benchname dfly_hmc_rand_mac > dfly_log/hmc_rand_mac.log 2>&1 &
+# microbenchmarks
+for microbench in reduce rand_reduce mac rand_mac
+do
+  ./mcsim -mdfile ../Apps/md/md-16o3core2GHz-mesh-hmc.py -runfile ../Apps/list/run-${microbench}.py -benchname dfly_hmc_${microbench} > dfly_log/hmc_${microbench}.log 2>&1 &
+done

@@ -210,7 +210,6 @@ uint32_t O3Core::process_event(uint64_t curr_time)
   }
 
   LocalQueueElement * lqe;
-
   // process o3queue
 
   //  check queue and send a request to iTLB -- TODO: can we send multiple requests to an iTLB simultaneously?
@@ -245,12 +244,13 @@ uint32_t O3Core::process_event(uint64_t curr_time)
       }
     }
   }
-
   //  check queue and send the instructions to the reorder buffer
   for (unsigned int i = 0; i < max_issue_width && o3queue_size > 0 && o3rob_size < o3rob_max_size - 3; i++)
   {
     uint64_t dependency_distance = o3rob_size;
     O3Queue & o3queue_entry      = o3queue[o3queue_head];
+
+    //if(o3queue_entry.type == ins_pei && o3rob_size >= o3rob_max_size - 5 ) break;
 
     if (o3queue_entry.state == o3iqs_ready && o3queue_entry.ready_time <= curr_time)
     {
@@ -289,8 +289,10 @@ uint32_t O3Core::process_event(uint64_t curr_time)
       int32_t rr3 = -1;
       if (o3queue_entry.type == ins_update_add ||
           o3queue_entry.type == ins_update_mult ||
-          o3queue_entry.type == ins_gather)
+          o3queue_entry.type == ins_gather ||
+          o3queue_entry.type == ins_pei)
       {
+        /*Handle dependency for ins_pei*/
       }
       else
       {
@@ -370,6 +372,47 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         rob_idx = (rob_idx + 1) % o3rob_max_size;
         o3rob_size++;
         o3rob_entry.nthreads   = (o3queue_entry.type == ins_gather) ? o3queue_entry.wlen : -1;  // Jiayi, 03/31/17
+      }
+      else if(o3queue_entry.type == ins_pei || o3queue_entry.type == ins_pei_rand){
+        /*Handle raddr dependency for pei instructions
+          Since data(belongs to one of the source operands) 
+          is read from memory location to CPU and then 
+          sent back to MemNet for processing DOT product*/
+        if (o3queue_entry.raddr != 0)
+        {
+           
+          O3ROB & o3rob_entry    = o3rob[rob_idx];
+          o3rob_entry.state      = o3irs_issued;
+          o3rob_entry.ready_time = curr_time + process_interval;
+          o3rob_entry.ip         = o3queue_entry.ip;
+          int32_t mem_dep        = (o3rob_head + o3rob_size - 1) % o3rob_max_size;;
+          rr0 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 2) % o3rob_max_size;    
+          rr1 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 3) % o3rob_max_size;    
+          rr2 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 4) % o3rob_max_size;    
+          dependency_distance    = 1; 
+          /*pei_instruction is dependend on the previously issued mem_rd*/   
+          o3rob_entry.memaddr    = o3queue_entry.raddr2;
+          o3rob_entry.branch_miss = branch_miss;
+          o3rob_entry.isread     = false;
+          o3rob_entry.mem_dep    = (o3rob[mem_dep].state == o3irs_issued || o3rob[mem_dep].state == o3irs_executing) ? mem_dep : -1;
+          o3rob_entry.instr_dep  = instr_dep;
+          o3rob_entry.branch_dep = branch_dep;
+          o3rob_entry.type       = ins_pei;
+          o3rob_entry.rr0        = (o3rob[rr0].state == o3irs_issued || o3rob[rr0].state == o3irs_executing) ? rr0 : -1;
+          o3rob_entry.rr1        = (o3rob[rr1].state == o3irs_issued || o3rob[rr1].state == o3irs_executing) ? rr1 : -1;
+          o3rob_entry.rr2        = (o3rob[rr2].state == o3irs_issued || o3rob[rr2].state == o3irs_executing) ? rr2 : -1;
+          o3rob_entry.rr3        = -1;
+          o3rob_entry.rw0        = -1;
+          o3rob_entry.rw1        = -1;
+          o3rob_entry.rw2        = -1;
+          o3rob_entry.rw3        = -1;
+          o3rob_entry.updtsrc1   = o3queue_entry.raddr;       /*Local arg 32B*/
+          o3rob_entry.updtsrc2   = o3queue_entry.raddr2;      /*Mem address destination*/
+          o3rob_entry.updtdest   = o3queue_entry.waddr;
+          instr_dep              = rob_idx;
+          rob_idx = (rob_idx + 1) % o3rob_max_size;
+          o3rob_size++;
+        }
       }
       else
       {
@@ -589,11 +632,19 @@ uint32_t O3Core::process_event(uint64_t curr_time)
       }
       else if (o3rob_entry.type == ins_update_add ||
           o3rob_entry.type == ins_update_mult ||
-          o3rob_entry.type == ins_gather)
+          o3rob_entry.type == ins_gather ||
+          o3rob_entry.type == ins_pei)
       {
         // make sure that gather is after all updates, TODO: may degrade performance
         if (o3rob_entry.type == ins_gather && i != 0) continue;
 
+        if(o3rob_entry.type == ins_pei && i == 0) assert(o3rob_entry.mem_dep == -1); 
+
+        if (o3rob_entry.type == ins_pei && 
+            o3rob_entry.mem_dep != -1 && 
+            o3rob_entry.rr2 != -1 && 
+            o3rob_entry.rr1 != -1 && 
+            o3rob_entry.rr0 != -1 ) continue;
         o3rob_entry.state = o3irs_executing;
         o3rob_entry.ready_time = curr_time + process_interval;
 
@@ -610,13 +661,20 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         o3rob_entry.ready_time = curr_time + process_interval;
         //geq->add_event(o3rob_entry.ready_time, this); //cache will add the event on response
         lqe->type = (o3rob_entry.type == ins_update_add) ? et_hmc_update_add :
-          (o3rob_entry.type == ins_update_mult) ? et_hmc_update_mult : et_hmc_gather;
+          (o3rob_entry.type == ins_update_mult) ? et_hmc_update_mult : 
+          (o3rob_entry.type == ins_gather) ? et_hmc_gather : et_hmc_pei;
         lqe->nthreads = o3rob_entry.nthreads; // Jiayi, for gather barrier, 03/31/17
         lqe->issue_time = curr_time;
         if (o3rob_entry.type == ins_gather)
         {
           noc->add_req_event(curr_time + lsu_to_noc_t, lqe, this);
           //((Component *) mcsim->hmcs[0])->add_req_event(curr_time + 2*lsu_to_l1d_t, lqe);
+        }
+        else if (o3rob_entry.type == ins_pei)
+        {
+          noc->add_req_event(curr_time + lsu_to_noc_t, lqe, this);
+          //uint32_t dir_num = geq->which_mc(lqe->src_addr1);
+          //((Component *) mcsim->dirs[dir_num])->add_req_event(curr_time + 2 * lsu_to_l1d_t, lqe);
         }
         else if (o3rob_entry.type == ins_update_add)
         {
@@ -763,7 +821,7 @@ uint32_t O3Core::process_event(uint64_t curr_time)
     geq->add_event(curr_time + process_interval, this);
   }
   // Jiayi, for gather
-  else if (o3rob_size > 0 && o3rob[o3rob_head].state == o3irs_issued && o3rob[o3rob_head].type == ins_gather)
+  else if (o3rob_size > 0 && o3rob[o3rob_head].state == o3irs_issued && ( o3rob[o3rob_head].type == ins_gather || o3rob[o3rob_head].type == ins_pei ))
   {
     geq->add_event(curr_time + process_interval, this);
   }
@@ -918,6 +976,11 @@ void O3Core::add_rep_event(
   }
   else
   {
+    if (local_event->type == et_hmc_pei)
+    {
+      num_update_ins++;
+      total_update_roundtrip_time += geq->curr_time - local_event->issue_time;
+    }
     uint64_t aligned_event_time = event_time;
     if (aligned_event_time%process_interval != 0)
     {

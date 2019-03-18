@@ -52,12 +52,12 @@ static bool ONLY_CR = false;		//Print only critical debug
 static bool STATE_SIM = false;		//State log file generation (true / false)
 static int PLOT_SAMPLING = 10000;	//(cycle)Bandwidth graph data time unit
 static bool BANDWIDTH_PLOT = true;	//Bandwidth graph files generation
-
+static int PCU_DELAY = 4;
 
 //
 //Memory transaction setting
 //
-static double CPU_CLK_PERIOD = 0.5;	//(ns) CPU clock period in nanoseconds
+extern double gCpuClkPeriod;	//(ns) CPU clock period in nanoseconds
 static int TRANSACTION_SIZE = 32; 	//(byte) Data size of DRAM request (the internal 32-byte granularity of the DRAM data bus within each vault in the HMC)
 static int TRANSACTION_SIZE_ACTIVE = 32; //(byte) Data size of transaction excluding 1FLIT Control information TBD
 static int TRANSACTION_SIZE_GET = 0; //(byte) Data size of transaction excluding 1FLIT Control information TBD
@@ -82,9 +82,9 @@ static int MAX_OPERAND_BUF = 128;
 //
 //Link(SerDes) setting
 //
-static int NUM_LINKS = 4;			//The number of links
-static int HMC_NUM_LINKS = 64;      //The number of HMC-HMC links
-static int TOTAL_NUM_LINKS = 68;    //The number of HMC links 4*dim^2 = 64
+static const int NUM_LINKS = 4;			//The number of links
+extern int gHmcNumLinks;      //The number of HMC-HMC links
+extern int gTotalNumLinks;    //The number of HMC links 4*dim^2 = 64
 static int LINK_WIDTH = 16;			//Full-Width(16-lane), Half-width(8-lane), and quarter-width link(4-lane)
 static double LINK_SPEED = 30;		//(Gb/s) (12.5, 15, 25, 28, 30)
 
@@ -97,7 +97,7 @@ static int MAX_CROSS_BUF = 64;
 //(packet) Crossbar switch buffer size (one buffer space is for 1 unit packet (128 bits) )
 static int MAX_CMD_QUE = 16;		//(Command) Command queue size (the minimum is 8 due to 256-byte request [max data size(256) / min address mapping block size(32)])
 
-static bool CRC_CHECK = true;		//CRC checking enable
+static bool CRC_CHECK = false;		//CRC checking enable
 static double CRC_CAL_CYCLE = 0.01;	//(clock) CPU clock cycles to calculate CRC value of one packet (128 bits)
 ////  '0' of CRC_CAL_CYCLE means that CRC calculation delay is completely hidden in transmitting packet header
 ////  (the beginning of the packet may have been forwarded before the CRC was performed at the tail, to minimize latency )
@@ -118,8 +118,8 @@ enum TOPOLOGY
   MESH
 };
 
-//static TOPOLOGY SIM_TOPOLOGY = DEFAULT;
-static TOPOLOGY SIM_TOPOLOGY = MESH;
+extern TOPOLOGY gTopology;
+extern int gDim;
 
 enum LinkState
 {

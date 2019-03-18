@@ -26,7 +26,7 @@ namespace CasHMC
 
     inServiceLink = -1;
 
-    switch (SIM_TOPOLOGY) {
+    switch (gTopology) {
       case DUAL_HMC:
       case MESH:
       case DFLY:
@@ -36,7 +36,7 @@ namespace CasHMC
         CPU_LINKS = 4;
         break;
       default:
-        ERROR(header << "topology " << SIM_TOPOLOGY << " not defined");
+        ERROR(header << "topology " << gTopology << " not defined");
         exit(0);
     }
 
@@ -62,7 +62,7 @@ namespace CasHMC
 
     inServiceLink = -1;
 
-    switch (SIM_TOPOLOGY) {
+    switch (gTopology) {
       case DUAL_HMC:
       case MESH:
       case DFLY:
@@ -72,7 +72,7 @@ namespace CasHMC
         CPU_LINKS = 4;
         break;
       default:
-        ERROR(header << "topology " << SIM_TOPOLOGY << " not defined");
+        ERROR(header << "topology " << gTopology << " not defined");
         exit(0);
     }
 
@@ -155,7 +155,7 @@ namespace CasHMC
       if(link == -1) {
         for(int l=0; l<CPU_LINKS; l++) {
           link = FindAvailableLink(inServiceLink, downLinkMasters);
-          if (SIM_TOPOLOGY == DFLY || SIM_TOPOLOGY == MESH) {
+          if (gTopology == DFLY || gTopology == MESH) {
             assert(CPU_LINKS == 1);
             assert(link == 0);
           }
@@ -412,9 +412,10 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       case ATM_SWAP16:	cmdtype = SWAP16;	packetLength = 2;	break;
 
       // ACTIVE commands, Jiayi, 01/27
-      case ACTIVE_ADD:    cmdtype = ACT_ADD;  packetLength = 1;   break;
-      case ACTIVE_MULT:   cmdtype = ACT_MULT; packetLength = 1;   break;
-      case ACTIVE_GET: cmdtype = ACT_GET;  packetLength = 1;   break;
+      case ACTIVE_ADD:  reqDataSize = tran->dataSize; cmdtype = ACT_ADD;  packetLength = 1; break;
+      case ACTIVE_MULT: reqDataSize = tran->dataSize; cmdtype = ACT_MULT; packetLength = 1; break;
+      case ACTIVE_GET:  reqDataSize = tran->dataSize; cmdtype = ACT_GET;  packetLength = 1; break;
+      case PIMINS_DOT:  reqDataSize = tran->dataSize; cmdtype = PEI_DOT;  packetLength = 3; break;
 
       default:
                        ERROR(header<<"   == Error - WRONG transaction type  (CurrentClock : "<<currentClockCycle<<")");
@@ -444,7 +445,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       newPacket->active = false;
     }
     newPacket->reqDataSize = reqDataSize;
-    newPacket->orig_addr = tran->address;//tran->orig_addr;
+    newPacket->orig_addr = tran->address;
     newPacket->tran_tag = tran->transactionID;
     return newPacket;
   }
@@ -511,9 +512,9 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       assert(inp_buf);
       CrossbarSwitch * root_xbar = dynamic_cast<CrossbarSwitch *> (inp_buf->xbar);
       assert(root_xbar);
-      map<uint64_t, pair<pair<unsigned, int>, pair<int, vector<int> > > >::iterator it;
-      it = root_xbar->reserveTable.find(dest_addr);
-      if (it == root_xbar->reserveTable.end()) continue;
+      map<FlowID, FlowEntry>::iterator it;
+      it = root_xbar->flowTable.find(dest_addr);
+      if (it == root_xbar->flowTable.end()) continue;
       
       // print the routing tree using BFS
       vector<CrossbarSwitch *> xbarQ;
@@ -523,8 +524,8 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
         CrossbarSwitch *xbar = xbarQ[0];
         cout << xbar->cubeID << ": ";
         bool children_found = false;
-        for (int c = 0; c < xbar->childrenTable[dest_addr].size(); ++c) {
-          if (xbar->childrenTable[dest_addr][c]) {
+        for (int c = 0; c < NUM_LINKS; ++c) {
+          if (xbar->flowTable[dest_addr].children_count[c]) {
             LinkSlave *clsp = dynamic_cast<LinkSlave *> (xbar->upBufferDest[c]->linkP->linkSlaveP);
             assert(clsp);
             InputBuffer *cinp_buf = dynamic_cast<InputBuffer *> (clsp->downBufferDest);
@@ -555,9 +556,9 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       assert(inp_buf);
       CrossbarSwitch * root_xbar = dynamic_cast<CrossbarSwitch *> (inp_buf->xbar);
       assert(root_xbar);
-      map<uint64_t, pair<pair<unsigned, int>, pair<int, vector<int> > > >::iterator it;
-      it = root_xbar->reserveTable.find(dest_addr);
-      if (it == root_xbar->reserveTable.end()) continue;
+      map<FlowID, FlowEntry>::iterator it;
+      it = root_xbar->flowTable.find(dest_addr);
+      if (it == root_xbar->flowTable.end()) continue;
 
       // print the routing tree using BFS
       vector<unsigned> cubes;
@@ -569,16 +570,16 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
         CrossbarSwitch *xbar = xbarQ[0];
         cout << xbar->cubeID << ": ";
         bool children_found = false;
-        for (int c = 0; c < xbar->childrenTable[dest_addr].size(); ++c) {
+        for (int c = 0; c < NUM_LINKS; ++c) {
           LinkSlave *clsp = dynamic_cast<LinkSlave *> (xbar->upBufferDest[c]->linkP->linkSlaveP);
           assert(clsp);
           InputBuffer *cinp_buf = dynamic_cast<InputBuffer *> (clsp->downBufferDest);
           assert(cinp_buf);
           CrossbarSwitch * c_xbar = dynamic_cast<CrossbarSwitch *> (cinp_buf->xbar);
           if (c_xbar) {
-            map<uint64_t, pair<pair<unsigned, int>, pair<int, vector<int> > > >::iterator c_it;
-            c_it = c_xbar->reserveTable.find(dest_addr);
-            if (c_it == c_xbar->reserveTable.end()) continue;
+            map<FlowID, FlowEntry>::iterator c_it;
+            c_it = c_xbar->flowTable.find(dest_addr);
+            if (c_it == c_xbar->flowTable.end()) continue;
             else if (find(cubes.begin(), cubes.end(), c_xbar->cubeID) == cubes.end()) {
               cubes.push_back(c_xbar->cubeID);
               xbarQ.push_back(c_xbar);

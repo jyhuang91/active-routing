@@ -211,7 +211,7 @@ uint32_t GlobalEventQueue::process_event()
       for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
       {
         PTSHMCController * hmc = mcsim->hmcs[i];
-        cout << "hmc-controller " << hmc->num << ": resp_queue size " << hmc->resp_queue.size() << endl;
+        //cout << "hmc-controller " << hmc->num << ": resp_queue size " << hmc->resp_queue.size() << endl;
         for (vector<LocalQueueElement *>::iterator it = hmc->resp_queue.begin();
             it != hmc->resp_queue.end(); it++)
         {

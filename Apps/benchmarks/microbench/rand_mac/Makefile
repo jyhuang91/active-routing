@@ -1,5 +1,5 @@
 
-TRGS = rand_mac ar_rand_mac
+TRGS = rand_mac ar_rand_mac pei_rand_mac
 
 LIB_DEPEND = hooks
 
@@ -24,6 +24,8 @@ $(LIB_DEPEND):
 rand_mac: main.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_rand_mac: main_ar.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+pei_rand_mac: main_pei.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 
 clean:

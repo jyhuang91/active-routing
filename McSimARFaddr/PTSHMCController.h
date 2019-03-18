@@ -54,6 +54,7 @@ namespace PinPthread
       uint32_t num_mcs_log2;
       uint32_t interleave_xor_base_bit; // Jiayi, for addressing, 04/16/17
       uint32_t cube_interleave_base_bit;
+      uint32_t cubes_per_mc;
 
       uint64_t num_read;
       uint64_t num_write;
@@ -77,12 +78,12 @@ namespace PinPthread
       static map<uint64_t, vector<bool> > active_forests;
 
       inline uint32_t get_cube_num(uint64_t addr) {  // Jiayi, addressing
-        return (num * 4) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % 4;
+        return (num * cubes_per_mc) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % cubes_per_mc;
       }
 
       inline uint32_t get_active_cube_num(uint64_t addr) {
         uint32_t base_num = geq->which_mc(addr);
-        return (base_num * 4) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % 4;
+        return (base_num * cubes_per_mc) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % cubes_per_mc;
       }
 
       double get_update_req_lat() { return (total_update_req_time/ num_update_sent / process_interval); }

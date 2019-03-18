@@ -233,60 +233,46 @@ namespace CasHMC
     }
     bool findUpPacket = false;
     bool findDownPacket = false;
+    Packet *pkt = NULL;
     // first find packets upbuffers (response has higher priority, flow packets are sent through upbuffers)
     for (i = 0; i < upBuffers.size(); i++) {
       if (upBuffers[i] != NULL && upBuffers[i]->CMD != PRET && upBuffers[i]->CMD != IRTRY) {
-        findUpPacket = true;
+        if (upBuffers[i]->LNG <= upTokenCount) {
+          findUpPacket = true;
+          pkt = upBuffers[i];
+        }
+        break;
       }
-      break;
     }
     // second find packets downbuffers
     for (j = 0; j < downBuffers.size() && !findUpPacket; j++) {
       if (downBuffers[j] != NULL && downBuffers[j]->CMD != PRET && downBuffers[j]->CMD != IRTRY) {
-        findDownPacket = true;
+        if (downBuffers[j]->LNG <= downTokenCount) {
+          findDownPacket = true;
+          pkt = downBuffers[j];
+        }
+        break;
       }
-      break;
     }
-    if (findUpPacket) {
+    if (pkt != NULL) {
       if (extDRTC) {  // REQUEST
-        if (upBuffers[i]->DRTC == 0) {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[i]<<(downstream ? "Down) " : "Up)  ")<<"DRTC ("<<extDRTC<<") is embedded in tihs packet (from "<<*packet<<")");
+        if (pkt->DRTC == 0) {
+          DEBUG(ALI(18)<<header<<ALI(15)<<*pkt<<(downstream ? "Down) " : "Up)  ")<<"DRTC ("<<extDRTC<<") is embedded in tihs packet (from "<<*packet<<")");
         }
         else {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[i]<<(downstream ? "Down) " : "Up)   ")<<"DRTC ("<<upBuffers[i]->DRTC<<" + "<<extDRTC<<") is embedded in this packet (from "<<*packet<<")");
+          DEBUG(ALI(18)<<header<<ALI(15)<<*pkt<<(downstream ? "Down) " : "Up)   ")<<"DRTC ("<<pkt->DRTC<<" + "<<extDRTC<<") is embedded in this packet (from "<<*packet<<")");
         }
-        upBuffers[i]->DRTC += extDRTC;
+        pkt->DRTC += extDRTC;
       }
       else {
         assert(extURTC); // RESPONSE
-        if (upBuffers[i]->URTC == 0) {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[i]<<(downstream ? "Down) " : "Up)  ")<<"URTC ("<<extURTC<<") is embedded in tihs packet (from "<<*packet<<")");
+        if (pkt->URTC == 0) {
+          DEBUG(ALI(18)<<header<<ALI(15)<<*pkt<<(downstream ? "Down) " : "Up)  ")<<"URTC ("<<extURTC<<") is embedded in tihs packet (from "<<*packet<<")");
         }
         else {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[i]<<(downstream ? "Down) " : "Up)   ")<<"URTC ("<<upBuffers[i]->URTC<<" + "<<extURTC<<") is embedded in this packet (from "<<*packet<<")");
+          DEBUG(ALI(18)<<header<<ALI(15)<<*pkt<<(downstream ? "Down) " : "Up)   ")<<"URTC ("<<pkt->URTC<<" + "<<extURTC<<") is embedded in this packet (from "<<*packet<<")");
         }
-        upBuffers[i]->URTC += extURTC;
-      }
-    }
-    else if (findDownPacket) {
-      if (extDRTC) {  // REQUEST
-        if (downBuffers[j]->DRTC == 0) {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[j]<<(downstream ? "Down) " : "Up)  ")<<"DRTC ("<<extDRTC<<") is embedded in tihs packet (from "<<*packet<<")");
-        }
-        else {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[j]<<(downstream ? "Down) " : "Up)   ")<<"DRTC ("<<downBuffers[j]->DRTC<<" + "<<extDRTC<<") is embedded in this packet (from "<<*packet<<")");
-        }
-        downBuffers[j]->DRTC += extDRTC;
-      }
-      else {
-        assert(extURTC); // RESPONSE
-        if (downBuffers[j]->URTC == 0) {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[j]<<(downstream ? "Down) " : "Up)  ")<<"URTC ("<<extURTC<<") is embedded in tihs packet (from "<<*packet<<")");
-        }
-        else {
-          DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[j]<<(downstream ? "Down) " : "Up)   ")<<"URTC ("<<downBuffers[j]->URTC<<" + "<<extURTC<<") is embedded in this packet (from "<<*packet<<")");
-        }
-        downBuffers[j]->URTC += extURTC;
+        pkt->URTC += extURTC;
       }
     }
     else {
@@ -519,7 +505,7 @@ namespace CasHMC
       retryTime = retryTimer;
     }
     else {
-      retryTime = ceil(retryTimer * (double)tCK/CPU_CLK_PERIOD);
+      retryTime = ceil(retryTimer * (double)tCK/gCpuClkPeriod);
     }
     linkP->statis->errorRetryLat.push_back(retryTime);
     retryTimer = 0;
@@ -540,27 +526,39 @@ namespace CasHMC
       else if(upBuffers[0]->bufPopDelay == 0) {
 
         //Token count register represents the available space in link slave input buffer
-        if(linkRxTx.size() == 0 && !(upBuffers[0]->packetType != FLOW && upTokenCount < upBuffers[0]->LNG)) {
+        if (linkRxTx.size() == 0 && (upBuffers[0]->packetType == FLOW || upTokenCount >= upBuffers[0]->LNG)) {
           int tempWriteP = retBufWriteP + upBuffers[0]->LNG;
-          if(retBufWriteP	>= retBufReadP) {
-            if(tempWriteP - (int)retBufReadP < MAX_RETRY_BUF) {
-              CRCCountdown(tempWriteP, upBuffers[0]);
+          if (CRC_CHECK) {
+            if(retBufWriteP	>= retBufReadP) {
+              if(tempWriteP - (int)retBufReadP < MAX_RETRY_BUF) {
+                CRCCountdown(tempWriteP, upBuffers[0]);
+              }
+              else {
+                DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<"Up)   "<<"Retry buffer is near-full condition");
+              }
             }
             else {
-              //DEBUG(ALI(18)<<header<<ALI(15)<<*Buffers[0]<<(downstream ? "Down) " : "Up)   ")<<"Retry buffer is near-full condition");
+              if((int)retBufReadP - tempWriteP > 0) {
+                CRCCountdown(tempWriteP, upBuffers[0]);
+              }
+              else {
+                DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<"Up)   "<<"Retry buffer is near-full condition");
+              }
             }
           }
           else {
-            if((int)retBufReadP - tempWriteP > 0) {
-              CRCCountdown(tempWriteP, upBuffers[0]);
-            }
-            else {
-              //DEBUG(ALI(18)<<header<<ALI(15)<<*Buffers[0]<<(downstream ? "Down) " : "Up)   ")<<"Retry buffer is near-full condition");
-            }
+            CRCCountdown(tempWriteP, upBuffers[0]);
           }
         }
         else {
-          //DEBUG(ALI(18)<<header<<ALI(15)<<*Buffers[0]<<(downstream ? "Down) " : "Up)   ")<<"packet length ("<<Buffers[0]->LNG<<") is BIGGER than token count register ("<<tokenCount<<")");
+          if (linkRxTx.size() != 0) {
+            stringstream s;
+            (linkRxTx[0] == NULL) ? (s << "null") : (s << *linkRxTx[0]);
+            DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<" Up   linkRxTx has packet "<<s.str());
+          }
+          else {
+            DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<" Up   packet length ("<<upBuffers[0]->LNG<<") is BIGGER than token count register ("<<upTokenCount<<")");
+          }
         }
       }
     }
@@ -575,27 +573,39 @@ namespace CasHMC
       else if(downBuffers[0]->bufPopDelay == 0) {
 
         //Token count register represents the available space in link slave input buffer
-        if(linkRxTx.size() == 0 && !(downBuffers[0]->packetType != FLOW && downTokenCount < downBuffers[0]->LNG)) {
+        if (linkRxTx.size() == 0 && (downBuffers[0]->packetType == FLOW || downTokenCount >= downBuffers[0]->LNG)) {
           int tempWriteP = retBufWriteP + downBuffers[0]->LNG;
-          if(retBufWriteP	>= retBufReadP) {
-            if(tempWriteP - (int)retBufReadP < MAX_RETRY_BUF) {
-              CRCCountdown(tempWriteP, downBuffers[0]);
+          if (CRC_CHECK) {
+            if(retBufWriteP	>= retBufReadP) {
+              if(tempWriteP - (int)retBufReadP < MAX_RETRY_BUF) {
+                CRCCountdown(tempWriteP, downBuffers[0]);
+              }
+              else {
+                DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[0]<<"Down) "<<"Retry buffer is near-full condition");
+              }
             }
             else {
-              //DEBUG(ALI(18)<<header<<ALI(15)<<*Buffers[0]<<(downstream ? "Down) " : "Up)   ")<<"Retry buffer is near-full condition");
+              if((int)retBufReadP - tempWriteP > 0) {
+                CRCCountdown(tempWriteP, downBuffers[0]);
+              }
+              else {
+                DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[0]<<"Down) "<<"Retry buffer is near-full condition");
+              }
             }
           }
           else {
-            if((int)retBufReadP - tempWriteP > 0) {
-              CRCCountdown(tempWriteP, downBuffers[0]);
-            }
-            else {
-              //DEBUG(ALI(18)<<header<<ALI(15)<<*Buffers[0]<<(downstream ? "Down) " : "Up)   ")<<"Retry buffer is near-full condition");
-            }
+            CRCCountdown(tempWriteP, downBuffers[0]);
           }
         }
         else {
-          //DEBUG(ALI(18)<<header<<ALI(15)<<*Buffers[0]<<(downstream ? "Down) " : "Up)   ")<<"packet length ("<<Buffers[0]->LNG<<") is BIGGER than token count register ("<<tokenCount<<")");
+          if (linkRxTx.size() != 0) {
+            stringstream s;
+            (linkRxTx[0] == NULL) ? (s << "null") : (s << *linkRxTx[0]);
+            DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[0]<<" Down linkRxTx has packet "<<s.str());
+          }
+          else {
+            DEBUG(ALI(18)<<header<<ALI(15)<<*downBuffers[0]<<" Down packet length ("<<downBuffers[0]->LNG<<") is BIGGER than token count register ("<<downTokenCount<<")");
+          }
         }
       }
     }
@@ -853,21 +863,23 @@ namespace CasHMC
             <<"Decreased UTOKEN : "<<packet->LNG<<" (remaining : "<<upTokenCount<<"/"<<MAX_LINK_BUF<<")");
       }
     }
-    //Save packet in retry buffer
-    Packet *retryPacket = new Packet(*packet);
-    if(retryBuffers[retBufWriteP] == NULL) {
-      retryBuffers[retBufWriteP] = retryPacket;
+    if (CRC_CHECK) {
+      //Save packet in retry buffer
+      Packet *retryPacket = new Packet(*packet);
+      if(retryBuffers[retBufWriteP] == NULL) {
+        retryBuffers[retBufWriteP] = retryPacket;
+      }
+      else {
+        ERROR(header<<"  == Error - retryBuffers["<<retBufWriteP<<"] is not NULL  (CurrentClock : "<<currentClockCycle<<")");
+        exit(0);
+      }
+      for(int i=1; i<packet->LNG; i++) {
+        retryBuffers[(retBufWriteP+i<MAX_RETRY_BUF ? retBufWriteP+i : retBufWriteP+i-MAX_RETRY_BUF)] = NULL;
+      }
+      DEBUG(ALI(18)<<header<<ALI(15)<<*packet<<(downstream ? "Down) " : "Up)   ")
+          <<"RETRY BUFFER["<<retBufWriteP<<"] (FRP : "<<packet->FRP<<")");
+      retBufWriteP = packet->FRP;
     }
-    else {
-      ERROR(header<<"  == Error - retryBuffers["<<retBufWriteP<<"] is not NULL  (CurrentClock : "<<currentClockCycle<<")");
-      exit(0);
-    }
-    for(int i=1; i<packet->LNG; i++) {
-      retryBuffers[(retBufWriteP+i<MAX_RETRY_BUF ? retBufWriteP+i : retBufWriteP+i-MAX_RETRY_BUF)] = NULL;
-    }
-    DEBUG(ALI(18)<<header<<ALI(15)<<*packet<<(downstream ? "Down) " : "Up)   ")
-        <<"RETRY BUFFER["<<retBufWriteP<<"] (FRP : "<<packet->FRP<<")");
-    retBufWriteP = packet->FRP;
     //Send packet to standby buffer where the packet is ready to be transmitted
     packet->bufPopDelay = 1;
     linkRxTx.push_back(packet);
@@ -877,7 +889,7 @@ namespace CasHMC
       LinkSlave *lsp = dynamic_cast<LinkSlave *> (linkP->linkSlaveP);
       InputBuffer *to_ib = NULL;
       if (lsp) to_ib = dynamic_cast<InputBuffer *> (lsp->downBufferDest);
-      cout << CYCLE() << "push ACT_GET to link, ";
+      cout << CYCLE() << "push ACT_GET of flow " << hex << packet->DESTADRS << dec << " to link, ";
       if (ib && to_ib) {
         cout << "from cube#" << ((CrossbarSwitch *) ib->xbar)->cubeID << " to cube#" << ((CrossbarSwitch *) to_ib->xbar)->cubeID << endl;
       } else if (ib && !to_ib) {

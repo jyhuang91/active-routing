@@ -464,11 +464,12 @@ uint32_t Directory::process_event(uint64_t curr_time)
         if (d_entry.sharedl2.empty() == true)
         {
           if (d_entry.pending->type == et_hmc_update_add ||
-              d_entry.pending->type == et_hmc_update_mult)
+              d_entry.pending->type == et_hmc_update_mult ||
+              d_entry.pending->type == et_hmc_pei)
           {
             num_tr_to_i++;
             // offloading active compute to memory network
-            if (num == 0)
+            if (num == 0 || d_entry.pending->type == et_hmc_pei)
             {
               hmccontroller->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
             }
@@ -605,7 +606,8 @@ uint32_t Directory::process_event(uint64_t curr_time)
     {
       address = (req_lqe->twin_lqe1 == NULL) ? req_lqe->src_addr1 : req_lqe->src_addr2;
       is_active_req = true;
-    }
+    }else if(req_lqe->type == et_hmc_pei) is_active_req = true;
+
     uint64_t dir_entry = (address >> set_lsb);
     uint32_t set       = dir_entry % num_sets;
     event_type etype   = req_lqe->type;
@@ -674,7 +676,7 @@ uint32_t Directory::process_event(uint64_t curr_time)
     else if (dir.find(dir_entry) == dir.end())
     {
       // offloading active computation to memory network
-      if (num == 0)
+      if (num == 0 || req_lqe->type == et_hmc_pei)
       {
         hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
       }
@@ -743,7 +745,7 @@ uint32_t Directory::process_event(uint64_t curr_time)
             // offloading active compute to memory network
             dir.erase(dir_entry);
             remove_directory_cache_entry(set, dir_entry);
-            if (num == 0)
+            if (num == 0 || req_lqe->type == et_hmc_pei)
             {
               hmccontroller->add_req_event(curr_time + dir_to_xbar_t, req_lqe);
             }
@@ -1005,7 +1007,7 @@ uint32_t Directory::process_event(uint64_t curr_time)
             break;
         }
       }
-      else if (etype == et_hmc_update_add || etype == et_hmc_update_mult)
+      else if (etype == et_hmc_update_add || etype == et_hmc_update_mult || etype == et_hmc_pei)
       {
         // in cs stable states, back-invalidate in caches
         switch (ctype)

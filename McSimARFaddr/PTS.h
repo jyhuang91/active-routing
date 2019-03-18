@@ -145,6 +145,7 @@ namespace PinPthread
   {
     public:
       PthreadTimingSimulator(const string & mdfile);
+      PthreadTimingSimulator(const string & mdfile, const string & benchname = "");
       PthreadTimingSimulator(int port_num) { }
       ~PthreadTimingSimulator();
 

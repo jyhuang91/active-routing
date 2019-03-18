@@ -187,6 +187,7 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   is_race_free_application(pts_->get_param_str("pts.is_race_free_application") == "false" ? false : true),
   max_acc_queue_size(pts_->get_param_uint64("pts.max_acc_queue_size", 1000)),
   hmc_topology(pts_->get_param_str("pts.hmc_top") == "DFLY" ? DFLY : MESH),
+  core_frequency(pts->get_param_uint64("pts.core_frequency", 2)),
   cores(), hthreads(), l1ds(), l1is(), l2s(), dirs(), rbols(), /*mcs(),*/ hmcs(),  tlbl1ds(), tlbl1is(), comps(),
   num_fetched_instrs(0), num_instrs_printed_last_time(0),
   num_destroyed_cache_lines_last_time(0), cache_line_life_time_last_time(0),
@@ -199,14 +200,17 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   is_asymmetric = pts->get_param_str("is_asymmetric") == "true" ? true : false;
   is_nuca       = pts->get_param_str("pts.is_nuca") == "true" ? true: false;  // Jiayi, 06/05/17
 
-  hmc_net = Network::New(4, hmc_topology);
-
   uint32_t num_threads_per_l1_cache   = pts->get_param_uint64("pts.num_hthreads_per_l1$", 4);
   assert(use_o3core == false || num_threads_per_l1_cache == 1);
   uint32_t num_l1_caches_per_l2_cache = pts->get_param_uint64("pts.num_l1$_per_l2$", 2);
   uint32_t num_mcs                    = pts->get_param_uint64("pts.num_mcs", 2);
+  uint32_t net_dim                    = pts->get_param_uint64("pts.net_dim", 4);
   print_interval                      = pts->get_param_uint64("pts.print_interval", 1000000);
   string   noc_type(pts->get_param_str("pts.noc_type"));
+  string   benchname(pts->get_param_str("pts.benchname"));
+
+  double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
+  hmc_net = Network::New(net_dim, hmc_topology, benchname, cpu_clk);
 
   // for stats
   if (use_o3core)
@@ -1058,6 +1062,7 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
     cout << setw(6) << num_gather_acc - num_gather_acc_last << " gather accs, ";
     num_mem_acc_last    = num_mem_acc;
     num_used_pages_last = num_used_pages;
+    num_gather_acc_last = num_gather_acc;
 
     if (o3cores.size() > 0)
     {

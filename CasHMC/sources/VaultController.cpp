@@ -97,6 +97,7 @@ namespace CasHMC
         case WR_RS:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING write response packet");		break;
         case ACT_ADD:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");		break;  // Jiayi
         case ACT_MULT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet");  break;
+        case PEI_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING PEI_DOT response packet");  break;
         default:
                     ERROR(header<<"  == Error - WRONG response packet command type  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
                     exit(0);
@@ -182,16 +183,23 @@ namespace CasHMC
         pendingDataSize -= (retCMD->dataSize/16)+1;
         //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   pendingDataSize "<<(retCMD->dataSize/16)+1<<" decreased   (current pendingDataSize : "<<pendingDataSize<<")");
         newPacket->ADRS = retCMD->addr; // Jiayi, 03/27/17
+       
         if (retCMD->packetCMD == ACT_ADD) { // Jiayi
           newPacket->CMD = ACT_ADD; // Jiayi, 03/15/17
           newPacket->active = true;
           newPacket->DESTADRS = retCMD->destAddr;
           newPacket->SRCADRS1 = retCMD->srcAddr1;
-          newPacket->LNG = 2;
+          newPacket->operandBufID = retCMD->operandBufID;
+          //newPacket->LNG = 2; // comment it, LNG is calculated from dataSize/16+1
 #ifdef DEBUG_UPDATE
-          cout << "Active ADD packet " << newPacket->TAG << " is returned" << endl;
+          cout << "Active ADD packet " << *newPacket << " is returned for (ADD) operand addr " << hex << newPacket->SRCADRS1 << dec << endl;
 #endif
-        } else if (retCMD->packetCMD == ACT_MULT) { // 03/24/17
+
+        } else if(retCMD->packetCMD == PEI_DOT) {
+          newPacket->LNG = 2;
+          newPacket->CMD = PEI_DOT; // Jiayi, 03/15/17
+        }
+        else if (retCMD->packetCMD == ACT_MULT) { // 03/24/17
           newPacket->CMD = ACT_MULT;
           //newPacket->SRCCUB = retCMD->dest_cube;
           //newPacket->DESTCUB = retCMD->src_cube;
@@ -207,15 +215,13 @@ namespace CasHMC
           if (newPacket->SRCADRS1) {
             assert(newPacket->SRCADRS2 == 0);
             cout << " for operand 1 is returned, src_cube: " << newPacket->SRCCUB << ", dest_cube: " << newPacket->DESTCUB
-              << endl;
-              //<<" (srcAddr1: 0x" << hex << newPacket->SRCADRS1
-              //<< ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
+              << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
+              << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
           } else {
             assert(newPacket->SRCADRS1 == 0 && newPacket->SRCADRS2);
             cout << " for operand 2 is returned, src_cube: " << newPacket->SRCCUB << ", dest_cube: " << newPacket->DESTCUB
-              << endl;
-              //<<" (srcAddr1: 0x" << hex << newPacket->SRCADRS1
-              //<< ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
+              << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
+              << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
           }
 #endif 
         }
@@ -229,7 +235,16 @@ namespace CasHMC
     newPacket->orig_addr = retCMD->addr;
     newPacket->tran_tag = retCMD->tran_tag;
     newPacket->segment = retCMD->segment;
-    ReceiveUp(newPacket);
+    if (newPacket->CMD != PEI_DOT) {
+      ReceiveUp(newPacket);
+    } else {
+      if (pcuPacket.empty()) { 
+        newPacket->bufPopDelay = PCU_DELAY;
+      } else {
+        newPacket->bufPopDelay = max(PCU_DELAY,(pcuPacket.back())->bufPopDelay + 1);
+      }
+      pcuPacket.push_back(newPacket);
+    }
   }
 
   //
@@ -237,6 +252,9 @@ namespace CasHMC
   //
   void VaultController::Update()
   {
+    if(!pcuPacket.empty() && (pcuPacket.front())->bufPopDelay == 0){
+      ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
+    } 
     //Update DRAM state and various countdown
     UpdateCountdown();
 
@@ -355,6 +373,7 @@ namespace CasHMC
 
         if(!atomicCMD->posted) {
           MakeRespondPacket(atomicCMD);
+          assert(atomicCMD->packetCMD != PEI_DOT);
         }
         delete atomicCMD;
         atomicCMD = NULL;
@@ -369,6 +388,10 @@ namespace CasHMC
     EnablePowerdown();
 
     commandQueue->Update();
+    for(int i=0; i<pcuPacket.size(); i++){
+      assert(pcuPacket[i]->bufPopDelay > 0);
+      pcuPacket[i]->bufPopDelay--;
+    }
     Step();
   }
 
@@ -397,10 +420,11 @@ namespace CasHMC
         if(dataBus->lastCMD) {
           if(!dataBus->atomic && !dataBus->posted) {
             MakeRespondPacket(dataBus);
+            assert(dataBus->packetCMD != PEI_DOT); 
           }
           else if(dataBus->trace != NULL && dataBus->posted) {
-            dataBus->trace->tranFullLat = ceil(currentClockCycle * (double)tCK/CPU_CLK_PERIOD) - dataBus->trace->tranTransmitTime;
-            dataBus->trace->linkFullLat = ceil(currentClockCycle * (double)tCK/CPU_CLK_PERIOD) - dataBus->trace->linkTransmitTime;
+            dataBus->trace->tranFullLat = ceil(currentClockCycle * (double)tCK/gCpuClkPeriod) - dataBus->trace->tranTransmitTime;
+            dataBus->trace->linkFullLat = ceil(currentClockCycle * (double)tCK/gCpuClkPeriod) - dataBus->trace->linkTransmitTime;
             dataBus->trace->vaultFullLat = currentClockCycle - dataBus->trace->vaultIssueTime;
             delete dataBus->trace;
           }
@@ -474,48 +498,49 @@ namespace CasHMC
       case P_WR128:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
       case P_WR256:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
                     //Read
-      case RD16:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD32:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD48:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD64:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD80:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD96:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD112:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD128:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case RD256:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
-      case MD_RD:		tempCMD = OPEN_PAGE ? READ : READ_P;	pendingReadData.push_back(packet->TAG);	break;
+      case RD16:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD32:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD48:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD64:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD80:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD96:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD112:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD128:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case RD256:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
+      case MD_RD:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
                     //Arithmetic atomic
-      case _2ADD8:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case ADD16:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case P_2ADD8:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	tempPosted = true;	break;
-      case P_ADD16:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	tempPosted = true;	break;
-      case _2ADDS8R:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case ADDS16R:	atomic = true;	tempCMD = READ; pendingReadData.push_back(packet->TAG);	break;
-      case INC8:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case P_INC8:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	tempPosted = true;	break;
+      case _2ADD8:	atomic = true;	tempCMD = READ;	break;
+      case ADD16:		atomic = true;	tempCMD = READ;	break;
+      case P_2ADD8:	atomic = true;	tempCMD = READ;	tempPosted = true;	break;
+      case P_ADD16:	atomic = true;	tempCMD = READ;	tempPosted = true;	break;
+      case _2ADDS8R:	atomic = true;	tempCMD = READ;	break;
+      case ADDS16R:	atomic = true;	tempCMD = READ; break;
+      case INC8:		atomic = true;	tempCMD = READ;	break;
+      case P_INC8:	atomic = true;	tempCMD = READ;	tempPosted = true;	break;
                     //Boolean atomic
-      case XOR16:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case OR16:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case NOR16:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case AND16:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case NAND16:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
+      case XOR16:		atomic = true;	tempCMD = READ;	break;
+      case OR16:		atomic = true;	tempCMD = READ;	break;
+      case NOR16:		atomic = true;	tempCMD = READ;	break;
+      case AND16:		atomic = true;	tempCMD = READ;	break;
+      case NAND16:	atomic = true;	tempCMD = READ;	break;
                     //Comparison atomic
-      case CASGT8:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case CASLT8:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case CASGT16:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case CASLT16:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case CASEQ8:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case CASZERO16:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case EQ16:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case EQ8:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
+      case CASGT8:	atomic = true;	tempCMD = READ;	break;
+      case CASLT8:	atomic = true;	tempCMD = READ;	break;
+      case CASGT16:	atomic = true;	tempCMD = READ;	break;
+      case CASLT16:	atomic = true;	tempCMD = READ;	break;
+      case CASEQ8:	atomic = true;	tempCMD = READ;	break;
+      case CASZERO16:	atomic = true;	tempCMD = READ;	break;
+      case EQ16:		atomic = true;	tempCMD = READ;	break;
+      case EQ8:		atomic = true;	tempCMD = READ;	break;
                   //Bitwise atomic
-      case BWR:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
-      case P_BWR:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	tempPosted = true;	break; 
-      case BWR8R:		atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break; 
-      case SWAP16:	atomic = true;	tempCMD = READ;	pendingReadData.push_back(packet->TAG);	break;
+      case BWR:		atomic = true;	tempCMD = READ;	break;
+      case P_BWR:		atomic = true;	tempCMD = READ;	tempPosted = true;	break; 
+      case BWR8R:		atomic = true;	tempCMD = READ;	break; 
+      case SWAP16:	atomic = true;	tempCMD = READ;	break;
       // Active Add
-      case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; pendingReadData.push_back(packet->TAG); break; 
-      case ACT_MULT:   tempCMD = OPEN_PAGE ? READ : READ_P; pendingReadData.push_back(packet->TAG); break; 
+      case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; break; 
+      case ACT_MULT:   tempCMD = OPEN_PAGE ? READ : READ_P; break; 
+      case PEI_DOT:   tempCMD = OPEN_PAGE ? READ : READ_P; break; 
 
       default:
                       ERROR(header<<"  == Error - WRONG packet command type  (CurrentClock : "<<currentClockCycle<<")");
@@ -555,11 +580,11 @@ namespace CasHMC
         if(tempCMD == READ || tempCMD == READ_P) {
           pendingReadData.push_back(packet->TAG);
           // Jiayi, active, 02/06, 03/24
-          //if (packet->active) {
           if (packet->CMD == ACT_ADD) {
             assert(packet->SRCADRS1 && !packet->SRCADRS2);
             rwCMD->srcAddr1 = packet->SRCADRS1;
             rwCMD->destAddr = packet->DESTADRS;
+            rwCMD->operandBufID = packet->operandBufID;
           } else if (packet->CMD == ACT_MULT) {
             assert((!packet->SRCADRS1 && packet->SRCADRS2) || (packet->SRCADRS1 && !packet->SRCADRS2));
             if (packet->SRCADRS1 != 0) {
@@ -571,7 +596,6 @@ namespace CasHMC
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
           }
-          //}
         }
         rwCMD->addr = packet->orig_addr;//packet->ADRS; // Jiayi, 03/27/17
         rwCMD->tran_tag = packet->tran_tag;
@@ -716,7 +740,7 @@ namespace CasHMC
         cout << (upBuffers[i]->packetType == REQUEST ? "    Request " : "    Response ")
           << *upBuffers[i] << " from current cube " << xbar->cubeID << " to next cube " << next_cube
           << " (src_cube: " << upBuffers[i]->SRCCUB << ", dest_cube: " << upBuffers[i]->DESTCUB
-          << ", packet length: " << upBuffers[i]->LNG << endl;
+          << ", packet length: " << upBuffers[i]->LNG;
         if (upBuffers[i]->CMD == ACT_MULT) {
           if (upBuffers[i]->SRCADRS1 && upBuffers[i]->SRCADRS2) {
             cout << ", full pkt, dest_cube1: " << upBuffers[i]->DESTCUB1 << ", dest_cube2: " << upBuffers[i]->DESTCUB2

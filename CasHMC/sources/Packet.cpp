@@ -424,7 +424,13 @@ namespace CasHMC
   {
     string header;
     stringstream id;
-    id << f.TAG;
+    id << f.TAG << "-";
+    switch(f.packetType) {
+      case REQUEST:   id << "REQ";  break;
+      case RESPONSE:  id << "REP";  break;
+      case FLOW:      id << "FLOW"; break;
+      default: ERROR("ERROR Packet Type"); exit(0);
+    }
 
     switch(f.CMD) {
       //Request commands
@@ -470,6 +476,7 @@ namespace CasHMC
       case ACT_ADD: header = "[P" + id.str() + "-ACT_ADD]"; break;
       case ACT_MULT: header = "[P" + id.str() + "-ACT_MULT]"; break;
       case ACT_GET: header = "[P" + id.str() + "-ACT_GET]"; break;
+      case PEI_DOT: header = "[P" + id.str() + "-PEI_DOT]"; break;
       case ERROR:		header = "[P" + id.str() + "-ERROR]";		break;
       default:
                     ERROR(" (FL) == Error - Trying to print unknown kind of Packet CMD type");
@@ -478,6 +485,104 @@ namespace CasHMC
     }
     out<<header;
     return out;
+  }
+
+  ostream& operator<<(ostream &out, PacketCommandType cmd)
+  {
+    switch(cmd) {
+      //Request commands
+      case WR16:	  out << "WR16";    break;
+      case WR32:	  out << "WR32";    break;
+      case WR48:	  out << "WR48";    break;
+      case WR64:	  out << "WR64";    break;
+      case WR80:	  out << "WR80";    break;
+      case WR96:	  out << "WR96";    break;
+      case WR112:	  out << "WR112";   break;
+      case WR128:	  out << "WR128";   break;
+      case MD_WR:	  out << "MD_WR";   break;
+      case WR256:	  out << "WR256";   break;
+      case P_WR16:	out << "P_WR16";  break;
+      case P_WR32:	out << "P_WR32";  break;
+      case P_WR48:	out << "P_WR48";  break;
+      case P_WR64:	out << "P_WR64";  break;
+      case P_WR80:	out << "P_WR80";  break;
+      case P_WR96:	out << "P_WR96";  break;
+      case P_WR112:	out << "P_WR112"; break;
+      case P_WR128:	out << "P_WR128"; break;
+      case P_WR256:	out << "P_WR256"; break;
+      case RD16:	  out << "RD16";    break;
+      case RD32:	  out << "RD32";    break;
+      case RD48:	  out << "RD48";    break;
+      case RD64:	  out << "RD64";    break;
+      case RD80:	  out << "RD80";    break;
+      case RD96:	  out << "RD96";    break;
+      case RD112:	  out << "RD112";   break;
+      case RD128:	  out << "RD128";   break;
+      case RD256:	  out << "RD256";   break;
+      case MD_RD:	  out << "MD_RD";   break;
+      //ATOMICS commands
+      case _2ADD8:    out << "2ADD8";   break;
+      case ADD16:     out << "ADD16";   break;
+      case P_2ADD8:   out << "P_2ADD8"; break;
+      case P_ADD16:   out << "P_ADD16"; break;
+      case _2ADDS8R:  out << "2ADDS8R"; break;
+      case ADDS16R:   out << "ADDS16R"; break;
+      case INC8:      out << "INC8";    break;
+      case P_INC8:    out << "P_INC8";	break;
+      case XOR16:     out << "XOR16";   break;
+      case OR16:      out << "OR16";    break;
+      case NOR16:     out << "NOR16";   break;
+      case AND16:     out << "AND16";   break;
+      case NAND16:    out << "NAND16";  break;
+      case CASGT8:    out << "CASGT8";  break;
+      case CASLT8:    out << "CASLT8";  break;
+      case CASGT16:   out << "CASGT16"; break;
+      case CASLT16:   out << "CASLT16"; break;
+      case CASEQ8:    out << "CASEQ8";  break;
+      case CASZERO16: out << "CASZR16"; break;
+      case EQ16:      out << "EQ16";    break;
+      case EQ8:       out << "EQ8";     break;
+      case BWR:       out << "BWR";     break;
+      case P_BWR:     out << "P_BWR";   break;
+      case BWR8R:     out << "BWR8R";   break;
+      case SWAP16:    out << "SWAP16";  break;
+      //Flow Commands
+      case NULL_:     out << "NULL";    break;
+      case PRET:      out << "PRET";    break;
+      case TRET:      out << "TRET";    break;
+      case IRTRY:     out << "IRTRY";   break;
+      //Respond commands
+      case RD_RS:     out << "RD_RS";	    break;
+      case WR_RS:     out << "WR_RS";     break;
+      case MD_RD_RS:  out << "MD_RD_RS]"; break;
+      case MD_WR_RS:  out << "MD_WR_RS";  break;
+      // active commands
+      case ACT_ADD:   out << "ACT_ADD";   break;
+      case ACT_MULT:  out << "ACT_MULT";  break;
+      case ACT_GET:   out << "ACT_GET";   break;
+      case PEI_DOT:   out << "PEI_DOT";   break;
+      case ERROR:		  out << "ERROR";		  break;
+      default:
+        ERROR(" (FL) == Error - Trying to print unknown kind of Packet CMD type");
+        exit(0);
+    }
+  }
+
+  void Packet::Display()
+  {
+    string header;
+    stringstream id;
+    switch(packetType) {
+      case REQUEST:   id << "REQ";  break;
+      case RESPONSE:  id << "REP";  break;
+      case FLOW:      id << "FLOW"; break;
+      default: ERROR("ERROR Packet Type"); exit(0);
+    }
+    //id << "-" ;
+    //header = "[" + id.str() + "]";
+
+    cout << "[" << id.str() << "-" << CMD << "-" << TAG << "-(LNG " << LNG
+      << ", utk " << URTC << ", dtk " << DRTC << ", bufdelay " << bufPopDelay << ")]" << endl;
   }
 
 } //namespace CasHMC

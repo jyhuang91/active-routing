@@ -29,7 +29,7 @@ enum MAPPING_SCHEME
   MAX_BLOCK_128B=128,
   MAX_BLOCK_256B=256
 };
-static MAPPING_SCHEME ADDRESS_MAPPING = MAX_BLOCK_32B;
+static MAPPING_SCHEME ADDRESS_MAPPING = MAX_BLOCK_64B;
 
 static bool QUE_PER_BANK = true;	//Command queue structure (If true, every bank has respective command queue [Bank-Level parallelism])
 static bool OPEN_PAGE = false;		//Whether open page policy or close page policy

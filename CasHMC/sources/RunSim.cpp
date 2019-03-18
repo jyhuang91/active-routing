@@ -41,6 +41,16 @@ void help()
   cout<<"-h (--help)    : Simulation option help"<<endl<<endl;
 }
 
+void MakePEITransaction(void)
+{
+    Transaction *newTran;
+    uint64_t physicalAddress = rand();
+    physicalAddress = (physicalAddress<<32)|rand();
+
+    newTran = new Transaction(PIMINS_DOT, physicalAddress, TRANSACTION_SIZE, casHMCWrapper, 0, 11);      // Read transaction
+    transactionBuffers.push_back(newTran);
+}
+
 void MakeRandomTransaction(void)
 {
   int rand_tran = rand()%10000+1;
@@ -163,8 +173,8 @@ void parseTraceFileLine(string &line, uint64_t &clockCycle, uint64_t &addr, Tran
   istringstream size(tempStr);
   size>>dataSize;
 }
-/*
-int main(int argc, char **argv)
+
+/*int main(int argc, char **argv)
 {
   //
   //parse command-line options setting
@@ -409,5 +419,5 @@ int main(int argc, char **argv)
   casHMCWrapper = NULL;
 
   return 0;
-}
-*/
+}*/
+

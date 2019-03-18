@@ -1,0 +1,235 @@
+Created a DragonFly topology with dimension 4
+
+****************************************************************
+*                      CasHMC version 1.1                      *
+*            Date : 2018/07/24      Time : 19:33:00            *
+****************************************************************
+
+ = Log folder generating information
+   Result folder already exists (./result/)
+
+   === Simulation start === 
+  [ graph/CasHMC_plot_no0.dat ] is generated
+  [ graph/CasHMC_plot_no0.gnuplot ] is generated
+
+in case when the program exits with an error, please run the following command
+kill -9 42158 
+  -- {51907} cmd: /home/sungkeun/git/active-routing-fullsim-cache-granularity/pin/intel64/bin/pinbin -t /home/sungkeun/git/active-routing-fullsim-cache-granularity/Pthread/mypthreadtool -port 51907 -skip_first 0 -run_roi true -- ./ar_mac 16 6400000 
+initiating context at the begining ...
+  -- [           0]: {51907} thread 0 is created
+finish context initialization ...
+NYI: __pthread_initialize_minimal at: 0x402080
+NYI: __linkin_atfork at: 0x41adf0
+I am in ::::::::::::::::::::::::::::::::::: ROI-Begin
+  -- [           0]: {51907} thread 1 is created
+  -- [           0]: {51907} thread 2 is created
+  -- [           0]: {51907} thread 3 is created
+  -- [           0]: {51907} thread 4 is created
+  -- [           0]: {51907} thread 5 is created
+  -- [           0]: {51907} thread 6 is created
+  -- [           0]: {51907} thread 7 is created
+  -- [           0]: {51907} thread 8 is created
+  -- [           0]: {51907} thread 9 is created
+  -- [           0]: {51907} thread 10 is created
+  -- [           0]: {51907} thread 11 is created
+  -- [           0]: {51907} thread 12 is created
+  -- [           0]: {51907} thread 13 is created
+  -- [           0]: {51907} thread 14 is created
+  -- [           0]: {51907} thread 15 is created
+  -- [      973460]:    1000059 instrs so far, IPC=  10.273, L1 (acc, miss)=(   23679,    212), L2 (acc, miss)=(    157,    145),     38 mem accs, (   25,   25) touched pages (this time, 1stly), 124313 update accs,      0 gather accs,  avg_dd= 62.442,      0 back-inv,  169.5 update-noc-lat, 0.069287 update-stall-lat, 185.916 update-roundtrip-lat,      0 gather-roundtrip-lat, 81.9292 load-amat, 148.134 store-amat, 151.16 req_noc_lat, 
+  -- [     1945310]:    2000123 instrs so far, IPC=  10.290, L1 (acc, miss)=(   23442,      0), L2 (acc, miss)=(      0,      0),      0 mem accs, (    4,    0) touched pages (this time, 1stly), 125015 update accs,      0 gather accs,  avg_dd= 62.758,      0 back-inv, 169.12 update-noc-lat, 0.0704098 update-stall-lat, 185.529 update-roundtrip-lat,      0 gather-roundtrip-lat,      0 load-amat,      0 store-amat, 151.16 req_noc_lat, 
+  -- [     2627210]: {51907} thread 12 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2677420]: {51907} thread 15 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2682010]: {51907} thread 14 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2698970]: {51907} thread 13 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2766850]: {51907} thread 8 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2845790]: {51907} thread 4 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2869710]: {51907} thread 9 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2872220]: {51907} thread 10 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2892140]: {51907} thread 6 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2892490]: {51907} thread 11 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2899250]: {51907} thread 5 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2914220]: {51907} thread 7 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     2961400]:    3000038 instrs so far, IPC=   9.840, L1 (acc, miss)=(   23571,     39), L2 (acc, miss)=(     39,      5),      5 mem accs, (    9,    3) touched pages (this time, 1stly), 125481 update accs,     13 gather accs,  avg_dd= 62.903,      0 back-inv, 153.982 update-noc-lat, 0.0588582 update-stall-lat, 170.381 update-roundtrip-lat,      0 gather-roundtrip-lat, 10.5288 load-amat,      6 store-amat, 153.545 req_noc_lat, 
+  -- [     3314180]: {51907} thread 3 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     3342340]: {51907} thread 1 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [     3365020]: {51907} thread 2 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+I am in ::::::::::::::::::::::::::::::::::: ROI-End
+
+Spawn Threads...[MCSIM-HOOKS] ROI begin
+[MCSIM-HOOKS] ROI end
+
+Threads Joined!
+Time:226.013401 seconds
+Array size: 6400000, sum: 0.000000
+  -- [     3365020]: {51907} thread 0 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- {51907} total number of unsimulated (ins, rd, wr, rd_2nd): (0, 0, 0, 0)
+  -- {51907} (cond_broadcast, cond_signal, cond_wait, barrier) = (0, 0, 0, 16)
+Pthread Tool ngather: 16
+ -- event became empty at cycle = 3367520 num_threads 
+  -- event became empty at cycle = 3367520
+  -- th[  0] fetched 200291 instrs
+  -- th[  1] fetched 200051 instrs
+  -- th[  2] fetched 200051 instrs
+  -- th[  3] fetched 200051 instrs
+  -- th[  4] fetched 200051 instrs
+  -- th[  5] fetched 200051 instrs
+  -- th[  6] fetched 200051 instrs
+  -- th[  7] fetched 200051 instrs
+  -- th[  8] fetched 200051 instrs
+  -- th[  9] fetched 200051 instrs
+  -- th[ 10] fetched 200051 instrs
+  -- th[ 11] fetched 200051 instrs
+  -- th[ 12] fetched 200051 instrs
+  -- th[ 13] fetched 200051 instrs
+  -- th[ 14] fetched 200051 instrs
+  -- th[ 15] fetched 200051 instrs
+  -- total number of fetched instructions : 3201056 (IPC =   9.505)
+  -- total number of ticks: 3367520 , cycles: 336752
+  -- total number of mem accs : 45
+  -- total number of updates : 400000
+  -- total number of gathers : 16
+  -- total ngather recieved : 16
+  -- total ngather to o3cores : 16
+  -- total number of back invalidations : 0
+  -- average update request latency : 156.873
+  -- average update stalls in hmc controllers : 0.06292
+  -- average update roundtrip latency : 173.273
+  -- average gather roundtrip latency : 45144.2
+  -- OOO [  0] : fetched     200291 instrs, branch (miss, access)=(       17,      25067)=   0.07%, nacks= 0, x87_ops= 0, call_ops= 33, latest_ip= 0x400bc0, num_read= 30, num_write= 38, tot_mem_wr_time= 56180, tot_mem_rd_time= 30240, tot_dep_dist= 12550420
+  -- OOO [  1] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 5720, tot_mem_rd_time= 6670, tot_dep_dist= 12546704
+  -- OOO [  2] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 6980, tot_mem_rd_time= 7950, tot_dep_dist= 12546031
+  -- OOO [  3] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 8180, tot_mem_rd_time= 6330, tot_dep_dist= 12547525
+  -- OOO [  4] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 6660, tot_mem_rd_time= 5620, tot_dep_dist= 12545656
+  -- OOO [  5] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 6260, tot_mem_rd_time= 6010, tot_dep_dist= 12547224
+  -- OOO [  6] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 5440, tot_mem_rd_time= 6000, tot_dep_dist= 12545185
+  -- OOO [  7] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 8150, tot_mem_rd_time= 4240, tot_dep_dist= 12547421
+  -- OOO [  8] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 7790, tot_mem_rd_time= 5950, tot_dep_dist= 12546957
+  -- OOO [  9] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 7270, tot_mem_rd_time= 5760, tot_dep_dist= 12547634
+  -- OOO [ 10] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 7870, tot_mem_rd_time= 4530, tot_dep_dist= 12545711
+  -- OOO [ 11] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 8580, tot_mem_rd_time= 3720, tot_dep_dist= 12543339
+  -- OOO [ 12] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 8500, tot_mem_rd_time= 7380, tot_dep_dist= 12547299
+  -- OOO [ 13] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 8430, tot_mem_rd_time= 6710, tot_dep_dist= 12546045
+  -- OOO [ 14] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 9090, tot_mem_rd_time= 6680, tot_dep_dist= 12545721
+  -- OOO [ 15] : fetched     200051 instrs, branch (miss, access)=(        6,      25004)=   0.02%, nacks= 0, x87_ops= 0, call_ops= 1, latest_ip= 0x7ffff6ad2980, num_read= 15, num_write= 6, tot_mem_wr_time= 9260, tot_mem_rd_time= 6340, tot_dep_dist= 12545711
+  -- L2$ [  0] : RD (miss, access)=(         99,        116)=  85.34%
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  6] : RD (miss, access)=(          1,         15)=   6.67%
+  -- L2$ [  6] : WR (miss, access)=(         14,         14)= 100.00%
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 0 : 14 , 
+  -- L2$ [  7] : WR (miss, access)=(          1,          1)= 100.00%
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L2$ [  9] : RD (miss, access)=(         11,         16)=  68.75%
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 11] : RD (miss, access)=(         23,         27)=  85.19%
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 13] : RD (miss, access)=(          1,         15)=   6.67%
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 15] : RD (miss, access)=(          1,          1)= 100.00%
+  -- L2$ [ 15] : WR (miss, access)=(          1,          2)=  50.00%
+  -- L2$ [ 15] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,          0,          0,          1,          0,          0)
+ L2$ (i,e,s,m,tr) ratio=( 999,    0,    0,    0,    0), num_dirty_lines (pid:#) = 0 : 2 , 
+  -- Dir [  0] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (7, 0, 0, 0, 0, 0, 4, 0, 3)
+  -- Dir [  0] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 0, 0, 7, 199982, 7, 0, 0, 0, 0), 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- Dir [  1] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (18, 1, 0, 0, 0, 0, 13, 0, 6)
+  -- Dir [  1] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 0, 0, 18, 200038, 18, 0, 0, 0, 0), 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- Dir [  2] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (5, 0, 0, 0, 0, 0, 1, 0, 4)
+  -- Dir [  2] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 0, 0, 5, 200010, 5, 0, 0, 0, 0), 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- Dir [  3] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (15, 0, 0, 0, 0, 0, 11, 0, 4)
+  -- Dir [  3] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 0, 0, 15, 200062, 15, 0, 0, 0, 0), 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- HMCCtrl [0] : (rd, wr, evict, update, gather) = (       7,        0,        0,    99968,        4), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.00,     -nan,     -nan,    36.00,     -nan,     -nan), (avg_update_req, avg_update_stall [cycles]) = (  306.20,     0.00)
+(ct_hmc, 0) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- HMCCtrl [1] : (rd, wr, evict, update, gather) = (      18,        0,        0,   100000,        4), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.06,     -nan,     -nan,    41.67,     -nan,     -nan), (avg_update_req, avg_update_stall [cycles]) = (   62.41,     0.11)
+(ct_hmc, 1) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- HMCCtrl [2] : (rd, wr, evict, update, gather) = (       5,        0,        0,   100000,        4), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.00,     -nan,     -nan,    38.80,     -nan,     -nan), (avg_update_req, avg_update_stall [cycles]) = (  184.97,     0.00)
+(ct_hmc, 2) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- HMCCtrl [3] : (rd, wr, evict, update, gather) = (      15,        0,        0,   100032,        4), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.13,     -nan,     -nan,    31.67,     -nan,     -nan), (avg_update_req, avg_update_stall [cycles]) = (   73.99,     0.13)
+(ct_hmc, 3) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- MESH[0] : average hop = 4.00
+  -- NoC [  0] : (req, crq, rep) = (1065753, 0, 400578), num_data_transfers = 41
+  -- L1$I[  0] : RD (miss, access)=(         11,       4702)=   0.23%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  1] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  2] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  3] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  4] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  5] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  6] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  7] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  8] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  9] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 10] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 11] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 12] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 13] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 14] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 15] : RD (miss, access)=(          8,       4692)=   0.17%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  0] : RD (miss, access)=(         20,         30)=  66.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  0] : WR (miss, access)=(          1,         38)=   2.63%
+  -- L1$D[  1] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  1] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  2] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  2] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  3] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  3] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  4] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  4] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  5] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  5] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  6] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  6] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  7] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  7] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  8] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  8] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[  9] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  9] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[ 10] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 10] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[ 11] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 11] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[ 12] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 12] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[ 13] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 13] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[ 14] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 14] : WR (miss, access)=(          1,          6)=  16.67%
+  -- L1$D[ 15] : RD (miss, access)=(          7,         15)=  46.67%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 15] : WR (miss, access)=(          1,          6)=  16.67%
+  -- TLBI[0] : (miss, access) = (3, 4702) = 0.06%
+  -- TLBI[1] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[2] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[3] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[4] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[5] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[6] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[7] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[8] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[9] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[10] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[11] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[12] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[13] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[14] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBI[15] : (miss, access) = (3, 4692) = 0.06%
+  -- TLBD[0] : (miss, access) = (2, 68) = 2.94%
+  -- TLBD[1] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[2] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[3] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[4] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[5] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[6] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[7] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[8] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[9] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[10] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[11] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[12] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[13] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[14] : (miss, access) = (3, 21) = 14.29%
+  -- TLBD[15] : (miss, access) = (3, 21) = 14.29%
+ ## VLTCtrller DRAM_rd_bw:100.78GBps DRAM_wr_bw:0.00GBps DRAM_act_bw:100.77GBps
+  [ result/CasHMC_dfly_arfaddr_mac_setting.log ] is generated
+
+   === Simulation finished  ( CPU clk:946343 ) ===   
+  [ result/CasHMC_dfly_arfaddr_mac_result.log ] is generated
+

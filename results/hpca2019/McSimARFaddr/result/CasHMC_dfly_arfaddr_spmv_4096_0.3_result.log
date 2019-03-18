@@ -1,0 +1,1141 @@
+****************************************************************
+*                      CasHMC version 1.1                      *
+*                       result log file                        *
+*            Date : 2018/08/03      Time : 04:33:11            *
+****************************************************************
+
+- Trace type : 
+  ============= CasHMC statistic result =============
+
+  Elapsed epoch : 6
+  Elapsed clock : 6422995
+
+        HMC bandwidth : 9.61173 GB/s  (Considered only data size)
+    Link HC bandwidth : 34.6469 GB/s  (Bandwidth flowing into HMC Network)
+       Link bandwidth : 104.091 GB/s  (Sum of bandwidth over 68 Links, Included flow packet)
+ Effec Link bandwidth : 37.3834 GB/s  (Data bandwidth(sum) regardless of packet header and tail over 68 Links)
+ Ef Link HC bandwidth : 15.4517 GB/s  (Data bandwidth(sum) regardless of packet header and tail over CPU links injecting into HMCNET)
+     Link utilization : 2.55125 %     (Max link bandwidth : 480 GB/S)
+
+    Tran latency mean : 56.1472 ns
+                 std  : 20.837 ns
+                 max  : 234.5 ns
+                 min  : 28 ns
+    Link latency mean : 455411 ns
+                 std  : 298536 ns
+                 max  : 1.20434e+06 ns
+                 min  : 25 ns
+   Vault latency mean : 24.9088 ns
+                 std  : 5.07802 ns
+                 max  : 133.6 ns
+                 min  : 19.2 ns
+   Retry latency mean : 0 ns
+                 std  : 0 ns
+                 max  : 0 ns
+                 min  : 0 ns
+
+           Read count : 553238
+          Write count : 353171
+         Atomic count : 2207748
+        Request count : 3114157
+       Response count : 922140
+           Flow count : 10324775
+    Transaction count : 517880
+    Error abort count : 0
+    Error retry count : 0
+
+  ┌─────────────  [Link 0]   (HMC0_LK_U0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 131627
+  │              Flow per link : 862000
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.0206199 GB/s  (Utilization : 0.0343665 %)
+  │      Passive Pkt Bandwidth : 2.06663 GB/s  (Utilization : 3.44439 %)
+  │         Flow Pkt Bandwidth : 3.99963 GB/s  (Utilization : 6.66605 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth : 6.08688 GB/s  (Utilization : 10.1448 %)
+  │            Total Bandwidth : 6.08688 GB/s  (Utilization : 5.0724 %)
+  └───── Total effec Bandwidth : 1.47651 GB/s
+
+  ┌─────────────  [Link 1]   (HMC0_LK_D1)
+  │              Read per link : 18493
+  │             Write per link : 12425
+  │            Atomic per link : 82170
+  │           Request per link : 113088
+  │          Response per link : 0
+  │              Flow per link : 151252
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.14652 GB/s  (Utilization : 1.91087 %)
+  │      Passive Pkt Bandwidth : 0.374063 GB/s  (Utilization : 0.623438 %)
+  │         Flow Pkt Bandwidth :  0.7018 GB/s  (Utilization : 1.16967 %)
+  │       Downstream Bandwidth : 2.22239 GB/s  (Utilization : 3.70398 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.22239 GB/s  (Utilization : 1.85199 %)
+  └───── Total effec Bandwidth : 0.993133 GB/s
+
+  ┌─────────────  [Link 2]   (HMC0_LK_D2)
+  │              Read per link : 20672
+  │             Write per link : 12427
+  │            Atomic per link : 82155
+  │           Request per link : 115254
+  │          Response per link : 0
+  │              Flow per link : 158437
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.14627 GB/s  (Utilization : 1.91046 %)
+  │      Passive Pkt Bandwidth : 0.38422 GB/s  (Utilization : 0.640366 %)
+  │         Flow Pkt Bandwidth : 0.735138 GB/s  (Utilization : 1.22523 %)
+  │       Downstream Bandwidth : 2.26563 GB/s  (Utilization : 3.77605 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.26563 GB/s  (Utilization : 1.88803 %)
+  └───── Total effec Bandwidth : 0.993031 GB/s
+
+  ┌─────────────  [Link 3]   (HMC0_LK_D3)
+  │              Read per link : 20480
+  │             Write per link : 12568
+  │            Atomic per link : 80877
+  │           Request per link : 113925
+  │          Response per link : 0
+  │              Flow per link : 157098
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.12851 GB/s  (Utilization : 1.88085 %)
+  │      Passive Pkt Bandwidth :  0.3866 GB/s  (Utilization : 0.644333 %)
+  │         Flow Pkt Bandwidth : 0.728926 GB/s  (Utilization : 1.21488 %)
+  │       Downstream Bandwidth : 2.24404 GB/s  (Utilization : 3.74006 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.24404 GB/s  (Utilization : 1.87003 %)
+  └───── Total effec Bandwidth : 0.983788 GB/s
+
+  ┌─────────────  [Link 4]   (HMC1_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 31507
+  │              Flow per link : 215001
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00546585 GB/s  (Utilization : 0.00910975 %)
+  │      Passive Pkt Bandwidth : 0.486683 GB/s  (Utilization : 0.811139 %)
+  │         Flow Pkt Bandwidth : 0.997592 GB/s  (Utilization : 1.66265 %)
+  │       Downstream Bandwidth : 1.48974 GB/s  (Utilization : 2.4829 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.48974 GB/s  (Utilization : 1.24145 %)
+  └───── Total effec Bandwidth : 0.345959 GB/s
+
+  ┌─────────────  [Link 5]   (HMC1_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 6]   (HMC1_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 7]   (HMC1_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 8]   (HMC2_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 33679
+  │              Flow per link : 222152
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00538233 GB/s  (Utilization : 0.00897055 %)
+  │      Passive Pkt Bandwidth : 0.537245 GB/s  (Utilization : 0.895408 %)
+  │         Flow Pkt Bandwidth : 1.03077 GB/s  (Utilization : 1.71795 %)
+  │       Downstream Bandwidth :  1.5734 GB/s  (Utilization : 2.62233 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :  1.5734 GB/s  (Utilization : 1.31117 %)
+  └───── Total effec Bandwidth : 0.386359 GB/s
+
+  ┌─────────────  [Link 9]   (HMC2_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 10]   (HMC2_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 11]   (HMC2_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 12]   (HMC3_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 33634
+  │              Flow per link : 219753
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00543801 GB/s  (Utilization : 0.00906335 %)
+  │      Passive Pkt Bandwidth : 0.533445 GB/s  (Utilization : 0.889075 %)
+  │         Flow Pkt Bandwidth : 1.01964 GB/s  (Utilization : 1.6994 %)
+  │       Downstream Bandwidth : 1.55852 GB/s  (Utilization : 2.59754 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.55852 GB/s  (Utilization : 1.29877 %)
+  └───── Total effec Bandwidth : 0.382823 GB/s
+
+  ┌─────────────  [Link 13]   (HMC3_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 14]   (HMC3_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 15]   (HMC3_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 16]   (HMC4_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 17]   (HMC4_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 32962
+  │              Flow per link : 199417
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00478842 GB/s  (Utilization : 0.0079807 %)
+  │      Passive Pkt Bandwidth : 0.510087 GB/s  (Utilization : 0.850146 %)
+  │         Flow Pkt Bandwidth : 0.925283 GB/s  (Utilization : 1.54214 %)
+  │       Downstream Bandwidth : 1.44016 GB/s  (Utilization : 2.40027 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.44016 GB/s  (Utilization : 1.20013 %)
+  └───── Total effec Bandwidth : 0.361934 GB/s
+
+  ┌─────────────  [Link 18]   (HMC4_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 19]   (HMC4_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 20]   (HMC5_LK_D0)
+  │              Read per link : 19372
+  │             Write per link : 13074
+  │            Atomic per link : 70385
+  │           Request per link : 102831
+  │          Response per link : 0
+  │              Flow per link : 147113
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.982141 GB/s  (Utilization : 1.6369 %)
+  │      Passive Pkt Bandwidth : 0.393198 GB/s  (Utilization : 0.65533 %)
+  │         Flow Pkt Bandwidth : 0.682596 GB/s  (Utilization : 1.13766 %)
+  │       Downstream Bandwidth : 2.05793 GB/s  (Utilization : 3.42989 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.05793 GB/s  (Utilization : 1.71495 %)
+  └───── Total effec Bandwidth : 0.895815 GB/s
+
+  ┌─────────────  [Link 21]   (HMC5_LK_U1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 131692
+  │              Flow per link : 900826
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.0210004 GB/s  (Utilization : 0.0350006 %)
+  │      Passive Pkt Bandwidth : 2.06678 GB/s  (Utilization : 3.44464 %)
+  │         Flow Pkt Bandwidth : 4.17978 GB/s  (Utilization : 6.9663 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth : 6.26756 GB/s  (Utilization : 10.4459 %)
+  │            Total Bandwidth : 6.26756 GB/s  (Utilization : 5.22297 %)
+  └───── Total effec Bandwidth : 1.47674 GB/s
+
+  ┌─────────────  [Link 22]   (HMC5_LK_D2)
+  │              Read per link : 20677
+  │             Write per link : 12356
+  │            Atomic per link : 82181
+  │           Request per link : 115214
+  │          Response per link : 0
+  │              Flow per link : 165278
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.14671 GB/s  (Utilization : 1.91118 %)
+  │      Passive Pkt Bandwidth : 0.382596 GB/s  (Utilization : 0.637659 %)
+  │         Flow Pkt Bandwidth : 0.76688 GB/s  (Utilization : 1.27813 %)
+  │       Downstream Bandwidth : 2.29619 GB/s  (Utilization : 3.82698 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.29619 GB/s  (Utilization : 1.91349 %)
+  └───── Total effec Bandwidth : 0.991955 GB/s
+
+  ┌─────────────  [Link 23]   (HMC5_LK_D3)
+  │              Read per link : 20480
+  │             Write per link : 12578
+  │            Atomic per link : 80872
+  │           Request per link : 113930
+  │          Response per link : 0
+  │              Flow per link : 158666
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.12836 GB/s  (Utilization : 1.88061 %)
+  │      Passive Pkt Bandwidth : 0.386832 GB/s  (Utilization : 0.64472 %)
+  │         Flow Pkt Bandwidth : 0.736201 GB/s  (Utilization : 1.227 %)
+  │       Downstream Bandwidth :  2.2514 GB/s  (Utilization : 3.75233 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :  2.2514 GB/s  (Utilization : 1.87616 %)
+  └───── Total effec Bandwidth : 0.983927 GB/s
+
+  ┌─────────────  [Link 24]   (HMC6_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 25]   (HMC6_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 33629
+  │              Flow per link : 234177
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00553081 GB/s  (Utilization : 0.00921802 %)
+  │      Passive Pkt Bandwidth : 0.537031 GB/s  (Utilization : 0.895052 %)
+  │         Flow Pkt Bandwidth : 1.08657 GB/s  (Utilization : 1.81095 %)
+  │       Downstream Bandwidth : 1.62913 GB/s  (Utilization : 2.71522 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.62913 GB/s  (Utilization : 1.35761 %)
+  └───── Total effec Bandwidth : 0.386526 GB/s
+
+  ┌─────────────  [Link 26]   (HMC6_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 27]   (HMC6_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 28]   (HMC7_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 29]   (HMC7_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 33627
+  │              Flow per link : 220415
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00528025 GB/s  (Utilization : 0.00880042 %)
+  │      Passive Pkt Bandwidth : 0.533491 GB/s  (Utilization : 0.889152 %)
+  │         Flow Pkt Bandwidth : 1.02271 GB/s  (Utilization : 1.70452 %)
+  │       Downstream Bandwidth : 1.56148 GB/s  (Utilization : 2.60247 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.56148 GB/s  (Utilization : 1.30124 %)
+  └───── Total effec Bandwidth : 0.382744 GB/s
+
+  ┌─────────────  [Link 30]   (HMC7_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 31]   (HMC7_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 32]   (HMC8_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 33]   (HMC8_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 34]   (HMC8_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 32922
+  │              Flow per link : 198577
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00451002 GB/s  (Utilization : 0.00751671 %)
+  │      Passive Pkt Bandwidth : 0.510691 GB/s  (Utilization : 0.851151 %)
+  │         Flow Pkt Bandwidth : 0.921386 GB/s  (Utilization : 1.53564 %)
+  │       Downstream Bandwidth : 1.43659 GB/s  (Utilization : 2.39431 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.43659 GB/s  (Utilization : 1.19716 %)
+  └───── Total effec Bandwidth : 0.362444 GB/s
+
+  ┌─────────────  [Link 35]   (HMC8_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 36]   (HMC9_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 37]   (HMC9_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 38]   (HMC9_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 31501
+  │              Flow per link : 227894
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00545657 GB/s  (Utilization : 0.00909429 %)
+  │      Passive Pkt Bandwidth : 0.485807 GB/s  (Utilization : 0.809678 %)
+  │         Flow Pkt Bandwidth : 1.05741 GB/s  (Utilization : 1.76236 %)
+  │       Downstream Bandwidth : 1.54868 GB/s  (Utilization : 2.58113 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.54868 GB/s  (Utilization : 1.29056 %)
+  └───── Total effec Bandwidth :  0.3451 GB/s
+
+  ┌─────────────  [Link 39]   (HMC9_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 40]   (HMC10_LK_D0)
+  │              Read per link : 19407
+  │             Write per link : 13029
+  │            Atomic per link : 70104
+  │           Request per link : 102540
+  │          Response per link : 0
+  │              Flow per link : 146648
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.97809 GB/s  (Utilization : 1.63015 %)
+  │      Passive Pkt Bandwidth : 0.392316 GB/s  (Utilization : 0.653861 %)
+  │         Flow Pkt Bandwidth : 0.680438 GB/s  (Utilization : 1.13406 %)
+  │       Downstream Bandwidth : 2.05084 GB/s  (Utilization : 3.41807 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.05084 GB/s  (Utilization : 1.70904 %)
+  └───── Total effec Bandwidth : 0.892372 GB/s
+
+  ┌─────────────  [Link 41]   (HMC10_LK_D1)
+  │              Read per link : 18447
+  │             Write per link : 12466
+  │            Atomic per link : 82167
+  │           Request per link : 113080
+  │          Response per link : 0
+  │              Flow per link : 159020
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.14648 GB/s  (Utilization : 1.9108 %)
+  │      Passive Pkt Bandwidth : 0.374801 GB/s  (Utilization : 0.624668 %)
+  │         Flow Pkt Bandwidth : 0.737844 GB/s  (Utilization : 1.22974 %)
+  │       Downstream Bandwidth : 2.25912 GB/s  (Utilization : 3.7652 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.25912 GB/s  (Utilization : 1.8826 %)
+  └───── Total effec Bandwidth : 0.993866 GB/s
+
+  ┌─────────────  [Link 42]   (HMC10_LK_U2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 131673
+  │              Flow per link : 900381
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.0206477 GB/s  (Utilization : 0.0344129 %)
+  │      Passive Pkt Bandwidth : 2.06715 GB/s  (Utilization : 3.44525 %)
+  │         Flow Pkt Bandwidth : 4.17772 GB/s  (Utilization : 6.96286 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth : 6.26551 GB/s  (Utilization : 10.4425 %)
+  │            Total Bandwidth : 6.26551 GB/s  (Utilization : 5.22126 %)
+  └───── Total effec Bandwidth : 1.47684 GB/s
+
+  ┌─────────────  [Link 43]   (HMC10_LK_D3)
+  │              Read per link : 20480
+  │             Write per link : 12563
+  │            Atomic per link : 80887
+  │           Request per link : 113930
+  │          Response per link : 0
+  │              Flow per link : 158798
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.12861 GB/s  (Utilization : 1.88102 %)
+  │      Passive Pkt Bandwidth : 0.386484 GB/s  (Utilization : 0.64414 %)
+  │         Flow Pkt Bandwidth : 0.736813 GB/s  (Utilization : 1.22802 %)
+  │       Downstream Bandwidth : 2.25191 GB/s  (Utilization : 3.75319 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.25191 GB/s  (Utilization : 1.87659 %)
+  └───── Total effec Bandwidth : 0.983788 GB/s
+
+  ┌─────────────  [Link 44]   (HMC11_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 45]   (HMC11_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 46]   (HMC11_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 33621
+  │              Flow per link : 220496
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00536377 GB/s  (Utilization : 0.00893962 %)
+  │      Passive Pkt Bandwidth : 0.533422 GB/s  (Utilization : 0.889036 %)
+  │         Flow Pkt Bandwidth : 1.02309 GB/s  (Utilization : 1.70515 %)
+  │       Downstream Bandwidth : 1.56187 GB/s  (Utilization : 2.60312 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.56187 GB/s  (Utilization : 1.30156 %)
+  └───── Total effec Bandwidth : 0.382786 GB/s
+
+  ┌─────────────  [Link 47]   (HMC11_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 48]   (HMC12_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 49]   (HMC12_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 50]   (HMC12_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 51]   (HMC12_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 32834
+  │              Flow per link : 197298
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.0047513 GB/s  (Utilization : 0.00791883 %)
+  │      Passive Pkt Bandwidth : 0.510254 GB/s  (Utilization : 0.850424 %)
+  │         Flow Pkt Bandwidth : 0.915451 GB/s  (Utilization : 1.52575 %)
+  │       Downstream Bandwidth : 1.43046 GB/s  (Utilization : 2.38409 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.43046 GB/s  (Utilization : 1.19205 %)
+  └───── Total effec Bandwidth : 0.362658 GB/s
+
+  ┌─────────────  [Link 52]   (HMC13_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 53]   (HMC13_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 54]   (HMC13_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 55]   (HMC13_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 31667
+  │              Flow per link : 215704
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00539161 GB/s  (Utilization : 0.00898602 %)
+  │      Passive Pkt Bandwidth : 0.488205 GB/s  (Utilization : 0.813676 %)
+  │         Flow Pkt Bandwidth : 1.00085 GB/s  (Utilization : 1.66809 %)
+  │       Downstream Bandwidth : 1.49445 GB/s  (Utilization : 2.49075 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.49445 GB/s  (Utilization : 1.24538 %)
+  └───── Total effec Bandwidth : 0.346664 GB/s
+
+  ┌─────────────  [Link 56]   (HMC14_LK_D0)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 57]   (HMC14_LK_D1)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 58]   (HMC14_LK_D2)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 0
+  │              Flow per link : 0
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │      Passive Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Flow Pkt Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth :       0 GB/s  (Utilization : 0 %)
+  └───── Total effec Bandwidth :       0 GB/s
+
+  ┌─────────────  [Link 59]   (HMC14_LK_D3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 33715
+  │              Flow per link : 221521
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.00545657 GB/s  (Utilization : 0.00909429 %)
+  │      Passive Pkt Bandwidth : 0.537375 GB/s  (Utilization : 0.895625 %)
+  │         Flow Pkt Bandwidth : 1.02784 GB/s  (Utilization : 1.71307 %)
+  │       Downstream Bandwidth : 1.57068 GB/s  (Utilization : 2.61779 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 1.57068 GB/s  (Utilization : 1.3089 %)
+  └───── Total effec Bandwidth : 0.386396 GB/s
+
+  ┌─────────────  [Link 60]   (HMC15_LK_D0)
+  │              Read per link : 19412
+  │             Write per link : 12910
+  │            Atomic per link : 70104
+  │           Request per link : 102426
+  │          Response per link : 0
+  │              Flow per link : 144644
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.978211 GB/s  (Utilization : 1.63035 %)
+  │      Passive Pkt Bandwidth : 0.389579 GB/s  (Utilization : 0.649298 %)
+  │         Flow Pkt Bandwidth : 0.67114 GB/s  (Utilization : 1.11857 %)
+  │       Downstream Bandwidth : 2.03893 GB/s  (Utilization : 3.39822 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.03893 GB/s  (Utilization : 1.69911 %)
+  └───── Total effec Bandwidth : 0.890164 GB/s
+
+  ┌─────────────  [Link 61]   (HMC15_LK_D1)
+  │              Read per link : 18533
+  │             Write per link : 12553
+  │            Atomic per link : 82171
+  │           Request per link : 113257
+  │          Response per link : 0
+  │              Flow per link : 151928
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth :  1.1465 GB/s  (Utilization : 1.91084 %)
+  │      Passive Pkt Bandwidth : 0.377218 GB/s  (Utilization : 0.628697 %)
+  │         Flow Pkt Bandwidth : 0.704937 GB/s  (Utilization : 1.1749 %)
+  │       Downstream Bandwidth : 2.22866 GB/s  (Utilization : 3.71443 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.22866 GB/s  (Utilization : 1.85721 %)
+  └───── Total effec Bandwidth : 0.995518 GB/s
+
+  ┌─────────────  [Link 62]   (HMC15_LK_D2)
+  │              Read per link : 20672
+  │             Write per link : 12455
+  │            Atomic per link : 82131
+  │           Request per link : 115258
+  │          Response per link : 0
+  │              Flow per link : 157910
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 1.14598 GB/s  (Utilization : 1.90996 %)
+  │      Passive Pkt Bandwidth : 0.384869 GB/s  (Utilization : 0.641449 %)
+  │         Flow Pkt Bandwidth : 0.732693 GB/s  (Utilization : 1.22116 %)
+  │       Downstream Bandwidth : 2.26354 GB/s  (Utilization : 3.77257 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 2.26354 GB/s  (Utilization : 1.88628 %)
+  └───── Total effec Bandwidth : 0.993328 GB/s
+
+  ┌─────────────  [Link 63]   (HMC15_LK_U3)
+  │              Read per link : 0
+  │             Write per link : 0
+  │            Atomic per link : 0
+  │           Request per link : 0
+  │          Response per link : 131850
+  │              Flow per link : 863812
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 0.0208983 GB/s  (Utilization : 0.0348305 %)
+  │      Passive Pkt Bandwidth : 2.06935 GB/s  (Utilization : 3.44892 %)
+  │         Flow Pkt Bandwidth : 4.00804 GB/s  (Utilization : 6.68006 %)
+  │       Downstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │         Upstream Bandwidth : 6.09828 GB/s  (Utilization : 10.1638 %)
+  │            Total Bandwidth : 6.09828 GB/s  (Utilization : 5.0819 %)
+  └───── Total effec Bandwidth : 1.47847 GB/s
+
+  ┌─────────────  [Link 64]   (HC0_LK_D0)
+  │              Read per link : 78999
+  │             Write per link : 50406
+  │            Atomic per link : 315330
+  │           Request per link : 444735
+  │          Response per link : 0
+  │              Flow per link : 582191
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 4.39965 GB/s  (Utilization : 7.33275 %)
+  │      Passive Pkt Bandwidth : 1.53596 GB/s  (Utilization : 2.55993 %)
+  │         Flow Pkt Bandwidth : 2.70133 GB/s  (Utilization : 4.50222 %)
+  │       Downstream Bandwidth : 8.63694 GB/s  (Utilization : 14.3949 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 8.63694 GB/s  (Utilization : 7.19745 %)
+  └───── Total effec Bandwidth : 3.86175 GB/s
+
+  ┌─────────────  [Link 65]   (HC1_LK_D0)
+  │              Read per link : 79001
+  │             Write per link : 50428
+  │            Atomic per link : 315611
+  │           Request per link : 445040
+  │          Response per link : 0
+  │              Flow per link : 591313
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 4.40375 GB/s  (Utilization : 7.33958 %)
+  │      Passive Pkt Bandwidth : 1.53647 GB/s  (Utilization : 2.56079 %)
+  │         Flow Pkt Bandwidth : 2.74366 GB/s  (Utilization : 4.57276 %)
+  │       Downstream Bandwidth : 8.68388 GB/s  (Utilization : 14.4731 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 8.68388 GB/s  (Utilization : 7.23657 %)
+  └───── Total effec Bandwidth : 3.86477 GB/s
+
+  ┌─────────────  [Link 66]   (HC2_LK_D0)
+  │              Read per link : 79016
+  │             Write per link : 50432
+  │            Atomic per link : 315332
+  │           Request per link : 444780
+  │          Response per link : 0
+  │              Flow per link : 591566
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 4.39969 GB/s  (Utilization : 7.33282 %)
+  │      Passive Pkt Bandwidth : 1.53664 GB/s  (Utilization : 2.56106 %)
+  │         Flow Pkt Bandwidth : 2.74483 GB/s  (Utilization : 4.57472 %)
+  │       Downstream Bandwidth : 8.68116 GB/s  (Utilization : 14.4686 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 8.68116 GB/s  (Utilization : 7.2343 %)
+  └───── Total effec Bandwidth : 3.86225 GB/s
+
+  ┌─────────────  [Link 67]   (HC3_LK_D0)
+  │              Read per link : 79097
+  │             Write per link : 50501
+  │            Atomic per link : 315271
+  │           Request per link : 444869
+  │          Response per link : 0
+  │              Flow per link : 583489
+  │       Error abort per link : 0
+  │       Active Pkt Bandwidth : 4.39897 GB/s  (Utilization : 7.33161 %)
+  │      Passive Pkt Bandwidth : 1.53861 GB/s  (Utilization : 2.56436 %)
+  │         Flow Pkt Bandwidth : 2.70735 GB/s  (Utilization : 4.51226 %)
+  │       Downstream Bandwidth : 8.64494 GB/s  (Utilization : 14.4082 %)
+  │         Upstream Bandwidth :       0 GB/s  (Utilization : 0 %)
+  │            Total Bandwidth : 8.64494 GB/s  (Utilization : 7.20411 %)
+  └───── Total effec Bandwidth : 3.86296 GB/s
+
+  Operand buffer stalls : [0] 0  [1] 0  [2] 0  [3] 0  [4] 0  [5] 0  [6] 0  [7] 0  [8] 0  [9] 0  [10] 0  [11] 0  [12] 0  [13] 0  [14] 0  [15] 0  
+  Total operand buffer stalls 0
+
+  Number of updates : [0] 70128  [1] 82170  [2] 82155  [3] 80877  [4] 70385  [5] 82173  [6] 82181  [7] 80872  [8] 70104  [9] 82167  [10] 82174  [11] 80887  [12] 70104  [13] 82171  [14] 82131  [15] 80865  
+
+  Number of operands : [0] 70128  [1] 82170  [2] 82155  [3] 80877  [4] 70385  [5] 82173  [6] 82181  [7] 80872  [8] 70104  [9] 82167  [10] 82174  [11] 80887  [12] 70104  [13] 82171  [14] 82131  [15] 80865  
+

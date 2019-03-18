@@ -57,7 +57,8 @@ namespace CasHMC
     RD_RS=56, WR_RS, MD_RD_RS, MD_WR_RS, ERROR=62,
 
     // ACTIVE commands
-    ACT_ADD=108, ACT_MULT, ACT_GET // FIXME: what should be the number?
+    ACT_ADD=108, ACT_MULT, ACT_GET, // FIXME: what should be the number?
+    PEI_DOT
   };
 
   class Packet
@@ -80,6 +81,7 @@ namespace CasHMC
       void MakeCRCtable(uint32_t *table, uint32_t id);
       uint32_t CalcCRC(const unsigned char *mem, signed int size, uint32_t crc, uint32_t *table);
       void ReductGlobalTAG();
+      void Display();
 
       //Fields
       TranTrace *trace;
@@ -118,6 +120,7 @@ namespace CasHMC
   };
 
   ostream& operator<<(ostream &out, const Packet &t);
+  ostream& operator<<(ostream &out, PacketCommandType cmd);
 }
 
 #endif

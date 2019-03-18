@@ -26,6 +26,10 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   interleave_xor_base_bit = get_param_uint64("interleave_xor_base_bit", 20);
   cube_interleave_base_bit = get_param_uint64("cube_interleave_base_bit", 32);
 
+  uint32_t num_mcs = get_param_uint64("num_mcs", "pts.", 4);
+  uint32_t net_dim = get_param_uint64("net_dim", "pts.", 4);
+  cubes_per_mc = net_dim * net_dim / num_mcs;
+
   hmc_net = hmc_net_;
 
   if (mcsim->hmc_topology == DFLY)
@@ -152,12 +156,13 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   switch (transaction_type)
   {
-    case 1: tranType = DATA_READ;   data_size = 32;/* size can vary from 32 to 256 */  break;
-    case 2: tranType = DATA_WRITE;  data_size = 128; break;
-    case 3: tranType = DATA_WRITE;  data_size = 32;  break;
-    case 4: tranType = ACTIVE_GET;  data_size = 32;  break;
-    case 5: tranType = ACTIVE_ADD;  data_size = 32;  break;
-    case 6: tranType = ACTIVE_MULT; data_size = 32;  break;
+    case 1: tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
+    case 2: tranType = DATA_WRITE;  data_size = 64; break;
+    case 3: tranType = DATA_WRITE;  data_size = 64;  break;
+    case 4: tranType = ACTIVE_GET;  data_size = 8;  break;
+    case 5: tranType = ACTIVE_ADD;  data_size = 16;  break; // flit size is 16 bit, at least 1 flit
+    case 6: tranType = ACTIVE_MULT; data_size = 16;  break;
+    case 7: tranType = PIMINS_DOT;  data_size = 32;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -169,6 +174,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     case DATA_READ:
     case DATA_WRITE:
+    case PIMINS_DOT:
       newTran = new Transaction(tranType, lqele->address, data_size, hmc_net, src_cube, dest_cube);
       break;
 
@@ -212,6 +218,11 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     req_event.insert(pair<uint64_t, LocalQueueElement *>(req_id, lqele));
     num_reqs++;
+    if (lqele->type == et_hmc_pei)
+    {
+      num_update++;
+      total_update_req_time += geq->curr_time - lqele->issue_time;
+    }
   }
 
   uint64_t page_num = (lqele->address >> page_sz_base_bit);
@@ -246,6 +257,20 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
 {
 
   assert(curr_time % process_interval == 0);
+
+  // synchronize memory clock with cpu clock
+  if (last_process_time + process_interval < curr_time)
+  {
+#ifdef CASHMC_FASTSYNC
+    uint64_t c = (curr_time - last_process_time - process_interval) / process_interval;
+    update_hmc(c);
+#else
+    for (uint64_t c = last_process_time+process_interval; c < curr_time; c = c + process_interval)
+    {
+      update_hmc(c);
+    }
+#endif
+  }
 
   if (tran_buf.empty() == false && tran_buf.begin()->first <= curr_time)
   {
@@ -291,7 +316,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           num_read++;
           total_rd_stall_time += curr_time - tran_buf.begin()->first;
         }
-        else
+        else if(tran->transactionType == DATA_WRITE)
         {
           assert(tran->transactionType == DATA_WRITE);
           LocalQueueElement *lqele = req_event.find(req_id)->second;
@@ -307,6 +332,12 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
             num_evict++;
             total_ev_stall_time += curr_time - tran_buf.begin()->first;
           }
+        }
+        else
+        {
+          assert(tran->transactionType == PIMINS_DOT);
+          num_update_sent++;
+          total_update_stall_time += curr_time - tran_buf.begin()->first;
         }
         outstanding_req.insert(make_pair(req_id, curr_time));
       }
@@ -391,6 +422,8 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         case 3: // evict
           total_ev_mem_time += curr_time - issue_time;
           break;
+        case 7: // pei
+          break;
         default:
           cerr << "Unknown reply transaction type: " << tran_type  << endl;
           exit(1);
@@ -405,31 +438,6 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
 #endif
     
     served_trans.erase(served_trans.begin());
-  }
-
-  if (!req_event.empty() || !outstanding_req.empty() ||
-      !tran_buf.empty() || !active_update_event.empty() ||
-      //!tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
-      !active_gather_event.empty() || !resp_queue.empty())
-  {
-    geq->add_event(curr_time+process_interval, this);
-  }
-  else
-  {
-    assert(req_event.empty() && resp_queue.empty());
-  }
-
-  if (last_process_time < curr_time)
-  {
-#ifdef CASHMC_FASTSYNC
-    uint64_t c = (curr_time - last_process_time) / process_interval;
-    update_hmc(c);
-#else
-    for (uint64_t c = last_process_time+process_interval; c <= curr_time; c = c + process_interval)
-    {
-      update_hmc(c);
-    }
-#endif
   }
 
   vector<LocalQueueElement *>::iterator iter;
@@ -462,6 +470,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           resp_queue.erase(iter);
           break;
         case et_hmc_gather:
+        case et_hmc_pei:
           noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
           resp_queue.erase(iter);
           break;
@@ -473,7 +482,21 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     break; //as of now process only one in one cycle 
   }
 
-  last_process_time = curr_time; //last response time 
+  update_hmc(1);
+  last_process_time = curr_time; //last response time
+
+  if (!req_event.empty() || !outstanding_req.empty() ||
+      !tran_buf.empty() || !active_update_event.empty() ||
+      //!tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
+      !active_gather_event.empty() || !resp_queue.empty())
+  {
+    geq->add_event(curr_time+process_interval, this);
+  }
+  else
+  {
+    assert(req_event.empty() && resp_queue.empty());
+  }
+
   return 0;
 }
 
@@ -488,7 +511,17 @@ void PTSHMCController::update_hmc(uint64_t cycles)
 
 int PTSHMCController::get_src_cubeID(int num)
 {
-  int src_cube = num * 5;
+  int src_cube = -1;
+  switch (cubes_per_mc) {
+    case 4:
+      src_cube = num * 5;
+      break;
+    case 16:
+      src_cube = num * 21;
+      break;
+    default:
+      break;
+  }
   if (hmc_top == MESH) //Works only for 4x4;
   {
     switch (num)
@@ -540,6 +573,9 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
     case et_hmc_update_mult:
       return 6; // Jiayi, type 6 is ACTIVE_MULT
 
+    case et_hmc_pei:
+      return 7; // Jiayi, type 6 is ACTIVE_MULT
+    
     case et_rd_bypass:   // this read is older than what is in the cache
     case et_e_to_m:
     case et_e_to_i:

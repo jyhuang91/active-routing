@@ -1,5 +1,5 @@
 
-TRGS = reduce ar_reduce
+TRGS = reduce ar_reduce pei_reduce
 
 LIB_DEPEND = hooks
 
@@ -24,6 +24,8 @@ $(LIB_DEPEND):
 reduce: main.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_reduce: main_ar.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+pei_reduce: main_pei.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 
 clean:

@@ -1,5 +1,6 @@
 #include "mypthreadtool.h"
 #include "stdio.h"
+#include <hooks.h>
 
 using namespace PinPthread;
 
@@ -31,11 +32,13 @@ VOID Init(uint32_t argc, char** argv)
 {
     pthreadsim = new PthreadSim(argc, argv);
     in_roi = false;
+    ngather = 0;
 }
 
 VOID Fini(INT32 code, VOID* v) 
 {
     delete pthreadsim;
+    fprintf(stdout, "Pthread Tool ngather: %d\n", ngather);
 }
 
 VOID ProcessMemIns(
@@ -74,7 +77,7 @@ VOID ProcessMemIns(
     //pthreadsim->initiate(context);  // Jiayi, for skip instructions
   }
 
-  if (pthreadsim->run_roi == false || (pthreadsim->run_roi && in_roi))
+  if ((pthreadsim->run_roi && in_roi) || pthreadsim->run_roi == false)
   {
     pthreadsim->process_ins(
         context,
@@ -99,23 +102,171 @@ VOID NewPthreadSim(CONTEXT* ctxt)
 /* ------------------------------------------------------------------ */
 /* Active-Routing Callback Routines                                   */
 /* ------------------------------------------------------------------ */
+#ifdef RUNTIME_KNOB
+int gathers[] = {
+    18877
+    ,155543
+    ,1906
+    ,1919
+    ,2492
+    ,1252
+    ,2444
+    ,1840
+    ,2389
+    ,1799
+    ,2339
+    ,1179
+    ,2300
+    ,1732
+    ,2258
+    ,2255
+    ,2210
+    ,1662
+    ,2169
+    ,1636
+    ,2127
+    ,1606
+    ,2622
+    ,1576
+    ,2055
+    ,2066
+    ,2018
+    ,2027
+    ,1982
+    ,1993
+    ,1953
+    ,1962
+    ,1919
+    ,1928
+    ,2363
+    ,1896
+    ,1859
+    ,1868
+    ,2288
+    ,1836
+    ,2255
+    ,1808
+    ,1772
+    ,2223
+    ,1753
+    ,2190
+    ,1726
+    ,2159
+    ,2122
+    ,1707
+    ,420
+    ,415
+    ,1255
+    ,2100
+    ,1653
+    ,2069
+    ,2033
+    ,1633
+    ,2414
+    ,2015
+    ,792
+    ,392
+    ,794
+    ,1588
+    ,2348
+    ,1962
+    ,1925
+    ,1937
+    ,1897
+    ,1914
+    ,2252
+    ,1891
+    ,1850
+    ,1863
+    ,2201
+    ,1470
+    ,2537
+    ,1453
+    ,723
+    ,357
+    ,1429
+    ,1435
+};
+int testFunc(int tid)
+{
+  static int phase = 0;
+  static int num = 0;
+  static bool active = true;
+
+  if (pthreadsim->active_mode != 2) return pthreadsim->active_mode;
+
+  if (phase >= 82) return -1;
+
+  if (num++ >= gathers[phase]) {
+    fprintf(stderr, "[debug] change from %d to %d\n", active, !active);
+    num = 0;
+    phase++;
+    active = !active;
+  }
+  return active;
+}
+#endif
 
 // Jiayi, 01/29/2018
-VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int function)
+VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode opcode)
 {
   uint32_t category = -1;
-  switch (function)
+  switch (opcode)
   {
-    case 1:
+    case ADD:
       //* ((float *)c) += * ((float *)a);
       category = 128;
       break;
-    case 2:
+    case MULT:
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
       category = 130;
       break;
-    default: fprintf(stderr, "Unknown active operation: %d\n", function); exit(1);
+    case PEI_DOT:
+      category = 131;
+      // load first half source operands on-chip
+      for(int i = 0; i < 4; i++) {
+        pthreadsim->process_ins(
+            context,
+            ip,
+            (ADDRINT) ((ADDRINT) a + 8*i), 0, 0,
+            0, 0,
+            false, false,
+            0,
+            0, 0, 0, 0,
+            0, 0, 0, 0);
+      }
+      break;
+    case PEI_RIDOT:
+      category = 131;
+      // load first half source operands on-chip
+      for(int i = 0; i < 4; i++) {
+        pthreadsim->process_ins(
+            context,
+            ip,
+            (ADDRINT) ((void **)a)[i], 0, 0,
+            0, 0,
+            false, false,
+            0,
+            0, 0, 0, 0,
+            0, 0, 0, 0);
+      }      
+      break;
+    case PEI_ATOMIC:
+      category = 132;
+      // load source operand on-chip
+      pthreadsim->process_ins(
+         context,
+         ip,
+         (ADDRINT) (a), 0, 0,
+         0, 0,
+         false, false,
+         0,
+         0, 0, 0, 0,
+         0, 0, 0, 0);
+      break;
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
   }
+    
   pthreadsim->process_ins(
       context,
       ip,
@@ -125,7 +276,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //printf(" [UPDATE API Pin: %p %p %p <%i>]  \n",a,b,c,function);
+  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
 }
 
 VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthreads)
@@ -139,7 +290,8 @@ VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthr
       129,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //printf(" [GATHER API Pin: %p %p %p <%i>]  \n",a,b,c,nthreads);
+  ngather++;
+  //fprintf(stderr, " [GATHER API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, nthreads, pthreadsim->scheduler->current->first);
 }
 
 
@@ -235,6 +387,15 @@ VOID RandIndexCall(int *index, int start, int stop)
 VOID FlagImg(IMG img, VOID* v) 
 {
   RTN rtn;
+#ifdef RUNTIME_KNOB
+  rtn = RTN_FindByName(img, "testFunc");
+  if (rtn != RTN_Invalid()) {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)testFunc,
+        IARG_G_ARG0_CALLEE,
+        IARG_RETURN_REGS, REG_GAX,
+        IARG_END);
+  }
+#endif
 
   rtn = RTN_FindByName(img, "roi_begin");
   if (rtn != RTN_Invalid()) {
@@ -896,6 +1057,7 @@ VOID FlagRtn(RTN rtn, VOID* v)
 
 VOID FlagTrace(TRACE trace, VOID* v) 
 {
+  bool unnecessary_art_call = false;
   if (TRACE_Address(trace) == (ADDRINT)pthread_exit) 
   {
     TRACE_InsertCall(trace, IPOINT_BEFORE, (AFUNPTR)CallPthreadExit,
@@ -923,15 +1085,20 @@ VOID FlagTrace(TRACE trace, VOID* v)
           ADDRINT target = INS_DirectBranchOrCallTargetAddress(ins);
           RTN src_rtn = INS_Rtn(ins);
           RTN dest_rtn = RTN_FindByAddress(target);
-          if (INS_IsCall(ins) || (src_rtn != dest_rtn)) 
+
+          if (INS_IsCall(ins) || (src_rtn != dest_rtn))
           {
-            BOOL tailcall = !INS_IsCall(ins);
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessCall,
-                IARG_ADDRINT, target,
-                IARG_G_ARG0_CALLER,
-                IARG_G_ARG1_CALLER,
-                IARG_BOOL, tailcall,
-                IARG_END);
+            if (INS_IsCall(ins) && RTN_Valid(dest_rtn) && (RTN_Name(dest_rtn) == "UPDATE" || RTN_Name(dest_rtn) == "GATHER")) {
+              unnecessary_art_call = true;
+            } else {
+              BOOL tailcall = !INS_IsCall(ins);
+              INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessCall,
+                  IARG_ADDRINT, target,
+                  IARG_G_ARG0_CALLER,
+                  IARG_G_ARG1_CALLER,
+                  IARG_BOOL, tailcall,
+                  IARG_END);
+            }
           }
         }
         else if (INS_IsRet(ins))                                          // return
@@ -943,6 +1110,10 @@ VOID FlagTrace(TRACE trace, VOID* v)
                 IARG_PTR, new string(RTN_Name(rtn)),
                 IARG_END);
           }
+        }
+
+        if (unnecessary_art_call) {
+          return;
         }
 
         if (((INS_Address(ins) - (ADDRINT)StartThreadFunc) < 0) ||
