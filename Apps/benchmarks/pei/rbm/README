@@ -8,7 +8,9 @@ make small
 make medium
 make large
 
-
+small:  -u 10 -t 10 -m 10 -l 20 <-p #threads>
+medium: -u 100 -t 100 -m 100 -l 20 <-p #threads>
+large:  -u 100 -t 100 -m 100 -l 200 <-p #threads>
 
 
 
