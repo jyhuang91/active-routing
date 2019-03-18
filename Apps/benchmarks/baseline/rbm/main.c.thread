@@ -4,6 +4,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <hooks.h>
 
 #include "rbm.h"
 
