@@ -99,7 +99,7 @@ void* do_work(void* args)
       {
         //dp_tid[tid] = dp_tid[tid] + d*(PR[v]/N_real);
         //printf("\n %f %f %f %f",dp,d,D[uu],N_real);
-        UPDATE(&PR[v], NULL, &dp, ADD);
+        UpdateII(&PR[v], NULL, &dp, ADD);
       }
     }
     //pthread_mutex_lock(&lock);
@@ -107,7 +107,7 @@ void* do_work(void* args)
     //pthread_mutex_unlock(&lock);
     //printf("\n Outlinks Done %f",dp);
 
-    GATHER(&dp, &dp_tid[tid], &dp, arg->P);//gather behaves as implecit barrier 
+    Gather(&dp, &dp_tid[tid], &dp, arg->P);//gather behaves as implecit barrier 
                                         //so barrier needed after that 
     //pthread_barrier_wait(arg->barrier);
     
@@ -129,10 +129,10 @@ void* do_work(void* args)
           //if inlink
           //printf("\nuu:%d id:%d",uu,W_index[uu][j]);
           //pgtmp[v] = pgtmp[v] + (d*PR[W_index[v][j]]/outlinks[W_index[v][j]]);  //replace d with dp if dangling PRs required
-          UPDATE(&PR[W_index[v][j]], &outlinks[W_index[v][j]], &pgtmp[v], MULT);
+          UpdateII(&PR[W_index[v][j]], &outlinks[W_index[v][j]], &pgtmp[v], MULT);
         }
         if (test[v] > 0) {
-          GATHER(&PR[W_index[0][0]], &outlinks[W_index[0][0]], &pgtmp[v], 1);
+          Gather(&PR[W_index[0][0]], &outlinks[W_index[0][0]], &pgtmp[v], 1);
           pgtmp[v] *= d;
         }
       }

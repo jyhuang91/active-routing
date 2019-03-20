@@ -60,12 +60,12 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 			if (visible[v] != -1) {
         ++count;
 				//sum += (double) visible[v] * edges[v][h];
-        UPDATE(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
+        UpdateII(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
       }
 		}
 		//hiddenEnergies[h] = sum;
     if (count != 0)
-      GATHER(NULL, NULL, &hiddenEnergies[h], 1);
+      Gather(NULL, NULL, &hiddenEnergies[h], 1);
 	}
 
 	// Activate hidden units
@@ -106,11 +106,11 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
     count = 0;
 		for (h = 0; h < num_hidden + 1; h++) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
-      UPDATE(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
+      UpdateII(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
     }
 		//visibleEnergies[v] = sum;
     if (count != 0)
-      GATHER(NULL, NULL, &visibleEnergies[v], 1);
+      Gather(NULL, NULL, &visibleEnergies[v], 1);
 	}
 
 	// Activate visible units, handles K visible units at a time
@@ -126,10 +126,10 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 			//exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
       ++count;
-      UPDATE( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
+      UpdateII( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
 		}
     if (count != 0)
-      GATHER(NULL, NULL, &sumOfExps, 1); //TODO: this may have problem in CasHMC, since sumOfExps is reuse for differnt flows
+      Gather(NULL, NULL, &sumOfExps, 1); //TODO: this may have problem in CasHMC, since sumOfExps is reuse for differnt flows
 
 		// Getting the probabilities
 
@@ -158,10 +158,10 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 			for (j = 0; j < K; j++) {
 				//expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
         ++count;
-        UPDATE(&j, &probs[j], &expectation, MULT);
+        UpdateII(&j, &probs[j], &expectation, MULT);
       }
       if (count != 0)
-        GATHER(NULL, NULL, &expectation, 1);
+        Gather(NULL, NULL, &expectation, 1);
 
 			long prediction = round(expectation);
 
@@ -369,21 +369,60 @@ int main(int argc, char *argv[])
 
   // allocate memory for global arrays
   int u;
-  edges = (double **) calloc(num_visible + 1, sizeof(double *));
+  //edges = (double **) calloc(num_visible + 1, sizeof(double *));
+  if (posix_memalign((void **) &edges, CACHELINE_SIZE, (num_visible + 1) * sizeof(double *))) {
+    fprintf(stderr, "Memory allocation for edges fail\n");
+    exit(1);
+  }
   for (u = 0; u < num_visible + 1; u++) {
-    edges[u] = (double *) calloc(num_hidden + 1, sizeof(double));
+    if (posix_memalign((void **) &edges[u], CACHELINE_SIZE, (num_hidden + 1) * sizeof(double))) {
+      fprintf(stderr, "Memory allocation for edges[%d] fail\n", u);
+      exit(1);
+    }
+    memset(edges[u], 0, (num_hidden + 1) * sizeof(double));
+    //edges[u] = (double *) calloc(num_hidden + 1, sizeof(double));
   }
-  trainingData = (int **) calloc(users, sizeof(int *));
+
+  //trainingData = (int **) calloc(users, sizeof(int *));
+  if (posix_memalign((void **) &trainingData, CACHELINE_SIZE, users * sizeof(int *))) {
+    fprintf(stderr, "Memory allocation for trainingData fail\n");
+    exit(1);
+  }
   for (u = 0; u < users; u++) {
-    trainingData[u] = (int *) calloc(num_visible, sizeof(int));
+    //trainingData[u] = (int *) calloc(num_visible, sizeof(int));
+    if (posix_memalign((void **) &trainingData[u], CACHELINE_SIZE, num_visible * sizeof(int))) {
+      fprintf(stderr, "Memory allocation for trainingData[%d] fail\n", u);
+      exit(1);
+    }
+    memset(trainingData[u], 0, num_visible * sizeof(int));
   }
-  testActuals = (int **) calloc(test_users, sizeof(int *));
-  for (u = 0; u < test_users; u++) {
-    testActuals[u] = (int *) calloc(movies, sizeof(int));
+
+  //testActuals = (int **) calloc(test_users, sizeof(int *));
+  if (posix_memalign((void **) &testActuals, CACHELINE_SIZE, test_users * sizeof(int *))) {
+    fprintf(stderr, "Memory allocation for testActuals fail\n");
+    exit(1);
   }
-  testPredictions = (int **) calloc(test_users, sizeof(int *));
   for (u = 0; u < test_users; u++) {
-    testPredictions[u] = (int *) calloc(movies, sizeof(int));
+    //testActuals[u] = (int *) calloc(movies, sizeof(int));
+    if (posix_memalign((void **) &testActuals[u], CACHELINE_SIZE, movies * sizeof(int))) {
+      fprintf(stderr, "Memory allocation for testActuals[%d] fail\n", u);
+      exit(1);
+    }
+    memset(testActuals[u], 0, movies * sizeof(int));
+  }
+
+  //testPredictions = (int **) calloc(test_users, sizeof(int *));
+  if (posix_memalign((void **) &testPredictions, CACHELINE_SIZE, test_users * sizeof(int *))) {
+    fprintf(stderr, "Memory allocation for testPredictions fail\n");
+    exit(1);
+  }
+  for (u = 0; u < test_users; u++) {
+    //testPredictions[u] = (int *) calloc(movies, sizeof(int));
+    if (posix_memalign((void **) &testPredictions[u], CACHELINE_SIZE, movies * sizeof(int))) {
+      fprintf(stderr, "Memory allocation for testActuals[%d] fail\n", u);
+      exit(1);
+    }
+    memset(testPredictions[u], 0, movies * sizeof(int));
   }
 
   //**Timing**/
