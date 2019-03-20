@@ -4,7 +4,9 @@
 // Acknoledgement, code snippet from zsim
 
 #include <stdint.h>
-//#include <stdio.h>
+
+// TODO: add namespace to resolve possible conflicts, but
+//       funciton name should be identified by Pthread tool
 
 // Avoid optimizing compilers moving code around this barrier
 #define COMPILER_BARRIER() { __asm__ __volatile__("" ::: "memory"); }
@@ -27,9 +29,11 @@ typedef enum eOpcode {
   ADD        = 1,
   MULT       = 2,
   PEI_DOT    = 3,
-  PEI_RIDOT  = 4,
   PEI_ATOMIC = 5
 } Opcode;
+
+#define CACHELINE_SIZE 64 // Bytes
+#define PEI_GRANULARITY 4 // elements
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,8 +64,11 @@ void mcsim_skip_instrs_end();
 void mcsim_spinning_begin();
 void mcsim_spinning_end();
 
-void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
-void GATHER(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads);
+void UpdateRR(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
+void UpdateRI(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
+void UpdateII(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
+void Update(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
+void Gather(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads);
 
 int testFunc(int tid);
 #ifdef __cplusplus
