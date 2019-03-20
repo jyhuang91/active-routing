@@ -4,6 +4,7 @@
 // Acknoledgement, code snippet from zsim
 
 #include <stdint.h>
+#include "xed-category-enum.h"
 
 // TODO: add namespace to resolve possible conflicts, but
 //       funciton name should be identified by Pthread tool
@@ -50,11 +51,14 @@ typedef enum eOpcode {
 } Opcode;
 
 typedef enum {
-  ART_CATEGORY_GET = 128,
+  ART_CATEGORY_START = XED_CATEGORY_LAST + 1,
+  ART_CATEGORY_GET = ART_CATEGORY_START,
   ART_CATEGORY_ADD,
   ART_CATEGORY_MULT,
+  ART_CATEGORY_DOT,
   PEI_CATEGORY_DOT,
-  PEI_CATEGORY_ATOMIC
+  PEI_CATEGORY_ATOMIC,
+  ART_CATEGORY_LAST
 } ins_category_enum_t;
 
 #define CACHELINE_SIZE 64 // Bytes
