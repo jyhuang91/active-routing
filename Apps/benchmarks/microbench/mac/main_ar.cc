@@ -49,18 +49,23 @@ void *do_work(void *args)
   int i_start = start_d;
   int i_stop = stop_d;
 
+  int stride = CACHELINE_SIZE / sizeof(float);
+
   pthread_barrier_wait(arg->barrier);
 
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
-  for (v = i_start; v < i_stop; ++v) {
+
+  for (v = i_start; v < i_stop - stride; v += stride) {
     /*mcsim_skip_instrs_begin();
     local_sum += W[v] * X[v];
     mcsim_skip_instrs_end();*/
-    UPDATE((void *) &W[v], (void *) &X[v], (void *) &sum, MULT);
+    UpdateRR((void *) &W[v], (void *) &X[v], (void *) &sum, DMULT);
   }
-  GATHER((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
+  for (; v < i_stop; v++)
+    UpdateII((void *) &W[v], (void *) &X[v], (void *) &sum, DMULT);
+  Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   //printf("thread %d sends %d updates\n", tid, i_stop - i_start);
   //pthread_barrier_wait(arg->barrier);
 
@@ -83,11 +88,15 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W = (double *) malloc(N * sizeof(double *));
-  double *X = (double *) malloc(N * sizeof(double *));
-  double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
-  if (ret != 0) {
-    fprintf(stderr, "Could not allocate memory\n");
+  double *W, *X;
+
+  if (posix_memalign((void **) &W, CACHELINE_SIZE, N * sizeof(double))) {
+    fprintf(stderr, "Could not allocate memory for W\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (posix_memalign((void **) &X, CACHELINE_SIZE, N * sizeof(double))) {
+    fprintf(stderr, "Could not allocate memory for X\n");
     exit(EXIT_FAILURE);
   }
 

@@ -85,7 +85,7 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W = (double *) malloc(N * sizeof(double *));
+  double *W;
   double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
   if (ret != 0) {
     fprintf(stderr, "Could not allocate memory\n");

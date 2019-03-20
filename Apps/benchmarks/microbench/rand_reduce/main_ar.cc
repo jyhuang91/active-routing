@@ -70,9 +70,9 @@ void *do_work(void *args)
     mcsim_skip_instrs_end();*/
     //index = rand() % N;
     randindex(&index, i_start, i_stop);
-    UPDATE((void *) &W[index], 0, (void *) &sum, ADD);
+    UpdateII((void *) &W[index], 0, (void *) &sum, DADD);
   }
-  GATHER((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
+  Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   //printf("thread %d sends %d updates\n", tid, i_stop - i_start);
   //pthread_barrier_wait(arg->barrier);
 
@@ -95,7 +95,7 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W = (double *) malloc(N * sizeof(double *));
+  double *W;
   double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
   if (ret != 0) {
     fprintf(stderr, "Could not allocate memory\n");
