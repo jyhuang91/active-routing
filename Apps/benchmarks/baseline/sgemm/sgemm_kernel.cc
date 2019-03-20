@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <pthread.h>
+#include <hooks.h>
 
 /* thread arguments */
 struct thread_arg_t {

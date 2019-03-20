@@ -63,8 +63,10 @@ int n;
 {
   float *new;
 
-  new = (float *) malloc ((unsigned) (n * sizeof (float)));
-  if (new == NULL) {
+  //new = (float *) malloc ((unsigned) (n * sizeof (float)));
+  //if (new == NULL)
+  if (posix_memalign((void **) &new, CACHELINE_SIZE, n * sizeof(float)))
+  {
     printf("ALLOC_1D_DBL: Couldn't allocate array of floats\n");
     return (NULL);
   }
@@ -80,8 +82,10 @@ int m, n;
   int i;
   float **new;
 
-  new = (float **) malloc ((unsigned) (m * sizeof (float *)));
-  if (new == NULL) {
+  //new = (float **) malloc ((unsigned) (m * sizeof (float *)));
+  //if (new == NULL)
+  if (posix_memalign((void **) &new, CACHELINE_SIZE, m * sizeof(float *)))
+  {
     printf("ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs\n");
     return (NULL);
   }

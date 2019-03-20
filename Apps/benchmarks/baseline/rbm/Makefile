@@ -32,4 +32,4 @@ run-large:
 	-./rbm -u 100 -t 100 -m 100 -l 200 | tee ../results/rbm.large
 
 clean:
-	-rm rbm rbm-small rbm-medium rbm-large out.txt
+	-rm rbm out.txt #rbm-small rbm-medium rbm-large
