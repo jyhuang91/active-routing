@@ -73,7 +73,7 @@ void* do_work(void* args){
         //local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j]; 
         for (int c; c < stride; c++)
           addr_arr[c] = &shared_mat[(k+c)*size + j];
-        UpdateRI(addr_arr, &shared_mat[i*size + k], &local_product, PEI_DOT);
+        UpdateRI(addr_arr, &shared_mat[i*size + k], &local_product, FPEI_DOT);
         local_sum -= local_product;
       }
       // dealing with fragmentation, TODO: optimize it by applying masking
@@ -90,7 +90,7 @@ void* do_work(void* args){
       for(k = 0; k < i - stride; k += stride){
         for (int c; c < stride; c++)
           addr_arr[c] = &shared_mat[(k+c)*size + i];
-        UpdateRI(addr_arr, &shared_mat[j*size + k], &local_product, PEI_DOT);
+        UpdateRI(addr_arr, &shared_mat[j*size + k], &local_product, FPEI_DOT);
         local_sum -= local_product;
       }
       for (; k < i; k++)

@@ -68,17 +68,22 @@ void* do_work(void* args){
     float local_sum = 0;
 
     int j,k; 
+    int stride = CACHELINE_SIZE / sizeof(float); 
     for(j = i+tid; j<size; j+=P){
+      local_sum = shared_mat[i*size+j];
       int active = testFunc(tid);
       if (active == 1) {
-        for(k=0; k<i; k++) {
-          UPDATE(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], MULT);
+        shared_mat[i*size + j] = 0;
+        for (k = 0; k < i - stride; k += stride) {
+          //local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j]; 
+          UpdateRR(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], MULT);
         }
-        if(i != 0) {
-          GATHER(NULL, NULL, &shared_mat[i*size + j], 1);
-        }
+        // dealing with fragmentation, TODO: optimize it by applying masking
+        for (; k < i; k++)
+          UpdateII(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], MULT);
+        if(i != 0) Gather(NULL, NULL, &shared_mat[i*size + j], 1);
+        shared_mat[i*size + j] = local_sum - shared_mat[i*size + j];       //No lock required since j is different for each thread
       } else if (active == 0) {
-        local_sum = shared_mat[i*size+j];
         for(k=0; k<i; k++) local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j]; 
         shared_mat[i*size + j] = local_sum;       //No lock required since j is different for each thread
       } else {
@@ -95,12 +100,14 @@ void* do_work(void* args){
       int active = testFunc(tid);
       if (active == 1) {
 
-        for(k=0; k<i; k++) {
-          UPDATE(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
+        shared_mat[j*size + i] = 0;
+        for (k = 0; k < i - stride; k += stride) {
+          //local_sum -= shared_mat[j*size + k]*shared_mat[k*size + i];
+          UpdateRR(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
         }
-        if(i != 0) {
-          GATHER(NULL, NULL, &shared_mat[j*size + i], 1);
-        }
+        for (; k < i; k++)
+          UpdateII(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
+        if(i != 0) Gather(NULL, NULL, &shared_mat[j*size + i], 1);
         shared_mat[j*size + i] = (local_sum - shared_mat[j*size + i]) / shared_mat[i*size + i];
 
       } else if (active == 0) {

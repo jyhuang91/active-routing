@@ -99,7 +99,7 @@ void* do_work(void* args)
       {
         //dp_tid[tid] = dp_tid[tid] + d*(PR[v]/N_real);
         //printf("\n %f %f %f %f",dp,d,D[uu],N_real);
-        UpdateII(&PR[v], NULL, &dp, ADD);
+        UpdateII(&PR[v], NULL, &dp, DADD);
       }
     }
     //pthread_mutex_lock(&lock);
@@ -129,7 +129,7 @@ void* do_work(void* args)
           //if inlink
           //printf("\nuu:%d id:%d",uu,W_index[uu][j]);
           //pgtmp[v] = pgtmp[v] + (d*PR[W_index[v][j]]/outlinks[W_index[v][j]]);  //replace d with dp if dangling PRs required
-          UpdateII(&PR[W_index[v][j]], &outlinks[W_index[v][j]], &pgtmp[v], MULT);
+          UpdateII(&PR[W_index[v][j]], &outlinks[W_index[v][j]], &pgtmp[v], DIDIV);
         }
         if (test[v] > 0) {
           Gather(&PR[W_index[0][0]], &outlinks[W_index[0][0]], &pgtmp[v], 1);

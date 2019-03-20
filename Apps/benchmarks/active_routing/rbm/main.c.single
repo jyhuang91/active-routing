@@ -61,7 +61,7 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 			if (visible[v] != -1) {
         ++count;
 				//sum += (double) visible[v] * edges[v][h];
-        UpdateII(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
+        UpdateII(&visible[v], &edges[v][h], &hiddenEnergies[h], IDMULT);
       }
 		}
 		//hiddenEnergies[h] = sum;
@@ -105,16 +105,16 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		double sum = 0;
 		int h;
     count = 0;
-    int stride = CACHELINE_SIZE / sizeof(int);
+    int stride = CACHELINE_SIZE / sizeof(double);
 		for (h = 0; h < num_hidden + 1 - stride; h += stride) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
       ++count;
-      UpdateRR(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
+      UpdateRR(&hidden[h], &edges[v][h], &visibleEnergies[v], IDMULT);
     }
     // dealing with fragmentation, TODO: optimize it by applying masking
     for (; h < num_hidden + 1; h++) {
       ++count;
-      UpdateII(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
+      UpdateII(&hidden[h], &edges[v][h], &visibleEnergies[v], IDMULT);
     }
 		//visibleEnergies[v] = sum;
     if (count != 0)
@@ -135,12 +135,12 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 			//exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
       ++count;
-      UpdateRR( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
+      UpdateRR( &visibleEnergies[v + j], NULL, &sumOfExps, DEXP); // XXX: treat exponential-and-accumulate as ADD
 		}
     // dealing with fragmentation, TODO: optimize it by applying masking
     for (; j < K; j++) {
       ++count;
-      UpdateII( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
+      UpdateII( &visibleEnergies[v + j], NULL, &sumOfExps, DEXP); // XXX: treat exponential-and-accumulate as ADD
     }
     if (count != 0)
       Gather(NULL, NULL, &sumOfExps, 1); //TODO: this may have problem in CasHMC, since sumOfExps is reuse for differnt flows

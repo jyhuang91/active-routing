@@ -100,7 +100,7 @@ void* matVecMul(void *args){
     for (j = spm->row_ptr[i]; j < spm->row_ptr[i+1] - stride; j += stride) {
       for (int k = 0; k < stride; k++)
         addr_arr[k] = (inVec + spm->col_ind[j+k]);
-      UpdateRI(addr_arr, spm->vals +j, &local_product, PEI_DOT); 
+      UpdateRI(addr_arr, spm->vals +j, &local_product, FPEI_DOT); 
       outVec[i] += local_product;
     }
     // dealing with fragmentation, TODO: optimize it by applying masking

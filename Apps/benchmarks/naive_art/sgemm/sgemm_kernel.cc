@@ -72,7 +72,7 @@ void* work_func(void *thread_arg)
         /*float a = A[mm + i * lda];
         float b = B[nn + i * ldb];
         c += a * b;*/
-        UpdateII(&A[mm + i * lda], &B[nn + i * ldb], (void *) flowID, MULT);
+        UpdateII(&A[mm + i * lda], &B[nn + i * ldb], (void *) flowID, FMULT);
       }
       Gather(0, 0, (void *) flowID, 1);
       C[mm+nn*ldc] = C[mm+nn*ldc] * beta + alpha * flowID;

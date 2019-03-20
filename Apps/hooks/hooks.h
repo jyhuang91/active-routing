@@ -25,12 +25,37 @@
 
 // Active operations
 typedef enum eOpcode {
-  GET        = 0,
-  ADD        = 1,
-  MULT       = 2,
-  PEI_DOT    = 3,
-  PEI_ATOMIC = 5
+  GET = 0,
+  IADD,
+  FADD,
+  DADD,
+  IMULT,
+  FMULT,
+  DMULT,
+  IFMULT,
+  IDMULT,
+  FDMULT,
+  DIDIV,
+  DEXP,
+  // PEI
+  IPEI_DOT,
+  FPEI_DOT,
+  DPEI_DOT,
+  IFPEI_DOT,
+  IDPEI_DOT,
+  FDPEI_DOT,
+  IPEI_ATOMIC,
+  FPEI_ATOMIC,
+  DPEI_ATOMIC
 } Opcode;
+
+typedef enum {
+  ART_CATEGORY_GET = 128,
+  ART_CATEGORY_ADD,
+  ART_CATEGORY_MULT,
+  PEI_CATEGORY_DOT,
+  PEI_CATEGORY_ATOMIC
+} ins_category_enum_t;
 
 #define CACHELINE_SIZE 64 // Bytes
 #define PEI_GRANULARITY 4 // elements

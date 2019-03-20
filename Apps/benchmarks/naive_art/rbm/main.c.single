@@ -60,7 +60,7 @@ void activateHiddenUnits(int visible[], int stochastic, int hidden[])
 			if (visible[v] != -1) {
         ++count;
 				//sum += (double) visible[v] * edges[v][h];
-        UpdateII(&visible[v], &edges[v][h], &hiddenEnergies[h], MULT);
+        UpdateII(&visible[v], &edges[v][h], &hiddenEnergies[h], IDMULT);
       }
 		}
 		//hiddenEnergies[h] = sum;
@@ -106,7 +106,8 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
     count = 0;
 		for (h = 0; h < num_hidden + 1; h++) { // remove the +1 if you want to skip the bias
 			//sum += (double) hidden[h] * edges[v][h];
-      UpdateII(&hidden[h], &edges[v][h], &visibleEnergies[v], MULT);
+      ++count;
+      UpdateII(&hidden[h], &edges[v][h], &visibleEnergies[v], IDMULT);
     }
 		//visibleEnergies[v] = sum;
     if (count != 0)
@@ -126,7 +127,7 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 			//exps[j] = exp(visibleEnergies[v + j]);
 			//sumOfExps += exps[j];
       ++count;
-      UpdateII( &visibleEnergies[v + j], NULL, &sumOfExps, ADD); // XXX: treat exponential-and-accumulate as ADD
+      UpdateII( &visibleEnergies[v + j], NULL, &sumOfExps, DEXP); // XXX: treat exponential-and-accumulate as ADD
 		}
     if (count != 0)
       Gather(NULL, NULL, &sumOfExps, 1); //TODO: this may have problem in CasHMC, since sumOfExps is reuse for differnt flows
@@ -153,15 +154,15 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 		else // used for prediction: uses expectation
 		{
 
-      count = 0;
+      //count = 0;
 			double expectation = 0.0;
 			for (j = 0; j < K; j++) {
-				//expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
-        ++count;
-        UpdateII(&j, &probs[j], &expectation, MULT);
+				expectation += j * probs[j]; // we will predict rating between 0 to K-1, not between 1 to K
+        //++count;
+        //UpdateII(&j, &probs[j], &expectation, MULT);
       }
-      if (count != 0)
-        Gather(NULL, NULL, &expectation, 1);
+      //if (count != 0)
+      //  Gather(NULL, NULL, &expectation, 1);
 
 			long prediction = round(expectation);
 

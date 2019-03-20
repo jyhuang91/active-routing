@@ -115,7 +115,7 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
     double partial_sum = 0;
 		int h;
 		for (h = 0; h < num_hidden + 1 - stride; h += stride) { // remove the +1 if you want to skip the bias
-      UpdateRR(&hidden[h], &edges[v][h], &partial_sum, PEI_DOT);
+      UpdateRR(&hidden[h], &edges[v][h], &partial_sum, DPEI_DOT);
       sum += partial_sum;
     }
     for (; h < num_hidden + 1; h++)

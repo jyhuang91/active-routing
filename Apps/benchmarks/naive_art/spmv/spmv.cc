@@ -94,7 +94,7 @@ void* matVecMul(void *args){
   for(int i = tid; i < dim; i += num_threads){
     outVec[i] = 0; 
     for(int j = spm->row_ptr[i]; j<spm->row_ptr[i+1]; j++){
-      UpdateII(inVec + spm->col_ind[j], spm->vals +j, outVec + i, MULT); 
+      UpdateII(inVec + spm->col_ind[j], spm->vals +j, outVec + i, FMULT); 
       //outVec[i] += inVec[spm->col_ind[j]]*spm->vals[j];
     }
     if(spm->row_ptr[i] < spm->row_ptr[i+1]) Gather(NULL, NULL, outVec + i, 1); 

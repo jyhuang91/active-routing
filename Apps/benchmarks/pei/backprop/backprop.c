@@ -310,7 +310,7 @@ void *bpnn_pthread_worker(void *args)
     /*** Compute weighted sum of its inputs ***/
     hl[j] = 0.0;
     for (k = 0; k <= in - stride; k += stride) {
-      UpdateRR(&iw[k][j], &il[k], &hl[j], PEI_DOT);
+      UpdateRR(&iw[k][j], &il[k], &hl[j], FPEI_DOT);
       /*mcsim_skip_instrs_begin();
       hl[j] += iw[k][j] * il[k];
       mcsim_skip_instrs_end();*/
@@ -336,7 +336,7 @@ void *bpnn_pthread_worker(void *args)
     /*** Compute weighted sum of its inputs ***/
     ol[j] = 0.0;
     for (k = 0; k <= hid - stride; k += stride) {
-      UpdateRR(&hw[k][j], &hl[k], &ol[j], PEI_DOT);
+      UpdateRR(&hw[k][j], &hl[k], &ol[j], FPEI_DOT);
       /*mcsim_skip_instrs_begin();
       ol[j] += hw[k][j] * hl[k];
       mcsim_skip_instrs_end();*/

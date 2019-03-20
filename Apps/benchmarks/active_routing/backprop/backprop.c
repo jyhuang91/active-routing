@@ -309,14 +309,14 @@ void *bpnn_pthread_worker(void *args)
     hl[j] = 0.0;
     int stride = CACHELINE_SIZE / sizeof(float);
     for (k = 0; k <= in - stride; k += stride) {
-      UpdateRR(&iw[k][j], &il[k], &hl[j], MULT);
+      UpdateRR(&iw[k][j], &il[k], &hl[j], FMULT);
       /*mcsim_skip_instrs_begin();
       hl[j] += iw[k][j] * il[k];
       mcsim_skip_instrs_end();*/
     }
     // dealing with fragmentation, TODO: optimize it by applying masking
     for (; k <= in; k++)
-      UpdateII(&iw[k][j], &il[k], &hl[j], MULT);
+      UpdateII(&iw[k][j], &il[k], &hl[j], FMULT);
     Gather(0, 0, &hl[j], 1);
     hl[j] = squash(hl[j]);
     /*sum = 0.0;
@@ -337,14 +337,14 @@ void *bpnn_pthread_worker(void *args)
     ol[j] = 0.0;
     int stride = CACHELINE_SIZE / sizeof(float);
     for (k = 0; k <= hid - stride; k += stride) {
-      UpdateRR(&hw[k][j], &hl[k], &ol[j], MULT);
+      UpdateRR(&hw[k][j], &hl[k], &ol[j], FMULT);
       /*mcsim_skip_instrs_begin();
       ol[j] += hw[k][j] * hl[k];
       mcsim_skip_instrs_end();*/
     }
     // dealing with fragmentation, TODO: optimize it by applying masking
     for (; k <= hid; k++)
-      UpdateII(&hw[k][j], &hl[k], &ol[j], MULT);
+      UpdateII(&hw[k][j], &hl[k], &ol[j], FMULT);
     Gather(0, 0, &ol[j], 1);
     ol[j] = squash(ol[j]);
     /*sum = 0.0;

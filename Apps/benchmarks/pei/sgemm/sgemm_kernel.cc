@@ -71,7 +71,7 @@ void* work_func(void *thread_arg)
       float local_product = 0.0f;
       int i;
       for (i = 0; i < k - stride; i += stride) {
-        UpdateRR(&A[mm + i * lda], &B[nn + i * ldb], &local_product, PEI_DOT);
+        UpdateRR(&A[mm + i * lda], &B[nn + i * ldb], &local_product, FPEI_DOT);
         c += local_product;
       }
       // dealing with fragmentation, TODO: optimize it by applying masking
