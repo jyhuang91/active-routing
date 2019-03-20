@@ -61,6 +61,7 @@ void* work_func(void *thread_arg)
   int stop = stop_d;
   int niteration = arg->niteration;
   int niteration2 = arg->niteration2;
+  int stride = CACHELINE_SIZE / sizeof(float);
 
   pthread_barrier_wait(arg->barrier);
 
@@ -68,13 +69,18 @@ void* work_func(void *thread_arg)
     for (int nn = 0; nn < niteration2; nn++) {
       //float c = 0.0f;
       uint64_t flowID = mm+nn*ldc;
-      for (int i = 0; i < k; i++) {
+      int i;
+      for (i = 0; i < k - stride; i += stride) {
         /*float a = A[mm + i * lda];
         float b = B[nn + i * ldb];
         c += a * b;*/
-        UPDATE(&A[mm + i * lda], &B[nn + i * ldb], (void *) flowID, MULT);
+        UpdateRR(&A[mm + i * lda], &B[nn + i * ldb], (void *) flowID, MULT);
       }
-      GATHER(0, 0, (void *) flowID, 1);
+      // dealing with fragmentation, TODO: optimize it by applying masking
+      for (; i < k; i++) {
+        UpdateII(&A[mm + i * lda], &B[nn + i * ldb], (void *) flowID, MULT);
+      }
+      Gather(0, 0, (void *) flowID, 1);
       C[mm+nn*ldc] = C[mm+nn*ldc] * beta + alpha * flowID;
       //std::cout << "thread " << tid << " - flow ID " << flowID << std::endl;
     }

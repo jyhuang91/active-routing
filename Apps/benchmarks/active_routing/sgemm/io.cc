@@ -13,13 +13,20 @@
 #include<fstream>
 #include<iostream>
 #include<vector>
+#include <cstdlib>
+#include <hooks.h>
 
-bool generateMajorMatrix(int &nr_row, int &nr_col, std::vector<float> &v)
+bool generateMajorMatrix(int &nr_row, int &nr_col, float **v)
 {
   std::cerr << "Generate " << nr_row << "x" << nr_col << " matrix" << std::endl;
 
+  if (posix_memalign((void **) v, CACHELINE_SIZE, nr_row * nr_col * sizeof(float))) {
+    std::cerr << "Fail memory allocation" << std::endl;
+    abort();
+  }
+
   for (int i = 0; i < nr_row * nr_col; i++) {
-    v.push_back(0.5);
+    (*v)[i] = 0.5;
   }
 }
 

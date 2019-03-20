@@ -63,8 +63,10 @@ int n;
 {
   float *new;
 
-  new = (float *) malloc ((unsigned) (n * sizeof (float)));
-  if (new == NULL) {
+  //new = (float *) malloc ((unsigned) (n * sizeof (float)));
+  //if (new == NULL)
+  if (posix_memalign((void **) &new, CACHELINE_SIZE, n * sizeof(float)))
+  {
     printf("ALLOC_1D_DBL: Couldn't allocate array of floats\n");
     return (NULL);
   }
@@ -80,8 +82,10 @@ int m, n;
   int i;
   float **new;
 
-  new = (float **) malloc ((unsigned) (m * sizeof (float *)));
-  if (new == NULL) {
+  //new = (float **) malloc ((unsigned) (m * sizeof (float *)));
+  //if (new == NULL)
+  if (posix_memalign((void **) &new, CACHELINE_SIZE, m * sizeof(float *)))
+  {
     printf("ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs\n");
     return (NULL);
   }
@@ -303,13 +307,17 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_hid; j < end_hid; j++) {
     /*** Compute weighted sum of its inputs ***/
     hl[j] = 0.0;
-    for (k = 0; k <= in; k++) {
-      UPDATE(&iw[k][j], &il[k], &hl[j], MULT);
+    int stride = CACHELINE_SIZE / sizeof(float);
+    for (k = 0; k <= in - stride; k += stride) {
+      UpdateRR(&iw[k][j], &il[k], &hl[j], MULT);
       /*mcsim_skip_instrs_begin();
       hl[j] += iw[k][j] * il[k];
       mcsim_skip_instrs_end();*/
     }
-    GATHER(0, 0, &hl[j], 1);
+    // dealing with fragmentation, TODO: optimize it by applying masking
+    for (; k <= in; k++)
+      UpdateII(&iw[k][j], &il[k], &hl[j], MULT);
+    Gather(0, 0, &hl[j], 1);
     hl[j] = squash(hl[j]);
     /*sum = 0.0;
     for (k = 0; k <= in; k++) {
@@ -327,13 +335,17 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_out; j < end_out; j++) {
     /*** Compute weighted sum of its inputs ***/
     ol[j] = 0.0;
-    for (k = 0; k <= hid; k++) {
-      UPDATE(&hw[k][j], &hl[k], &ol[j], MULT);
+    int stride = CACHELINE_SIZE / sizeof(float);
+    for (k = 0; k <= hid - stride; k += stride) {
+      UpdateRR(&hw[k][j], &hl[k], &ol[j], MULT);
       /*mcsim_skip_instrs_begin();
       ol[j] += hw[k][j] * hl[k];
       mcsim_skip_instrs_end();*/
     }
-    GATHER(0, 0, &ol[j], 1);
+    // dealing with fragmentation, TODO: optimize it by applying masking
+    for (; k <= hid; k++)
+      UpdateII(&hw[k][j], &hl[k], &ol[j], MULT);
+    Gather(0, 0, &ol[j], 1);
     ol[j] = squash(ol[j]);
     /*sum = 0.0;
     for (k = 0; k <= hid; k++) {

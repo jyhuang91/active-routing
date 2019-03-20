@@ -63,14 +63,20 @@ void* do_work(void* args){
     //divide work amoung threads; 
     float local_sum = 0;
     
-    int j,k; 
+    int j,k;
+    int stride = CACHELINE_SIZE / sizeof(float); 
     for(j = i+tid; j<size; j+=P){
-      for(k=0; k<i; k++){
+      local_sum = shared_mat[i*size + j];
+      shared_mat[i*size + j] = 0;
+      for (k = 0; k < i - stride; k += stride) {
         //local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j]; 
-        UPDATE(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], MULT);
+        UpdateRR(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], MULT);
       }
-      if(i != 0) GATHER(NULL, NULL, &shared_mat[i*size + j], 1);
-      //shared_mat[i*size + j] = local_sum;       //No lock required since j is different for each thread
+      // dealing with fragmentation, TODO: optimize it by applying masking
+      for (; k < i; k++)
+        UpdateII(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], MULT);
+      if(i != 0) Gather(NULL, NULL, &shared_mat[i*size + j], 1);
+      shared_mat[i*size + j] = local_sum - shared_mat[i*size + j];       //No lock required since j is different for each thread
     }
     
     pthread_barrier_wait(arg->barrier);
@@ -78,11 +84,14 @@ void* do_work(void* args){
     for(j=i+tid; j<size; j+=P){
       if(tid == 0 && j == i + tid) continue;
       local_sum = shared_mat[j*size + i];
-      for(k=0; k<i; k++){
+      shared_mat[j*size + i] = 0;
+      for (k = 0; k < i - stride; k += stride) {
         //local_sum -= shared_mat[j*size + k]*shared_mat[k*size + i];
-        UPDATE(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
+        UpdateRR(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
       }
-      if(i != 0) GATHER(NULL, NULL, &shared_mat[j*size + i], 1);
+      for (; k < i; k++)
+        UpdateII(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], MULT);
+      if(i != 0) Gather(NULL, NULL, &shared_mat[j*size + i], 1);
       shared_mat[j*size + i] = (local_sum - shared_mat[j*size + i]) / shared_mat[i*size + i];
     }
     pthread_barrier_wait(arg->barrier);
