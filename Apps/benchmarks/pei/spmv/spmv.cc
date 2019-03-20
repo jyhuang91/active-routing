@@ -90,23 +90,22 @@ void* matVecMul(void *args){
   spm_t* spm = arg->spm; 
   float* inVec = arg->inVec;
   float* outVec = arg->outVec;
-  void* addr_arr[4];
+  int stride = PEI_GRANULARITY;
+  void *addr_arr[stride];
   
   for(int i = tid; i < dim; i += num_threads){
-    outVec[i] = 0; 
-  //  if(spm->row_ptr[i+1] - spm->row_ptr[i] < 4){
-  //    for(int k =spm->row_ptr[i]; k < spm->row_ptr[i+1]; k++)outVec[i] += inVec[spm->col_ind[k]]*spm->vals[k];
-  //  }else{
-      for(int j = spm->row_ptr[i]; j<spm->row_ptr[i+1]; j+=4){
-        addr_arr[0] = (inVec + spm->col_ind[j]);
-        addr_arr[1] = (inVec + spm->col_ind[j+1]);
-        addr_arr[2] = (inVec + spm->col_ind[j+2]);
-        addr_arr[3] = (inVec + spm->col_ind[j+3]);
-        UPDATE(addr_arr, spm->vals +j, outVec + i, PEI_RIDOT); 
-        //outVec[i] += inVec[spm->col_ind[j]]*spm->vals[j];
-   //   }
+    outVec[i] = 0;
+    int j;
+    float local_product = 0.0;
+    for (j = spm->row_ptr[i]; j < spm->row_ptr[i+1] - stride; j += stride) {
+      for (int k = 0; k < stride; k++)
+        addr_arr[k] = (inVec + spm->col_ind[j+k]);
+      UpdateRI(addr_arr, spm->vals +j, &local_product, PEI_DOT); 
+      outVec[i] += local_product;
     }
-    //if(spm->row_ptr[i] < spm->row_ptr[i+1]) GATHER(NULL, NULL, outVec + i, 1); 
+    // dealing with fragmentation, TODO: optimize it by applying masking
+    for (; j<spm->row_ptr[i+1]; j++)
+      outVec[i] += inVec[spm->col_ind[j]]*spm->vals[j];
   }
   return NULL; 
 } 
@@ -144,7 +143,12 @@ spm_t *CompressMatrix(float **matrix, int matrix_dim){
 //  }
   int val_ind = 0; 
   int *col_ind = (int *)malloc((nnz)*sizeof(int)); 
-  float *vals = (float *)malloc((nnz)*sizeof(float));
+  float *vals;
+  //vals = (float *)malloc((nnz)*sizeof(float));
+  if (posix_memalign((void **) &vals, CACHELINE_SIZE, nnz * sizeof(float))) {
+    fprintf(stderr, "Fail to allocate vals\n");
+    exit(1);
+  }
   for(int i = 0; i < matrix_dim; i++){
     row_ptr[row_ind] = val_ind;
     row_ind++; 

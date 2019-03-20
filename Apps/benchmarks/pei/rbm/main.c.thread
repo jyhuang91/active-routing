@@ -107,17 +107,19 @@ void activateVisibleUnits(int hidden[], int stochastic, int visible[])
 	double visibleEnergies[num_visible];
 	int v;
   int count;
+  int stride = PEI_GRANULARITY;
 	for (v = 0; v < num_visible; v++)
 	{
 		// Get the sum of energies
 		double sum = 0;
     double partial_sum = 0;
 		int h;
-		for (h = 0; h < num_hidden + 1; h += 4) { // remove the +1 if you want to skip the bias
-			//sum += (double) hidden[h] * edges[v][h];
-      UPDATE(&hidden[h], &edges[v][h], &partial_sum, PEI_DOT);
+		for (h = 0; h < num_hidden + 1 - stride; h += stride) { // remove the +1 if you want to skip the bias
+      UpdateRR(&hidden[h], &edges[v][h], &partial_sum, PEI_DOT);
       sum += partial_sum;
     }
+    for (; h < num_hidden + 1; h++)
+			sum += (double) hidden[h] * edges[v][h];
 		visibleEnergies[v] = sum;
 	}
 
