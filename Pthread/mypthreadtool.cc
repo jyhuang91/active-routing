@@ -1,6 +1,7 @@
 #include "mypthreadtool.h"
 #include "stdio.h"
 #include <hooks.h>
+#include <ins_category_enum.h>
 
 using namespace PinPthread;
 

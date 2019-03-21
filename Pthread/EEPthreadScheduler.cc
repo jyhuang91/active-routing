@@ -11,7 +11,7 @@
 #include <snappy.h>
 #include <map>
 
-#include <hooks.h>
+#include <ins_category_enum.h>
 
 using namespace PinPthread;
 using namespace std;
