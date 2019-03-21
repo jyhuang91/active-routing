@@ -1,6 +1,8 @@
 #ifndef __INS_CATEGORY_ENUM_H__
 #define __INS_CATEGORY_ENUM_H__
 
+#include "xed-category-enum.h"
+
 typedef enum {
   ART_CATEGORY_START = XED_CATEGORY_LAST + 1,
   ART_CATEGORY_GET = ART_CATEGORY_START,
