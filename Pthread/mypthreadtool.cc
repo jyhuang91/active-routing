@@ -208,7 +208,7 @@ int testFunc(int tid)
 #endif
 
 // TODO: two operands may have different type, int/fp/double, may not aligned in cacheline
-VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode opcode)
+VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
 {
   uint32_t category = -1;
   uint32_t rlen = 4 * PEI_GRANULARITY;
@@ -265,7 +265,7 @@ VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode
   //fprintf(stderr, " [UpdateRR API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
 }
 
-VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode opcode)
+VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
 {
   uint32_t category = -1;
   uint32_t rlen = 4 * PEI_GRANULARITY;
@@ -336,7 +336,7 @@ VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode
   //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
 }
 
-VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode opcode)
+VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
 {
   uint32_t category = -1;
   uint32_t rlen = 4;
@@ -373,7 +373,7 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode
 }
 
 // Jiayi, 01/29/2018
-VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, Opcode opcode)
+VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
 {
   uint32_t category = -1;
   uint32_t rlen = 4;
