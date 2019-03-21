@@ -25,7 +25,7 @@
 #define MAGIC_OP_INSTRS_COUNT      (1035)
 
 // Active operations
-typedef enum eOpcode {
+typedef enum eeOpcode {
   GET = 0,
   IADD,
   FADD,
@@ -48,7 +48,7 @@ typedef enum eOpcode {
   IPEI_ATOMIC,
   FPEI_ATOMIC,
   DPEI_ATOMIC
-} Opcode;
+} eOpcode;
 
 typedef enum {
   ART_CATEGORY_START = XED_CATEGORY_LAST + 1,
@@ -93,10 +93,10 @@ void mcsim_skip_instrs_end();
 void mcsim_spinning_begin();
 void mcsim_spinning_end();
 
-void UpdateRR(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
-void UpdateRI(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
-void UpdateII(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
-void Update(void *src_addr1, void *src_addr2, void *dest_addr, Opcode op);
+void UpdateRR(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
+void UpdateRI(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
+void UpdateII(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
+void Update(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
 void Gather(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads);
 
 int testFunc(int tid);
