@@ -4,7 +4,6 @@
 // Acknoledgement, code snippet from zsim
 
 #include <stdint.h>
-#include "xed-category-enum.h"
 
 // TODO: add namespace to resolve possible conflicts, but
 //       funciton name should be identified by Pthread tool
@@ -25,7 +24,7 @@
 #define MAGIC_OP_INSTRS_COUNT      (1035)
 
 // Active operations
-typedef enum eeOpcode {
+typedef enum {
   GET = 0,
   IADD,
   FADD,
@@ -49,17 +48,6 @@ typedef enum eeOpcode {
   FPEI_ATOMIC,
   DPEI_ATOMIC
 } eOpcode;
-
-typedef enum {
-  ART_CATEGORY_START = XED_CATEGORY_LAST + 1,
-  ART_CATEGORY_GET = ART_CATEGORY_START,
-  ART_CATEGORY_ADD,
-  ART_CATEGORY_MULT,
-  ART_CATEGORY_DOT,
-  PEI_CATEGORY_DOT,
-  PEI_CATEGORY_ATOMIC,
-  ART_CATEGORY_LAST
-} ins_category_enum_t;
 
 #define CACHELINE_SIZE 64 // Bytes
 #define PEI_GRANULARITY 4 // elements

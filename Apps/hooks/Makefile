@@ -4,6 +4,7 @@ RANLIB = ranlib
 LIBDIR = lib
 
 INCS = -I${PIN_HOME}/extras/xed2-intel64/include
+INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks/include
 
 default: all
 
