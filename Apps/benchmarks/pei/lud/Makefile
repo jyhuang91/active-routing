@@ -24,7 +24,7 @@ PTS_LIB_DEPEND = hooks
 PTS_LIBS += -lrt
 PTS_LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 PTS_LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-PTS_INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+PTS_INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 
 # ------------  compiler flags  ------------------------------------------------
 DEBUG_CFLAGS    := -Wall -O0 -g

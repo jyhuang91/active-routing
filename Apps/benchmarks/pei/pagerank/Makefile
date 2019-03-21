@@ -7,7 +7,7 @@ LIB_DEPEND = hooks
 LIBS += -lrt
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 
 CXXFLAGS = -g --std=c++0x -static #-O3 -static
 CXXFLAGS += -Wall -Werror
