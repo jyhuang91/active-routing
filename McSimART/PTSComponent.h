@@ -102,11 +102,12 @@ namespace PinPthread
     et_rd_dir_info_req,
     et_rd_dir_info_rep,
     et_nop,
-    et_hmc_update_add, // Jiayi
-    et_hmc_update_mult,
-    et_hmc_gather,
-    et_hmc_gather_rep,
-    et_hmc_pei,
+    et_art_get, // Jiayi
+    et_art_add,
+    et_art_mult,
+    et_art_dot,
+    et_pei_dot,
+    et_pei_atomic
   };
 
   struct LocalQueueElement
@@ -122,17 +123,18 @@ namespace PinPthread
     uint64_t   dest_addr;
     uint64_t   src_addr1;
     uint64_t   src_addr2;
+    uint32_t   rlen;
     int32_t    nthreads;  // Jiayi, for gather barrier, 03/31/17
-    LocalQueueElement *twin_lqe1;  // for hmc_update_mult, store the peer lqe address
-    LocalQueueElement *twin_lqe2; // for hmc_update_mult, store the peer lqe address
+    LocalQueueElement *twin_lqe1;  // for art_mult, store the peer lqe address
+    LocalQueueElement *twin_lqe2; // for art_mult, store the peer lqe address
     uint64_t   issue_time;
 
     LocalQueueElement() : from(), th_id(0), dummy(false), rob_entry(-1) { }
     LocalQueueElement(Component * comp, event_type type_, uint64_t address_)
       : from(), type(type_), address(address_), th_id(0), dummy(false), rob_entry(-1) { from.push(comp); }
-    LocalQueueElement(Component * comp, event_type type_, uint64_t dest_addr_, uint64_t src_addr1_, uint64_t src_addr2_)
+    LocalQueueElement(Component * comp, event_type type_, uint64_t dest_addr_, uint64_t src_addr1_, uint64_t src_addr2_, uint32_t rlen_)
       : from(), type(type_), address(0), th_id(0), dummy(false), rob_entry(-1), dest_addr(dest_addr_),
-      src_addr1(src_addr1_), src_addr2(src_addr2_) { from.push(comp); }
+      src_addr1(src_addr1_), src_addr2(src_addr2_), rlen(rlen_) { from.push(comp); }
 
     void display();
   };

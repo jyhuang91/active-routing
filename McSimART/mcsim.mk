@@ -7,6 +7,10 @@ default: all
 LIBS = ../../../extras/xed2-intel64/lib/libxed.a
 INCS = -I${PIN_HOME}/extras/xed2-intel64/include -I${MCSIM_PARENT_DIR}/CasHMC/sources
 
+# add hooks
+LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
+
 ifeq ($(TAG),dbg)
   DBG = -Wall
   OPT = -ggdb -g -O0

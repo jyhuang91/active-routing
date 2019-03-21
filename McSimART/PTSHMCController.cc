@@ -126,7 +126,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
     geq->add_event(event_time, this);
   }
 
-  if (lqele->type == et_hmc_update_mult)
+  if (lqele->type == et_art_mult)
   {
     if (lqele->twin_lqe1 == NULL &&
         active_mult_twins.find(lqele->twin_lqe2) == active_mult_twins.end())
@@ -156,13 +156,15 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   switch (transaction_type)
   {
-    case 1: tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
-    case 2: tranType = DATA_WRITE;  data_size = 64; break;
-    case 3: tranType = DATA_WRITE;  data_size = 64;  break;
-    case 4: tranType = ACTIVE_GET;  data_size = 8;  break;
-    case 5: tranType = ACTIVE_ADD;  data_size = 16;  break; // flit size is 16 bit, at least 1 flit
-    case 6: tranType = ACTIVE_MULT; data_size = 16;  break;
-    case 7: tranType = PIMINS_DOT;  data_size = 32;  break;
+    case MEM_READ:  tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
+    case MEM_WRITE: tranType = DATA_WRITE;  data_size = 64; break;
+    case MEM_EVICT: tranType = DATA_WRITE;  data_size = 64;  break;
+    case ART_GET:   tranType = ACTIVE_GET;  data_size = 8;  break;
+    case ART_ADD:   tranType = ACTIVE_ADD;  data_size = lqele->rlen;  break;
+    case ART_MULT:  tranType = ACTIVE_MULT; data_size = lqele->rlen;  break;
+    case ART_DOT:   tranType = ACTIVE_DOT;  data_size = lqele->rlen;  break; // TODO: this is size for naive-art
+    case PEI_DOT:   tranType = PIMINS_DOT;  data_size = lqele->rlen;  break;
+    case PEI_ATOMIC:tranType = PIMINS_DOT;  data_size = lqele->rlen;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -178,6 +180,11 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       newTran = new Transaction(tranType, lqele->address, data_size, hmc_net, src_cube, dest_cube);
       break;
 
+    case ACTIVE_DOT:
+      dest_cube = get_active_cube_num(lqele->src_addr2);
+      newTran = new Transaction(ACTIVE_DOT, lqele->dest_addr, lqele->src_addr2, data_size, hmc_net, 0, dest_cube);
+      assert(lqele->nthreads == -1);
+      break;
     case ACTIVE_ADD:
       dest_cube = get_active_cube_num(lqele->src_addr1);
       newTran = new Transaction(ACTIVE_ADD, lqele->dest_addr, lqele->src_addr1, data_size, hmc_net, 0, dest_cube);
@@ -202,13 +209,15 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   uint64_t req_id = hmc_net->get_tran_tag(newTran);
   tran_buf.insert(make_pair(event_time, newTran));
 
-  if (lqele->type == et_hmc_update_add || lqele->type == et_hmc_update_mult)
+  if (lqele->type == et_art_add ||
+      lqele->type == et_art_mult ||
+      lqele->type == et_art_dot)
   {
     active_update_event.insert(make_pair(req_id, lqele));
     num_update++;
     total_update_req_time += geq->curr_time - lqele->issue_time;
   }
-  else if (lqele->type == et_hmc_gather)
+  else if (lqele->type == et_art_get)
   {
     //active_gather_event.insert(make_pair(req_id, lqele));  // not neccessary though
     active_gather_event.insert(make_pair(lqele->dest_addr, lqele));
@@ -218,7 +227,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     req_event.insert(pair<uint64_t, LocalQueueElement *>(req_id, lqele));
     num_reqs++;
-    if (lqele->type == et_hmc_pei)
+    if (lqele->type == et_pei_dot || lqele->type == et_pei_atomic)
     {
       num_update++;
       total_update_req_time += geq->curr_time - lqele->issue_time;
@@ -279,7 +288,9 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     {
       uint64_t addr = hmc_net->get_tran_addr(tran);
       uint64_t req_id = hmc_net->get_tran_tag(tran);
-      if (tran->transactionType == ACTIVE_ADD || tran->transactionType == ACTIVE_MULT)
+      if (tran->transactionType == ACTIVE_ADD ||
+          tran->transactionType == ACTIVE_MULT ||
+          tran->transactionType == ACTIVE_DOT)
       {
         if (active_update_event.find(req_id) != active_update_event.end())
         {
@@ -397,9 +408,10 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     if (!is_active)
     {
       assert(tran_it != outstanding_req.end());
-      assert(tran_it->second != et_hmc_update_add &&
-          tran_it->second != et_hmc_update_mult &&
-          tran_it->second != et_hmc_gather);
+      assert(tran_it->second != et_art_get &&
+          tran_it->second != et_art_add &&
+          tran_it->second != et_art_mult &&
+          tran_it->second != et_art_dot);
       uint64_t req_id = tran_it->first;
       outstanding_req.erase(tran_it);
       served_trans[0].first = -1;
@@ -413,16 +425,17 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       int issue_time = tran_it->second;
       switch (tran_type)
       {
-        case 1: // read
+        case MEM_READ: // read
           total_rd_mem_time += curr_time - issue_time;
           break;
-        case 2: // write
+        case MEM_WRITE: // write
           total_wr_mem_time += curr_time - issue_time;
           break;
-        case 3: // evict
+        case MEM_EVICT: // evict
           total_ev_mem_time += curr_time - issue_time;
           break;
-        case 7: // pei
+        case PEI_DOT: // pei
+        case PEI_ATOMIC:
           break;
         default:
           cerr << "Unknown reply transaction type: " << tran_type  << endl;
@@ -469,8 +482,9 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           }
           resp_queue.erase(iter);
           break;
-        case et_hmc_gather:
-        case et_hmc_pei:
+        case et_art_get:
+        case et_pei_dot:
+        case et_pei_atomic:
           noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
           resp_queue.erase(iter);
           break;
@@ -552,30 +566,37 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
     case et_tlb_rd:
     case et_rd_dir_info_req:
     case et_rd_dir_info_rep:
-      return 1;//type 1 is READ
+      return MEM_READ;//type 1 is READ
 
     case et_write:
     case et_write_nd:
     case et_s_rd_wr:
-      return 2;//type 2 is WRITE
+      return MEM_WRITE;
 
     case et_evict:
     case et_evict_nd:
     case et_dir_evict:
-      return 3;//type 3 is EVICT
+      return MEM_EVICT; // both write and evict are DATA_WRITE
 
-    case et_hmc_gather:
-      return 4; // Jiayi, type 4 is ACTIVE_GET
+    case et_art_get:
+      return ART_GET;
 
-    case et_hmc_update_add:
-      return 5; // Jiayi, type 5 is ACTIVE_ADD
+    case et_art_add:
+      return ART_ADD; // Jiayi, type 5 is ACTIVE_ADD
 
-    case et_hmc_update_mult:
-      return 6; // Jiayi, type 6 is ACTIVE_MULT
+    case et_art_mult:
+      return ART_MULT; // Jiayi, type 6 is ACTIVE_MULT
 
-    case et_hmc_pei:
-      return 7; // Jiayi, type 6 is ACTIVE_MULT
+    case et_art_dot:
+      return ART_DOT; // Jiayi, type 6 is ACTIVE_PEI
     
+    case et_pei_dot:
+      return PEI_DOT;
+
+    case et_pei_atomic:
+      // TODO
+      return PEI_ATOMIC;
+
     case et_rd_bypass:   // this read is older than what is in the cache
     case et_e_to_m:
     case et_e_to_i:
@@ -592,7 +613,6 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
     case et_invalidate_nd:
     case et_i_to_e:
     case et_nop:
-    case et_hmc_gather_rep: // Jiayi added, 03/25/17
     default:
       cerr << lqe->type << " should not be sent to HMC network" << endl;
       assert(0);

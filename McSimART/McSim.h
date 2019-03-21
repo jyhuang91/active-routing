@@ -83,12 +83,12 @@ namespace PinPthread
     ins_x87,
     ins_notify,   // for thread migration
     ins_waitfor,  // for thread migration
-    ins_update_add,
-    ins_update_mult,
-    ins_gather,
-    ins_pei,
-    ins_pei_rand,
-    ins_dummy,
+    ins_art_get,
+    ins_art_add,
+    ins_art_mult,
+    ins_art_dot,
+    ins_pei_dot,
+    ins_pei_atomic,
     ins_invalid
   };
 

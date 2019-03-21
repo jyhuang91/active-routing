@@ -11,6 +11,19 @@ using namespace CasHMC;
 
 namespace PinPthread
 {
+  enum tran_type {
+    MEM_READ,
+    MEM_WRITE,
+    MEM_EVICT,
+    ART_GET,
+    ART_ADD,
+    ART_MULT,
+    ART_DOT,
+    PEI_DOT,
+    PEI_ATOMIC,
+    MEM_INVALID
+  };
+
   class PTSHMCController : public Component
   {
     public:
