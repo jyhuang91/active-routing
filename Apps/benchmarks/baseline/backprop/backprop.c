@@ -166,11 +166,18 @@ int n_in, n_hidden, n_out;
   newnet->output_delta = alloc_1d_dbl(n_out + 1);
   newnet->target = alloc_1d_dbl(n_out + 1);
 
-  newnet->input_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
-  newnet->hidden_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
+  //newnet->input_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
+  //newnet->hidden_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
 
-  newnet->input_prev_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
-  newnet->hidden_prev_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
+  //newnet->input_prev_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
+  //newnet->hidden_prev_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
+
+  // weight from input to output is stored in weights[output][input] for optimization
+  newnet->input_weights = alloc_2d_dbl(n_hidden + 1, n_in + 1);
+  newnet->hidden_weights = alloc_2d_dbl(n_out + 1, n_hidden + 1);
+
+  newnet->input_prev_weights = alloc_2d_dbl(n_hidden + 1, n_in + 1);
+  newnet->hidden_prev_weights = alloc_2d_dbl(n_out + 1, n_hidden + 1);
 
   return (newnet);
 }
@@ -181,8 +188,11 @@ BPNN *net;
 {
   int n1, n2, i;
 
-  n1 = net->input_n;
-  n2 = net->hidden_n;
+  //n1 = net->input_n;
+  //n2 = net->hidden_n;
+
+  n1 = net->hidden_n;
+  n2 = net->output_n;
 
   free((char *) net->input_units);
   free((char *) net->hidden_units);
@@ -228,13 +238,20 @@ int n_in, n_hidden, n_out;
   newnet = bpnn_internal_create(n_in, n_hidden, n_out);
 
 #ifdef INITZERO
-  bpnn_zero_weights(newnet->input_weights, n_in, n_hidden);
+  //bpnn_zero_weights(newnet->input_weights, n_in, n_hidden);
+  bpnn_zero_weights(newnet->input_weights, n_hidden, n_in);
 #else
-  bpnn_randomize_weights(newnet->input_weights, n_in, n_hidden);
+  //bpnn_randomize_weights(newnet->input_weights, n_in, n_hidden);
+  bpnn_randomize_weights(newnet->input_weights, n_hidden, n_in);
 #endif
+  /*
   bpnn_randomize_weights(newnet->hidden_weights, n_hidden, n_out);
   bpnn_zero_weights(newnet->input_prev_weights, n_in, n_hidden);
   bpnn_zero_weights(newnet->hidden_prev_weights, n_hidden, n_out);
+  */
+  bpnn_randomize_weights(newnet->hidden_weights, n_out, n_hidden);
+  bpnn_zero_weights(newnet->input_prev_weights, n_hidden, n_in);
+  bpnn_zero_weights(newnet->hidden_prev_weights, n_out, n_hidden);
   bpnn_randomize_row(newnet->target, n_out);
   return (newnet);
 }
@@ -308,7 +325,7 @@ void *bpnn_pthread_worker(void *args)
     /*** Compute weighted sum of its inputs ***/
     sum = 0.0;
     for (k = 0; k <= in; k++) {
-      sum += iw[k][j] * il[k];
+      sum += iw[j][k] * il[k];
     }
     hl[j] = squash(sum);
     //printf("hl[%d]: %f\n", j, hl[j]);
@@ -323,7 +340,7 @@ void *bpnn_pthread_worker(void *args)
     /*** Compute weighted sum of its inputs ***/
     sum = 0.0;
     for (k = 0; k <= hid; k++) {
-      sum += hw[k][j] * hl[k];
+      sum += hw[j][k] * hl[k];
     }
     ol[j] = squash(sum);
     //printf("ol[%d]: %f\n", j, ol[j]);
@@ -347,7 +364,7 @@ void *bpnn_pthread_worker(void *args)
       h = hl[j];
       sum = 0.0;
       for (k = 1; k <= out; k++) {
-        sum += delta_o[k] * hw[j][k];
+        sum += delta_o[k] * hw[k][j];
       }
       delta_h[j] = h * (1.0 - h) * sum;
       *hid_err += ABS(delta_h[j]);
@@ -360,8 +377,8 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_out; j < end_out; j++) {
     for (k = 0; k <= hid; k++) {
       new_dw = ((ETA * delta_o[j] * hl[k]) + (MOMENTUM * old_hw[j][j]));
-      hw[k][j] += new_dw;
-      old_hw[k][j] = new_dw;
+      hw[j][k] += new_dw;
+      old_hw[j][k] = new_dw;
     }
   }
 
@@ -371,8 +388,8 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_hid; j < end_hid; j++) {
     for (k = 0; k <= in; k++) {
       new_dw = ((ETA * delta_h[j] * il[k]) + (MOMENTUM * old_iw[j][j]));
-      iw[k][j] += new_dw;
-      old_iw[k][j] = new_dw;
+      iw[j][k] += new_dw;
+      old_iw[j][k] = new_dw;
     }
   }
 }
