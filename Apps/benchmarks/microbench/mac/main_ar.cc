@@ -51,20 +51,35 @@ void *do_work(void *args)
 
   int stride = CACHELINE_SIZE / sizeof(float);
 
+  int rr_start = i_start;
+  int rr_stop = i_stop;
+  uint64_t start_address = (uint64_t) &W[i_start];
+  if (start_address % CACHELINE_SIZE != 0) {
+    rr_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(double);
+  }
+  uint64_t stop_address = (uint64_t) &W[i_stop];
+  if (stop_address % CACHELINE_SIZE != 0) {
+    rr_stop -= (stop_address % CACHELINE_SIZE) / sizeof(double);
+  }
+
   pthread_barrier_wait(arg->barrier);
 
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
 
-  for (v = i_start; v < i_stop - stride; v += stride) {
+  for (v = i_start; v < rr_start; v++) {
+    UpdateII((void *) &W[v], (void *) &X[v], (void *) &sum, DMULT);
+  }
+  for (v = rr_start; v < rr_stop; v += stride) {
     /*mcsim_skip_instrs_begin();
     local_sum += W[v] * X[v];
     mcsim_skip_instrs_end();*/
     UpdateRR((void *) &W[v], (void *) &X[v], (void *) &sum, DMULT);
   }
-  for (; v < i_stop; v++)
+  for (; v < i_stop; v++) {
     UpdateII((void *) &W[v], (void *) &X[v], (void *) &sum, DMULT);
+  }
   Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   //printf("thread %d sends %d updates\n", tid, i_stop - i_start);
   //pthread_barrier_wait(arg->barrier);

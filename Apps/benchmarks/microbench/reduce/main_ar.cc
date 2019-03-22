@@ -49,15 +49,25 @@ void *do_work(void *args)
 
   int stride = CACHELINE_SIZE / sizeof(float);
 
-  //if (tid == 0)
-  //  sum = 0;
+  int rr_start = i_start;
+  int rr_stop = i_stop;
+  uint64_t start_address = (uint64_t) &W[i_start];
+  if (start_address % CACHELINE_SIZE != 0) {
+    rr_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(double);
+  }
+  uint64_t stop_address = (uint64_t) &W[i_stop];
+  if (stop_address % CACHELINE_SIZE != 0) {
+    rr_stop -= (stop_address % CACHELINE_SIZE) / sizeof(double);
+  }
 
   pthread_barrier_wait(arg->barrier);
 
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
-  for (v = i_start; v < i_stop - stride; v += stride) {
+  for (v = i_start; v < rr_start; ++v)
+    UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
+  for (v = rr_start; v < rr_stop; v += stride) {
     /*mcsim_skip_instrs_begin();
     local_sum += W[v];
     mcsim_skip_instrs_end();*/
