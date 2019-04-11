@@ -24,7 +24,7 @@
 extern void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc, int nthreads, int niteration, int niteration2);
 
 // I/O routines
-extern bool generateMajorMatrix(int &nr_row, int &nr_col, float **v);
+extern bool generateMatrix(int &nr_row, int &nr_col, float **v);
 extern bool readColMajorMatrixFile(const char *fn, int &nr_row, int &nr_col, std::vector<float>&v);
 extern bool writeColMajorMatrixFile(const char *fn, int, int, std::vector<float>&);
 
@@ -76,11 +76,11 @@ main (int argc, char *argv[]) {
   matBrow = matAcol;
   matBcol = atoi(params->inpFiles[2]);
 
-  // generate A
-  generateMajorMatrix(matArow, matAcol, &matA);
+  // generate row-major A
+  generateMatrix(matArow, matAcol, &matA);
 
-  // generate B^T
-  generateMajorMatrix(matBcol, matBrow, &matBT);
+  // generate row-major B^T
+  generateMatrix(matBcol, matBrow, &matBT);
 
 /*
   // load A
@@ -100,8 +100,8 @@ main (int argc, char *argv[]) {
   roi_begin();
   basicSgemm('N', 'T', matArow, matBcol, matAcol, 1.0f,
       //&matA.front(), matArow, &matBT.front(), matBcol, 0.0f, &matC.front(),
-      matA, matArow, matBT, matBcol, 0.0f, &matC.front(),
-      matArow, params->nthreads, params->niteration, params->niteration2);
+      matA, matAcol, matBT, matBrow, 0.0f, &matC.front(),
+      matBcol, params->nthreads, params->niteration, params->niteration2);
   roi_end();
 
   if (params->outFile) {
