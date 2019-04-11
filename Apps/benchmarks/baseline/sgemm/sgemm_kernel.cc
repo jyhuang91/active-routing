@@ -64,9 +64,9 @@ void* work_func(void *thread_arg)
 
   pthread_barrier_wait(arg->barrier);
 
-  for (int i = start; i < niteration * niteration2 && i < stop; i++) {
-    int mm = i / n;
-    int nn = i % n;
+  for (int l = start; l < niteration * niteration2 && l < stop; l++) {
+    int mm = l / n;
+    int nn = l % n;
     float c = 0.0f;
     for (int i = 0; i < k; i++) {
       float a = A[mm * lda + i];

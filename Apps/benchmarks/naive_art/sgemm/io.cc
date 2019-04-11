@@ -16,7 +16,7 @@
 #include <cstdlib>
 #include <hooks.h>
 
-bool generateMajorMatrix(int &nr_row, int &nr_col, float **v)
+bool generateMatrix(int &nr_row, int &nr_col, float **v)
 {
   std::cerr << "Generate " << nr_row << "x" << nr_col << " matrix" << std::endl;
 
