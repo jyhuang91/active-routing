@@ -64,18 +64,37 @@ void* do_work(void* args){
     float local_sum = 0;
     
     int j,k;
-    int stride = CACHELINE_SIZE / sizeof(float); 
+    int stride = CACHELINE_SIZE / sizeof(float);
+    int ri_start, ri_end;
+    uint64_t start_address, end_address;
+    void *addr_arr[stride];
+
     for(j = i+tid; j<size; j+=P){
       local_sum = shared_mat[i*size + j];
       shared_mat[i*size + j] = 0;
-      for (k = 0; k < i - stride; k += stride) {
-        //local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j]; 
-        UpdateRR(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], FMULT);
+
+      ri_start = 0;
+      ri_end = i;
+      start_address = (uint64_t) &shared_mat[i*size];
+      end_address = (uint64_t) &shared_mat[i*size + i];
+      if (start_address % CACHELINE_SIZE != 0)
+        ri_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(float);
+      if (end_address % CACHELINE_SIZE != 0)
+        ri_end -= (end_address % CACHELINE_SIZE) / sizeof(float);
+
+      for (k = 0; k < ri_start; k++)
+        UpdateII(&shared_mat[k*size + j], &shared_mat[i*size + k], &shared_mat[i*size + j], FMULT);
+      for (; k < ri_end; k += stride) {
+        //local_sum -= shared_mat[i*size + k]*shared_mat[k*size + j];
+        for (int t = 0; t < stride; t++)
+          addr_arr[t] = &shared_mat[(k + t)*size + j];
+        UpdateRR(addr_arr, &shared_mat[i*size + k], &shared_mat[i*size + j], FMULT);
       }
       // dealing with fragmentation, TODO: optimize it by applying masking
       for (; k < i; k++)
-        UpdateII(&shared_mat[i*size + k], &shared_mat[k*size + j], &shared_mat[i*size + j], FMULT);
+        UpdateII(&shared_mat[k*size + j], &shared_mat[i*size + k], &shared_mat[i*size + j], FMULT);
       if(i != 0) Gather(NULL, NULL, &shared_mat[i*size + j], 1);
+
       shared_mat[i*size + j] = local_sum - shared_mat[i*size + j];       //No lock required since j is different for each thread
     }
     
@@ -85,12 +104,26 @@ void* do_work(void* args){
       if(tid == 0 && j == i + tid) continue;
       local_sum = shared_mat[j*size + i];
       shared_mat[j*size + i] = 0;
-      for (k = 0; k < i - stride; k += stride) {
+
+      ri_start = 0;
+      ri_end = i;
+      start_address = (uint64_t) &shared_mat[j*size];
+      end_address = (uint64_t) &shared_mat[j*size + i];
+      if (start_address % CACHELINE_SIZE != 0)
+        ri_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(float);
+      if (end_address % CACHELINE_SIZE != 0)
+        ri_end -= (end_address % CACHELINE_SIZE) / sizeof(float);
+
+      for (; k < ri_start; k++)
+        UpdateII(&shared_mat[k*size + i], &shared_mat[j*size + k], &shared_mat[j*size + i], FMULT);
+      for (; k < ri_end; k += stride) {
         //local_sum -= shared_mat[j*size + k]*shared_mat[k*size + i];
-        UpdateRR(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], FMULT);
+        for (int t = 0; t < stride; t++)
+          addr_arr[t] = &shared_mat[(k + t)*size + i];
+        UpdateRR(addr_arr, &shared_mat[j*size + k], &shared_mat[j*size + i], FMULT);
       }
       for (; k < i; k++)
-        UpdateII(&shared_mat[j*size + k], &shared_mat[k*size + i], &shared_mat[j*size + i], FMULT);
+        UpdateII(&shared_mat[k*size + i], &shared_mat[j*size + k], &shared_mat[j*size + i], FMULT);
       if(i != 0) Gather(NULL, NULL, &shared_mat[j*size + i], 1);
       shared_mat[j*size + i] = (local_sum - shared_mat[j*size + i]) / shared_mat[i*size + i];
     }
