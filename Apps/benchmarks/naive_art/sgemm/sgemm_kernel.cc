@@ -67,18 +67,17 @@ void* work_func(void *thread_arg)
   for (int l = start; l < niteration * niteration2 && l < stop; l++) {
     int mm = l / n;
     int nn = l % n;
-      //float c = 0.0f;
-      uint64_t flowID = mm+nn*ldc;
-      for (int i = 0; i < k; i++) {
-        /*float a = A[mm + i * lda];
+    //float c = 0.0f;
+    uint64_t flowID = mm+nn*ldc;
+    for (int i = 0; i < k; i++) {
+      /*float a = A[mm + i * lda];
         float b = B[nn + i * ldb];
         c += a * b;*/
-        UpdateII(&A[mm * lda + i], &B[nn * ldb + i], (void *) flowID, FMULT);
-      }
-      Gather(0, 0, (void *) flowID, 1);
-      C[mm * ldc + nn] = C[mm * ldc + nn] * beta + alpha * flowID;
-      //std::cout << "thread " << tid << " - flow ID " << flowID << std::endl;
+      UpdateII(&A[mm * lda + i], &B[nn * ldb + i], (void *) flowID, FMULT);
     }
+    Gather(0, 0, (void *) flowID, 1);
+    C[mm * ldc + nn] = C[mm * ldc + nn] * beta + alpha * flowID;
+    //std::cout << "thread " << tid << " - flow ID " << flowID << std::endl;
   }
 
   //pthread_barrier_wait(arg->barrier);
