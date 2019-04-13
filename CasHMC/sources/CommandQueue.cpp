@@ -213,8 +213,15 @@ namespace CasHMC
               for(int i=0; i<ACCESSQUE(issuedBank).size(); i++) {
                 if(isIssuable(ACCESSQUE(issuedBank)[i])) {
                   //Check to make sure the last command to be issued lastly
-                  if (i > 0 && ACCESSQUE(issuedBank)[i-1]->packetTAG==ACCESSQUE(issuedBank)[i]->packetTAG
-                          && ACCESSQUE(issuedBank)[i]->lastCMD)
+                  bool dependencyFound = false;
+                  for (int j = 0; j < i; j++) {
+                    DRAMCommand *prevCMD = ACCESSQUE(issuedBank)[j];
+                    if (prevCMD->commandType==ACTIVATE && prevCMD->packetTAG == ACCESSQUE(issuedBank)[i]->packetTAG) {
+                      dependencyFound = true;
+                      break;
+                    }
+                  }
+                  if (dependencyFound)
                     continue;
 
                   if(ACCESSQUE(issuedBank)[i]->atomic
