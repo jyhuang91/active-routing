@@ -162,7 +162,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
     case ART_GET:   tranType = ACTIVE_GET;  data_size = 8;  break;
     case ART_ADD:   tranType = ACTIVE_ADD;  data_size = lqele->rlen;  break;
     case ART_MULT:  tranType = ACTIVE_MULT; data_size = lqele->rlen;  break;
-    case ART_DOT:   tranType = ACTIVE_DOT;  data_size = lqele->rlen;  break; // TODO: this is size for naive-art
+    case ART_DOT:   tranType = ACTIVE_DOT;  data_size = lqele->rlen;  break;
     case PEI_DOT:   tranType = PIM_DOT;     data_size = lqele->rlen;  break;
     case PEI_ATOMIC:tranType = PIM_ATOMIC;  data_size = lqele->rlen;  break;
     default:
@@ -597,7 +597,6 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
       return PEI_DOT;
 
     case et_pei_atomic:
-      // TODO
       return PEI_ATOMIC;
 
     case et_rd_bypass:   // this read is older than what is in the cache

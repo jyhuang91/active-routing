@@ -636,7 +636,7 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           o3rob_entry.type == ins_pei_dot ||
           o3rob_entry.type == ins_pei_atomic)
       {
-        // make sure that gather is after all updates, TODO: may degrade performance
+        // make sure that gather is after all updates, XXX: may degrade performance
         if (o3rob_entry.type == ins_art_get && i != 0) continue;
 
         if((o3rob_entry.type == ins_art_dot ||

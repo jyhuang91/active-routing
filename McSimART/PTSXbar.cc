@@ -270,7 +270,7 @@ uint32_t Crossbar::process_event(uint64_t curr_time)
   {
     // process the first request event
     /*
-    uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // TODO : it is assumed that (directory[i]->num == i)
+    uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // XXX: it is assumed that (directory[i]->num == i)
     queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, directory[which_mc])));
     */
     if ((req_event_iter->second.first->from.top()->type == ct_cachel1i && req_event_iter->second.second->type == ct_cachel1i) ||
@@ -310,7 +310,7 @@ uint32_t Crossbar::process_event(uint64_t curr_time)
     {
       // process the first request event
       assert(req_event_iter->second.first->from.top()->type == ct_cachel2);
-      uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // TODO : it is assumed that (directory[i]->num == i)
+      uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // XXX: it is assumed that (directory[i]->num == i)
       queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, directory[which_mc])));
     }
     ++req_event_iter;
