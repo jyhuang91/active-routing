@@ -372,7 +372,8 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         o3rob_entry.isread     = false;
         if (o3queue_entry.type == ins_art_add ||
             o3queue_entry.type == ins_art_mult ||
-            o3queue_entry.type == ins_art_get)
+            o3queue_entry.type == ins_art_get ||
+            o3queue_entry.type == ins_pei_atomic)
         {
           o3rob_entry.mem_dep = -1;
           o3rob_entry.memaddr = o3queue_entry.waddr;

@@ -163,8 +163,8 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
     case ART_ADD:   tranType = ACTIVE_ADD;  data_size = lqele->rlen;  break;
     case ART_MULT:  tranType = ACTIVE_MULT; data_size = lqele->rlen;  break;
     case ART_DOT:   tranType = ACTIVE_DOT;  data_size = lqele->rlen;  break; // TODO: this is size for naive-art
-    case PEI_DOT:   tranType = PIMINS_DOT;  data_size = lqele->rlen;  break;
-    case PEI_ATOMIC:tranType = PIMINS_DOT;  data_size = lqele->rlen;  break;
+    case PEI_DOT:   tranType = PIM_DOT;     data_size = lqele->rlen;  break;
+    case PEI_ATOMIC:tranType = PIM_ATOMIC;  data_size = lqele->rlen;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -176,8 +176,12 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   {
     case DATA_READ:
     case DATA_WRITE:
-    case PIMINS_DOT:
+    case PIM_DOT:
       newTran = new Transaction(tranType, lqele->address, data_size, hmc_net, src_cube, dest_cube);
+      break;
+    case PIM_ATOMIC:
+      dest_cube = get_cube_num(lqele->dest_addr);
+      newTran = new Transaction(tranType, lqele->dest_addr, data_size, hmc_net, src_cube, dest_cube);
       break;
 
     case ACTIVE_DOT:
@@ -307,8 +311,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         }
         else
         {
-          cerr << "ERROR: " << (tran->transactionType == ACTIVE_ADD ? "ACTIVE_ADD" : "ACTIVE_MULT")
-            << " req_id (" << req_id << ") lqele not found in active_update_event" << endl;
+          cerr << "ERROR: " << *tran << " req_id (" << req_id << ") lqele not found in active_update_event" << endl;
           assert(0);
         }
       }
@@ -346,7 +349,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         }
         else
         {
-          assert(tran->transactionType == PIMINS_DOT);
+          assert(tran->transactionType == PIM_DOT || tran->transactionType == PIM_ATOMIC);
           num_update_sent++;
           total_update_stall_time += curr_time - tran_buf.begin()->first;
         }
