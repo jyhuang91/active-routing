@@ -95,9 +95,11 @@ namespace CasHMC
       switch(upEle->CMD) {
         case RD_RS:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING read data response packet");	break;
         case WR_RS:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING write response packet");		break;
-        case ACT_ADD:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");		break;  // Jiayi
+        case ACT_ADD:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");		break;
         case ACT_MULT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet");  break;
-        case PEI_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING PEI_DOT response packet");  break;
+        case ACT_DOT:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_dot response packet");		break;
+        case PEI_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING pei dot response packet");  break;
+        case PEI_ATOMIC: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING pei atomic response packet");  break;
         default:
                     ERROR(header<<"  == Error - WRONG response packet command type  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
                     exit(0);
@@ -165,6 +167,10 @@ namespace CasHMC
         newPacket = new Packet(RESPONSE, WR_RS, retCMD->packetTAG, 1, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
         pendingDataSize -= 1;
       }
+      else if (retCMD->packetCMD == PEI_ATOMIC) {
+        newPacket = new Packet(RESPONSE, PEI_ATOMIC, retCMD->packetTAG, 1, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
+        pendingDataSize -= 1;
+      }
       else {
         newPacket = new Packet(RESPONSE, RD_RS, retCMD->packetTAG, 2, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
         pendingDataSize -= 2;
@@ -184,8 +190,9 @@ namespace CasHMC
         //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   pendingDataSize "<<(retCMD->dataSize/16)+1<<" decreased   (current pendingDataSize : "<<pendingDataSize<<")");
         newPacket->ADRS = retCMD->addr; // Jiayi, 03/27/17
        
-        if (retCMD->packetCMD == ACT_ADD) { // Jiayi
-          newPacket->CMD = ACT_ADD; // Jiayi, 03/15/17
+        if (retCMD->packetCMD == ACT_ADD ||
+            retCMD->packetCMD == ACT_DOT) {
+          newPacket->CMD = (retCMD->packetCMD == ACT_ADD ? ACT_ADD : ACT_DOT);
           newPacket->active = true;
           newPacket->DESTADRS = retCMD->destAddr;
           newPacket->SRCADRS1 = retCMD->srcAddr1;
@@ -197,7 +204,7 @@ namespace CasHMC
 
         } else if(retCMD->packetCMD == PEI_DOT) {
           newPacket->LNG = 2;
-          newPacket->CMD = PEI_DOT; // Jiayi, 03/15/17
+          newPacket->CMD = PEI_DOT;
         }
         else if (retCMD->packetCMD == ACT_MULT) { // 03/24/17
           newPacket->CMD = ACT_MULT;
@@ -209,7 +216,7 @@ namespace CasHMC
           newPacket->SRCADRS1 = retCMD->srcAddr1;
           newPacket->SRCADRS2 = retCMD->srcAddr2;
           newPacket->operandBufID = retCMD->operandBufID;
-          newPacket->LNG = 2;
+          newPacket->LNG = 2;//TODO
 #ifdef DEBUG_UPDATE
           cout << CYCLE() << "Active-Routing: Active MULT packet " << newPacket->TAG;
           if (newPacket->SRCADRS1) {
@@ -266,7 +273,8 @@ namespace CasHMC
           if(ConvPacketIntoCMDs(downBuffers[i])) {
             int tempLNG = downBuffers[i]->LNG;
             // Jiayi, 02/06, print out if active packet
-            if (downBuffers[i]->CMD == ACT_ADD) {
+            if (downBuffers[i]->CMD == ACT_ADD ||
+                downBuffers[i]->CMD == ACT_DOT) {
               assert(downBuffers[i]->SRCADRS1 != 0);
 #ifdef DEBUG_ACTIVE
               cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
@@ -319,14 +327,18 @@ namespace CasHMC
           }
           else if(poppedCMD->commandType == READ || poppedCMD->commandType == READ_P) {
             DRAM_rd_data += poppedCMD->dataSize;
-            if(poppedCMD->packetCMD == ACT_MULT || poppedCMD->packetCMD == ACT_ADD) DRAM_act_data += poppedCMD->dataSize;
+            if (poppedCMD->packetCMD == ACT_MULT ||
+                poppedCMD->packetCMD == ACT_ADD ||
+                poppedCMD->packetCMD == ACT_DOT)
+              DRAM_act_data += poppedCMD->dataSize;
             if(!poppedCMD->atomic) {
               pendingDataSize += (poppedCMD->dataSize/16)+1;
               //DEBUG(ALI(18)<<header<<ALI(15)<<*poppedCMD<<"Down) pendingDataSize "<<(poppedCMD->dataSize/16)+1<<" increased   (current pendingDataSize : "<<pendingDataSize<<")");
             }
             else {
               if(poppedCMD->packetCMD == _2ADD8 || poppedCMD->packetCMD == ADD16 || poppedCMD->packetCMD == INC8
-                  || poppedCMD->packetCMD == EQ8 || poppedCMD->packetCMD == EQ16 || poppedCMD->packetCMD == BWR) {
+                  || poppedCMD->packetCMD == EQ8 || poppedCMD->packetCMD == EQ16 || poppedCMD->packetCMD == BWR
+                  || poppedCMD->packetCMD == PEI_ATOMIC) {
                 pendingDataSize += 1;
               }
               else {
@@ -537,10 +549,13 @@ namespace CasHMC
       case P_BWR:		atomic = true;	tempCMD = READ;	tempPosted = true;	break; 
       case BWR8R:		atomic = true;	tempCMD = READ;	break; 
       case SWAP16:	atomic = true;	tempCMD = READ;	break;
-      // Active Add
-      case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; break; 
-      case ACT_MULT:   tempCMD = OPEN_PAGE ? READ : READ_P; break; 
-      case PEI_DOT:   tempCMD = OPEN_PAGE ? READ : READ_P; break; 
+      // Active ops
+      case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; break;
+      case ACT_MULT:  tempCMD = OPEN_PAGE ? READ : READ_P; break;
+      case ACT_DOT:   tempCMD = OPEN_PAGE ? READ : READ_P; break;
+      case PEI_DOT:   tempCMD = OPEN_PAGE ? READ : READ_P; break;
+      // PEI atomic
+      case PEI_ATOMIC: atomic = true; tempCMD = READ; break;
 
       default:
                       ERROR(header<<"  == Error - WRONG packet command type  (CurrentClock : "<<currentClockCycle<<")");
@@ -579,8 +594,8 @@ namespace CasHMC
         commandQueue->Enqueue(bankAdd, rwCMD);
         if(tempCMD == READ || tempCMD == READ_P) {
           pendingReadData.push_back(packet->TAG);
-          // Jiayi, active, 02/06, 03/24
-          if (packet->CMD == ACT_ADD) {
+          if (packet->CMD == ACT_ADD ||
+              packet->CMD == ACT_DOT) {
             assert(packet->SRCADRS1 && !packet->SRCADRS2);
             rwCMD->srcAddr1 = packet->SRCADRS1;
             rwCMD->destAddr = packet->DESTADRS;

@@ -47,7 +47,7 @@ void MakePEITransaction(void)
     uint64_t physicalAddress = rand();
     physicalAddress = (physicalAddress<<32)|rand();
 
-    newTran = new Transaction(PIMINS_DOT, physicalAddress, TRANSACTION_SIZE, casHMCWrapper, 0, 11);      // Read transaction
+    newTran = new Transaction(PIM_DOT, physicalAddress, TRANSACTION_SIZE, casHMCWrapper, 0, 11);      // Read transaction
     transactionBuffers.push_back(newTran);
 }
 

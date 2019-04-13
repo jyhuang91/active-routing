@@ -177,7 +177,8 @@ namespace CasHMC
             }
           }
           else {
-            if (curUpBuffers[i]->CMD == ACT_ADD) {
+            if (curUpBuffers[i]->CMD == ACT_ADD ||
+                curUpBuffers[i]->CMD == ACT_DOT) {
               assert(curUpBuffers[i]->DESTCUB == cubeID);
               uint64_t dest_addr = curUpBuffers[i]->DESTADRS;
               uint64_t src_addr = curUpBuffers[i]->SRCADRS1;
@@ -307,7 +308,8 @@ namespace CasHMC
               }
               else {
                 unsigned vaultMap = (curDownBuffers[i]->ADRS >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
-                if (curDownBuffers[i]->CMD == ACT_ADD) {
+                if (curDownBuffers[i]->CMD == ACT_ADD ||
+                    curDownBuffers[i]->CMD == ACT_DOT) {
                   bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
                   if (operand_buf_avail && downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
 #ifdef DEBUG_ROUTING
@@ -461,15 +463,21 @@ namespace CasHMC
                   // Jiayi, force the ordering for gather after update, 07/02/17
                   bool is_inorder = true;
                   for (int j = 0; j < i; j++) {
-                    if (curDownBuffers[j] != NULL && ((curDownBuffers[j]->CMD == ACT_ADD ||
-                            curDownBuffers[j]->CMD == ACT_MULT) && curDownBuffers[j]->DESTADRS == dest_addr)) {
+                    if (curDownBuffers[j] != NULL &&
+                        ((curDownBuffers[j]->CMD == ACT_ADD ||
+                          curDownBuffers[j]->CMD == ACT_DOT ||
+                          curDownBuffers[j]->CMD == ACT_MULT) &&
+                         curDownBuffers[j]->DESTADRS == dest_addr)) {
                       is_inorder = false;
                       break;
                     }
                   }
 #ifdef DEBUG_VERIFY
                   for (int j = i + 1; j < curDownBuffers.size(); j++) {
-                    if (curDownBuffers[j] != NULL && (curDownBuffers[j]->CMD == ACT_ADD || curDownBuffers[j]->CMD == ACT_MULT))
+                    if (curDownBuffers[j] != NULL &&
+                        (curDownBuffers[j]->CMD == ACT_ADD ||
+                         curDownBuffers[j]->CMD == ACT_DOT ||
+                         curDownBuffers[j]->CMD == ACT_MULT))
                       assert(curDownBuffers[j]->DESTADRS != dest_addr);
                   }
 #endif
@@ -730,7 +738,8 @@ namespace CasHMC
               }
               else if (upBufferDest[link]->currentState != LINK_RETRY) {
                 if (upBufferDest[link]->ReceiveDown(curDownBuffers[i])) {
-                  if (curDownBuffers[i]->CMD == ACT_ADD) {
+                  if (curDownBuffers[i]->CMD == ACT_ADD ||
+                      curDownBuffers[i]->CMD == ACT_DOT) {
                     assert(curDownBuffers[i]->packetType == REQUEST);
                     uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                     map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
