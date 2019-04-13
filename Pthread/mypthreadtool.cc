@@ -344,7 +344,6 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
   switch (opcode)
   {
     case DADD:
-    case DIDIV:
       rlen = 8;
     case IADD:
     case FADD:
@@ -352,6 +351,7 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category = ART_CATEGORY_ADD;
       break;
     case DMULT:
+    case DIDIV: // TODO: treat it differently
       rlen = 8;
     case IMULT:
     case FMULT:
