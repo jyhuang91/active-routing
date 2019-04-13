@@ -101,8 +101,8 @@ void* matVecMul(void *args){
 
     ri_start = spm->row_ptr[i];
     ri_end = spm->row_ptr[i+1];
-    start_address = (uint64_t) &(spm->vals + ri_start);
-    end_address = (uint64_t) &(spm->vals + ri_end);
+    start_address = (uint64_t) (&spm->vals + ri_start);
+    end_address = (uint64_t) (&spm->vals + ri_end);
     if (start_address % CACHELINE_SIZE != 0)
       ri_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(float);
     if (end_address % CACHELINE_SIZE != 0)
