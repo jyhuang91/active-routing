@@ -47,7 +47,7 @@ namespace PinPthread
       NoC * noc;
       vector<LocalQueueElement *> resp_queue;
       std::multimap<uint64_t, LocalQueueElement *> active_update_event;  // Jiayi, <tran_id, lqe>, 03/28/17 
-      std::multimap<uint64_t, LocalQueueElement *> active_gather_event;  // Jiayi, <tran_id, lqe>, 03/28/17
+      std::multimap<uint64_t, LocalQueueElement *> active_gather_event;  // Jiayi, <dest_addr, lqe>, 03/28/17
       std::multimap<uint64_t, LocalQueueElement *> pending_active_updates;
       std::map<LocalQueueElement *, LocalQueueElement *> active_mult_twins;
       TOPOLOGY hmc_top;
@@ -64,6 +64,7 @@ namespace PinPthread
       uint64_t num_reqs;
       uint64_t page_sz_base_bit;
 
+      uint32_t num_mcs_log2;
       uint32_t interleave_xor_base_bit; // Jiayi, for addressing, 04/16/17
       uint32_t cube_interleave_base_bit;
       uint32_t cubes_per_mc;
@@ -85,6 +86,9 @@ namespace PinPthread
       double total_update_stall_time;
 
       static uint64_t last_process_time;
+      // Jiayi, <dest, < <nthreads, count>, [nthreads0, nthreads1, ..., nthreadsN] >
+      static map<uint64_t, pair<pair<int, int>, vector<int> > > gather_barrier;
+      static map<uint64_t, vector<bool> > active_forests;
 
       inline uint32_t get_cube_num(uint64_t addr) {  // Jiayi, addressing
         return (num * cubes_per_mc) + ((addr >> cube_interleave_base_bit) ^ (addr >> interleave_xor_base_bit)) % cubes_per_mc;

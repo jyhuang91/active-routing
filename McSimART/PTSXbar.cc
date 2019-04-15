@@ -297,14 +297,42 @@ uint32_t Crossbar::process_event(uint64_t curr_time)
       }
       else if(etype == et_art_get)
       {
-        queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[0])));
+        uint32_t which_hmc;
+        switch (mcsim->art_scheme)
+        {
+          case art_naive:
+            which_hmc = 0;
+            break;
+          case art_tid:
+          case art_addr:
+            which_hmc = req_event_iter->second.first->th_id % 4;
+            break;
+          default:
+            assert(0);
+        }
+        queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[which_hmc])));
       }
     }
     else if(req_event_iter->second.first->from.top()->type == ct_directory &&
           (req_event_iter->second.first->type == et_art_mult || req_event_iter->second.first->type == et_art_add))
     {
+      uint32_t which_hmc;
+      switch (mcsim->art_scheme)
+      {
+        case art_naive:
+          which_hmc = 0;
+          break;
+        case art_tid:
+          which_hmc = req_event_iter->second.first->th_id % 4;
+          break;
+        case art_addr:
+          which_hmc = geq->which_mc(req_event_iter->second.first->src_addr1);
+          break;
+        default:
+          assert(0);
+      }
       req_event_iter->second.first->from.pop();
-      queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[0])));
+      queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[which_hmc])));
     } 
     else
     {
@@ -852,9 +880,22 @@ void Mesh2D::process_qs(
         }
         else if (etype == et_art_get)
         {
-          to_hmc = hmccontroller[0];
-          col = mc_pos[0] % num_cols;
-          row = mc_pos[0] / num_cols;
+          uint32_t which_hmc;
+          switch (mcsim->art_scheme)
+          {
+            case art_naive:
+              which_hmc = 0;
+              break;
+            case art_tid:
+            case art_addr:
+              which_hmc = curr_q.first->th_id % 4;
+              break;
+            default:
+              assert(0);
+          }
+          to_hmc = hmccontroller[which_hmc];
+          col = mc_pos[which_hmc] % num_cols;
+          row = mc_pos[which_hmc] / num_cols;
         }
         else if (etype == et_art_dot || etype == et_pei_dot)
         {
@@ -881,9 +922,25 @@ void Mesh2D::process_qs(
            curr_q.first->type == et_art_mult ||
            curr_q.first->type == et_art_dot))
       {
-        col = mc_pos[0] % num_cols;
-        row = mc_pos[0] / num_cols;
-        to_hmc = hmccontroller[0];
+        uint32_t which_hmc;
+        switch (mcsim->art_scheme)
+        {
+          case art_naive:
+            which_hmc = 0;
+            break;
+          case art_tid:
+            which_hmc = curr_q.first->th_id % 4;
+            break;
+          case art_addr:
+            assert(curr_q.first->type == et_art_mult);
+            which_hmc = geq->which_mc(curr_q.first->src_addr1);
+            break;
+          default:
+            assert(0);
+        }
+        col = mc_pos[which_hmc] % num_cols;
+        row = mc_pos[which_hmc] / num_cols;
+        to_hmc = hmccontroller[which_hmc];
       }
       else if (curr_q.first->from.top()->type == ct_directory &&
                 (curr_q.first->type == et_pei_dot ||

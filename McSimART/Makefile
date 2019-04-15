@@ -42,7 +42,7 @@ clean_rb: obj_rb
 	@$(MAKE) TAG=rb -C . -f $(TARGET).mk clean
 	rm -rf $<
 
-clean_mcsim: clean_mcsim_dbg clean_mcsim_opt clean_rb
+clean_mcsim: clean_mcsim_dbg clean_mcsim_opt
 
 clean_mcsim_dbg: obj_dbg
 	@$(MAKE) TAG=dbg -C . -f $(TARGET).mk clean

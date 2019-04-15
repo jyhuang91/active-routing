@@ -217,6 +217,11 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   string   noc_type(pts->get_param_str("pts.noc_type"));
   string   benchname(pts->get_param_str("pts.benchname"));
 
+  string art_type(pts->get_param_str("pts.art_scheme"));
+  art_scheme = (art_type == "naive") ? art_naive :
+    (art_type == "address")          ? art_addr :
+    (art_type == "threadid")         ? art_tid : art_addr;
+
   double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
   hmc_net = Network::New(net_dim, hmc_topology, benchname, cpu_clk);
 

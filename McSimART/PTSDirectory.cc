@@ -471,7 +471,14 @@ uint32_t Directory::process_event(uint64_t curr_time)
           {
             num_tr_to_i++;
             // offloading active compute to memory network
-            if (num == 0 || d_entry.pending->type == et_pei_dot || d_entry.pending->type == et_pei_atomic)
+            if (d_entry.pending->type == et_pei_dot ||
+                d_entry.pending->type == et_pei_atomic ||
+                (mcsim->art_scheme == art_naive && num == 0) ||
+                ((mcsim->art_scheme == art_tid) && (d_entry.pending->th_id % 4 == num)) ||
+                (mcsim->art_scheme == art_addr &&
+                 ((d_entry.pending->type == et_art_add) ||
+                  (d_entry.pending->type == et_art_dot) ||
+                  (geq->which_mc(d_entry.pending->src_addr1) == num))))
             {
               hmccontroller->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
             }
@@ -480,8 +487,6 @@ uint32_t Directory::process_event(uint64_t curr_time)
               d_entry.pending->from.push(this);
               crossbar->add_req_event(curr_time + dir_to_xbar_t, d_entry.pending, this);
             }
-            //mcsim->hmcs[0]->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
-            //hmccontorller->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
             dir.erase(dir_entry);
             remove_directory_cache_entry(set, dir_entry);
           }
@@ -688,7 +693,14 @@ uint32_t Directory::process_event(uint64_t curr_time)
     else if (dir.find(dir_entry) == dir.end())
     {
       // offloading active computation to memory network
-      if (num == 0 || req_lqe->type == et_pei_dot || req_lqe->type == et_pei_atomic)
+      if (req_lqe->type == et_pei_dot ||
+          req_lqe->type == et_pei_atomic ||
+          (mcsim->art_scheme == art_naive && num == 0) ||
+          ((mcsim->art_scheme == art_tid) && (req_lqe->th_id % 4 == num)) ||
+          (mcsim->art_scheme == art_addr &&
+           ((etype == et_art_add) ||
+            (etype == et_art_dot) ||
+            (geq->which_mc(req_lqe->src_addr1) == num))))
       {
         hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
       }
@@ -757,17 +769,22 @@ uint32_t Directory::process_event(uint64_t curr_time)
             // offloading active compute to memory network
             dir.erase(dir_entry);
             remove_directory_cache_entry(set, dir_entry);
-            if (num == 0 || req_lqe->type == et_pei_dot || req_lqe->type == et_pei_atomic)
+            if (req_lqe->type == et_pei_dot ||
+                req_lqe->type == et_pei_atomic ||
+                (mcsim->art_scheme == art_naive && num == 0) ||
+                ((mcsim->art_scheme == art_tid) && (req_lqe->th_id % 4 == num)) ||
+                (mcsim->art_scheme == art_addr &&
+                 ((etype == et_art_add) ||
+                  (etype == et_art_dot) ||
+                  (geq->which_mc(req_lqe->src_addr1) == num))))
             {
-              hmccontroller->add_req_event(curr_time + dir_to_xbar_t, req_lqe);
+              hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
             }
             else
             {
               req_lqe->from.push(this);
               crossbar->add_req_event(curr_time + dir_to_xbar_t, req_lqe, this);
             }
-            //mcsim->hmcs[0]->add_req_event(curr_time + dir_to_mc_t, req_lqe);
-            //hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
             return 0;
           }
 

@@ -105,6 +105,12 @@ namespace PinPthread
     cs_m_to_s    // modified -> shared
   };
 
+  enum art_scheme_type
+  {
+    art_naive,
+    art_tid,
+    art_addr
+  };
 
 
   class McSim
@@ -150,6 +156,7 @@ namespace PinPthread
       bool     is_nuca;
       TOPOLOGY hmc_topology;
       uint64_t core_frequency;
+      art_scheme_type art_scheme;
 
       vector<Core *>             cores;
       vector<Hthread *>          hthreads;
