@@ -250,8 +250,6 @@ uint32_t O3Core::process_event(uint64_t curr_time)
     uint64_t dependency_distance = o3rob_size;
     O3Queue & o3queue_entry      = o3queue[o3queue_head];
 
-    //if(o3queue_entry.type == ins_pei && o3rob_size >= o3rob_max_size - 5 ) break;
-
     if (o3queue_entry.state == o3iqs_ready && o3queue_entry.ready_time <= curr_time)
     {
       unsigned int rob_idx = (o3rob_head + o3rob_size) % o3rob_max_size;

@@ -35,6 +35,9 @@ struct Programs
   int port_num;
   int pid;
   string run_roi;
+#ifdef RUNTIME_KNOB
+  string active_mode;
+#endif
 };
 
 
@@ -165,7 +168,12 @@ int main(int argc, char * argv[])
       else
       {
         programs[idx].trace_name = string();
+#ifdef RUNTIME_KNOB
+        sline >> programs[idx].num_skip_first_instrs >> programs[idx].run_roi
+            >> programs[idx].active_mode >> programs[idx].directory;
+#else
         sline >> programs[idx].num_skip_first_instrs >> programs[idx].run_roi >> programs[idx].directory;
+#endif
       }
     }
     
@@ -301,6 +309,10 @@ int main(int argc, char * argv[])
         argp[curr_argc++] = (char *)programs[i].num_skip_first_instrs.c_str();
         argp[curr_argc++] = (char *)"-run_roi";
         argp[curr_argc++] = (char *)programs[i].run_roi.c_str();
+#ifdef RUNTIME_KNOB
+        argp[curr_argc++] = (char *)"-active_mode";
+        argp[curr_argc++] = (char *)programs[i].active_mode.c_str();
+#endif
       }
       if (programs[i].agile_bank_th_perc > 0)
       {

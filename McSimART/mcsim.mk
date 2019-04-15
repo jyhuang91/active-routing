@@ -12,8 +12,11 @@ LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 
 ifeq ($(TAG),dbg)
-  DBG = -Wall
-  OPT = -ggdb -g -O0
+	DBG = -Wall
+	OPT = -ggdb -g -O0
+else ifeq ($(TAG),rb)
+	DBG += -DRUNTIME_KNOB
+	OPT = -O3 -g
 else
   #DBG = -DNDEBUG
   DBG =

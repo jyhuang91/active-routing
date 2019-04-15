@@ -124,7 +124,7 @@ ostream & operator << (ostream & output, event_type et)
     case et_rd_dir_info_req: output << "et_rdiq"; break;
     case et_rd_dir_info_rep: output << "et_rdip"; break;
     case et_nop:        output << "et_nop"; break;
-    case et_art_get:       output << "et_art_get"; break;
+    case et_art_get:    output << "et_art_get"; break;
     case et_art_add:    output << "et_art_add"; break;
     case et_art_mult:   output << "et_art_mult"; break;
     case et_art_dot:    output << "et_art_dot"; break;
