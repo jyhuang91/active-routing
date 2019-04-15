@@ -11,6 +11,8 @@
 #include <snappy.h>
 #include <map>
 
+#include <ins_category_enum.h>
+
 using namespace PinPthread;
 using namespace std;
 
@@ -423,7 +425,7 @@ void PthreadScheduler::process_ins(
     return;
   }
 
-  if (category < 128 && category > 132) // Jiayi, 01/29/2018, active instructions
+  if (category < ART_CATEGORY_START) // Jiayi, 01/29/2018, active instructions
   {
     //first_instrs++;
     if ((ignore_skip_instrs == false && pthread->skip_instrs > 0 && pthread->spinning <= 0) /* ||

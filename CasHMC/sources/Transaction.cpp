@@ -114,11 +114,13 @@ namespace CasHMC
       case ATM_EQ8:		header = "[T" + id.str() + "-EQ8]";		break;		case ATM_BWR:		header = "[T" + id.str() + "-BWR]";		break;
       case ATM_P_BWR:		header = "[T" + id.str() + "-P_BWR]";	break;		case ATM_BWR8R:		header = "[T" + id.str() + "-BWR8R]";	break;
       case ATM_SWAP16:	header = "[T" + id.str() + "-SWAP16]";	break;
-                        // ACTIVE commands, Jiayi, 01/27
-      case ACTIVE_ADD:    header = "[T" + id.str() + "-ACT_ADD]"; break;
+      // ACTIVE commands, Jiayi, 01/27
+      case ACTIVE_GET:  header = "[T" + id.str() + "-ACT_GET]"; break;
+      case ACTIVE_ADD:  header = "[T" + id.str() + "-ACT_ADD]"; break;
       case ACTIVE_MULT: header = "[T" + id.str() + "-ACT_MULT]"; break;
-      case ACTIVE_GET:    header = "[T" + id.str() + "-ACT_GET]"; break;
-      case PIMINS_DOT:    header = "[T" + id.str() + "-PEI_DOT]"; break;
+      case ACTIVE_DOT:  header = "[T" + id.str() + "-ACT_DOT]"; break;
+      case PIM_DOT:     header = "[T" + id.str() + "-PEI_DOT]"; break;
+      case PIM_ATOMIC:  header = "[T" + id.str() + "-PEI_ATOMIC"; break;
       default:
                           ERROR(" (TS) == Error - Trying to print unknown kind of transaction type");
                           ERROR("         T"<<t.transactionID<<" [?"<<t.transactionType<<"?] [0x"<<hex<<setw(16)<<setfill('0')<<t.address<<dec<<"]");

@@ -52,6 +52,7 @@ void *do_work(void *args)
 
   pthread_barrier_wait(arg->barrier);
 
+  // TODO: optimize it to multiply with {1, 1, 1, 1}
   double local_sum = 0.0;
   for (v = i_start; v < i_stop; ++v) {
     local_sum += W[v];
@@ -63,7 +64,7 @@ void *do_work(void *args)
 
   pthread_mutex_lock(&lock);
   //sum += local_sum;
-  UPDATE((void *) &local_sum, NULL, (void *) &sum, PEI);
+  Update((void *) &local_sum, NULL, (void *) &sum, DPEI_ATOMIC);
   pthread_mutex_unlock(&lock);
 
   pthread_barrier_wait(arg->barrier);
@@ -79,7 +80,7 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W = (double *) malloc(N * sizeof(double *));
+  double *W;
   double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
   if (ret != 0) {
     fprintf(stderr, "Could not allocate memory\n");

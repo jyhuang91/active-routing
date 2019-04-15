@@ -14,7 +14,7 @@ APP_LDFLAGS=-lstdc++
 
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 
 CUR_DIR=$(shell pwd)
 

@@ -412,10 +412,12 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       case ATM_SWAP16:	cmdtype = SWAP16;	packetLength = 2;	break;
 
       // ACTIVE commands, Jiayi, 01/27
-      case ACTIVE_ADD:  reqDataSize = tran->dataSize; cmdtype = ACT_ADD;  packetLength = 1; break;
-      case ACTIVE_MULT: reqDataSize = tran->dataSize; cmdtype = ACT_MULT; packetLength = 1; break;
-      case ACTIVE_GET:  reqDataSize = tran->dataSize; cmdtype = ACT_GET;  packetLength = 1; break;
-      case PIMINS_DOT:  reqDataSize = tran->dataSize; cmdtype = PEI_DOT;  packetLength = 3; break;
+      case ACTIVE_GET:  reqDataSize = tran->dataSize; cmdtype = ACT_GET;    packetLength = 1; break;
+      case ACTIVE_ADD:  reqDataSize = tran->dataSize; cmdtype = ACT_ADD;    packetLength = 1; break;
+      case ACTIVE_MULT: reqDataSize = tran->dataSize; cmdtype = ACT_MULT;   packetLength = 1; break;
+      case ACTIVE_DOT:  reqDataSize = tran->dataSize; cmdtype = ACT_DOT;    packetLength = 1 + tran->dataSize / 16; break;
+      case PIM_DOT:     reqDataSize = tran->dataSize; cmdtype = PEI_DOT;    packetLength = 1 + tran->dataSize / 16; break;
+      case PIM_ATOMIC:  reqDataSize = tran->dataSize; cmdtype = PEI_ATOMIC; packetLength = 1 + tran->dataSize / 16; break;
 
       default:
                        ERROR(header<<"   == Error - WRONG transaction type  (CurrentClock : "<<currentClockCycle<<")");
@@ -427,11 +429,14 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
     //Packet *newPacket = new Packet(REQUEST, cmdtype, tran->address, 0, packetLength, tran->trace);
     // Jiayi, 01/31
     Packet *newPacket = NULL;
-    if (tran->transactionType == ACTIVE_ADD || tran->transactionType == ACTIVE_GET) {
+    if (tran->transactionType == ACTIVE_GET ||
+        tran->transactionType == ACTIVE_ADD ||
+        tran->transactionType == ACTIVE_DOT) {
       newPacket = new Packet(REQUEST, cmdtype, tran->dest_address, tran->src_address1, 0, packetLength, tran->trace,
           tran->src_cube, tran->dest_cube1);
       newPacket->active = true;
-      if (tran->transactionType == ACTIVE_ADD) {  // Jiayi, 03/15/17
+      if (tran->transactionType == ACTIVE_ADD ||
+          tran->transactionType == ACTIVE_DOT) {
         newPacket->ADRS = (tran->src_address1 << 30) >> 30;
       }
     } else if (tran->transactionType == ACTIVE_MULT) {  // Jiayi, 03/23/17

@@ -1,7 +1,7 @@
 CC = gcc
 LDFLAGS = -lm -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
 
-INCLUDES = -I$(CURDIR)/includes -I$(CURDIR) -I$(MCSIM_PARENT_DIR)/Apps/hooks
+INCLUDES = -I$(CURDIR)/includes -I$(CURDIR) -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 COMPILE_C = $(CC) $(CFLAGS) -O2 $(INCLUDES)
 COMMON_SRC := $(wildcard $(CURDIR)/*.c)
 C_SRC := $(wildcard $(CURDIR)/includes/*.c)
@@ -32,4 +32,4 @@ run-large:
 	-./rbm -u 100 -t 100 -m 100 -l 200 | tee ../results/rbm.large
 
 clean:
-	-rm rbm rbm-small rbm-medium rbm-large out.txt
+	-rm rbm out.txt #rbm-small rbm-medium rbm-large

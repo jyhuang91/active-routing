@@ -47,21 +47,35 @@ void *do_work(void *args)
   int i_start = start_d;
   int i_stop = stop_d;
 
-  //if (tid == 0)
-  //  sum = 0;
+  int stride = CACHELINE_SIZE / sizeof(float);
+
+  int rr_start = i_start;
+  int rr_stop = i_stop;
+  uint64_t start_address = (uint64_t) &W[i_start];
+  if (start_address % CACHELINE_SIZE != 0) {
+    rr_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(double);
+  }
+  uint64_t stop_address = (uint64_t) &W[i_stop];
+  if (stop_address % CACHELINE_SIZE != 0) {
+    rr_stop -= (stop_address % CACHELINE_SIZE) / sizeof(double);
+  }
 
   pthread_barrier_wait(arg->barrier);
 
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
-  for (v = i_start; v < i_stop; ++v) {
+  for (v = i_start; v < rr_start; ++v)
+    UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
+  for (v = rr_start; v < rr_stop; v += stride) {
     /*mcsim_skip_instrs_begin();
     local_sum += W[v];
     mcsim_skip_instrs_end();*/
-    UPDATE((void *) &W[v], 0, (void *) &sum, ADD);
+    UpdateRR((void *) &W[v], 0, (void *) &sum, DADD);
   }
-  GATHER((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
+  for (; v < i_stop; ++v)
+    UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
+  Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   printf("thread %d sends %d updates\n", tid, i_stop - i_start);
   pthread_barrier_wait(arg->barrier);
 
@@ -84,7 +98,7 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W = (double *) malloc(N * sizeof(double *));
+  double *W;
   double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
   if (ret != 0) {
     fprintf(stderr, "Could not allocate memory\n");

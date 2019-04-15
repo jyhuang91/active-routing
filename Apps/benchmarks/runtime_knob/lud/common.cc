@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <hooks.h>
 
 #include "common.h"
 
@@ -50,8 +51,10 @@ create_matrix_from_file(float **mp, const char* filename, int *size_p){
 
   fscanf(fp, "%d\n", &size);
 
-  m = (float*) malloc(sizeof(float)*size*size);
-  if ( m == NULL) {
+  //m = (float*) malloc(sizeof(float)*size*size);
+  //if ( m == NULL)
+  if (posix_memalign((void **) &m, CACHELINE_SIZE, size * size * sizeof(float)))
+  {
       fclose(fp);
       return RET_FAILURE;
   }
@@ -78,12 +81,15 @@ create_matrix_from_random(float **mp, int size){
 
   srand(time(NULL));
 
-  l = (float*)malloc(size*size*sizeof(float));
-  if ( l == NULL)
+  //l = (float*)malloc(size*size*sizeof(float));
+  //if ( l == NULL)
+  if (posix_memalign((void **) &l, CACHELINE_SIZE, size * size * sizeof(float)))
     return RET_FAILURE;
 
-  u = (float*)malloc(size*size*sizeof(float));
-  if ( u == NULL) {
+  //u = (float*)malloc(size*size*sizeof(float));
+  //if ( u == NULL)
+  if (posix_memalign((void **) &u, CACHELINE_SIZE, size * size * sizeof(float)))
+  {
       free(l);
       return RET_FAILURE;
   }
@@ -224,8 +230,10 @@ create_matrix(float **mp, int size){
       coe[j]=coe_i;
     }
 
-  m = (float*) malloc(sizeof(float)*size*size);
-  if ( m == NULL) {
+  //m = (float*) malloc(sizeof(float)*size*size);
+  //if ( m == NULL)
+  if (posix_memalign((void **) &m, CACHELINE_SIZE, size * size * sizeof(float)))
+  {
       return RET_FAILURE;
   }
 

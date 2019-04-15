@@ -1,5 +1,5 @@
 
-TRGS = mac ar_mac pei_mac
+TRGS = mac naive_art_mac ar_mac pei_mac
 
 LIB_DEPEND = hooks
 
@@ -7,7 +7,7 @@ LIB_DEPEND = hooks
 LIBS += -lrt
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks
+INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks/include
 LDFLAGS = $(MCSIM_PARENT_DIR)/Pthread/libmypthread.a
 
 CXXFLAGS = -g --std=c++0x -O3 -static
@@ -21,6 +21,8 @@ $(LIB_DEPEND):
 	(cd $(MCSIM_PARENT_DIR)/Apps/hooks; $(MAKE); cd $(CUR_DIR))
 
 mac: main.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+naive_art_mac: main_naive_art.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_mac: main_ar.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)

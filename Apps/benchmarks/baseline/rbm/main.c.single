@@ -358,21 +358,60 @@ int main(int argc, char *argv[])
 
   // allocate memory for global arrays
   int u;
-  edges = (double **) calloc(num_visible + 1, sizeof(double *));
+  //edges = (double **) calloc(num_visible + 1, sizeof(double *));
+  if (posix_memalign((void **) &edges, CACHELINE_SIZE, (num_visible + 1) * sizeof(double *))) {
+    fprintf(stderr, "Memory allocation for edges fail\n");
+    exit(1);
+  }
   for (u = 0; u < num_visible + 1; u++) {
-    edges[u] = (double *) calloc(num_hidden + 1, sizeof(double));
+    if (posix_memalign((void **) &edges[u], CACHELINE_SIZE, (num_hidden + 1) * sizeof(double))) {
+      fprintf(stderr, "Memory allocation for edges[%d] fail\n", u);
+      exit(1);
+    }
+    memset(edges[u], 0, (num_hidden + 1) * sizeof(double));
+    //edges[u] = (double *) calloc(num_hidden + 1, sizeof(double));
   }
-  trainingData = (int **) calloc(users, sizeof(int *));
+
+  //trainingData = (int **) calloc(users, sizeof(int *));
+  if (posix_memalign((void **) &trainingData, CACHELINE_SIZE, users * sizeof(int *))) {
+    fprintf(stderr, "Memory allocation for trainingData fail\n");
+    exit(1);
+  }
   for (u = 0; u < users; u++) {
-    trainingData[u] = (int *) calloc(num_visible, sizeof(int));
+    //trainingData[u] = (int *) calloc(num_visible, sizeof(int));
+    if (posix_memalign((void **) &trainingData[u], CACHELINE_SIZE, num_visible * sizeof(int))) {
+      fprintf(stderr, "Memory allocation for trainingData[%d] fail\n", u);
+      exit(1);
+    }
+    memset(trainingData[u], 0, num_visible * sizeof(int));
   }
-  testActuals = (int **) calloc(test_users, sizeof(int *));
-  for (u = 0; u < test_users; u++) {
-    testActuals[u] = (int *) calloc(movies, sizeof(int));
+
+  //testActuals = (int **) calloc(test_users, sizeof(int *));
+  if (posix_memalign((void **) &testActuals, CACHELINE_SIZE, test_users * sizeof(int *))) {
+    fprintf(stderr, "Memory allocation for testActuals fail\n");
+    exit(1);
   }
-  testPredictions = (int **) calloc(test_users, sizeof(int *));
   for (u = 0; u < test_users; u++) {
-    testPredictions[u] = (int *) calloc(movies, sizeof(int));
+    //testActuals[u] = (int *) calloc(movies, sizeof(int));
+    if (posix_memalign((void **) &testActuals[u], CACHELINE_SIZE, movies * sizeof(int))) {
+      fprintf(stderr, "Memory allocation for testActuals[%d] fail\n", u);
+      exit(1);
+    }
+    memset(testActuals[u], 0, movies * sizeof(int));
+  }
+
+  //testPredictions = (int **) calloc(test_users, sizeof(int *));
+  if (posix_memalign((void **) &testPredictions, CACHELINE_SIZE, test_users * sizeof(int *))) {
+    fprintf(stderr, "Memory allocation for testPredictions fail\n");
+    exit(1);
+  }
+  for (u = 0; u < test_users; u++) {
+    //testPredictions[u] = (int *) calloc(movies, sizeof(int));
+    if (posix_memalign((void **) &testPredictions[u], CACHELINE_SIZE, movies * sizeof(int))) {
+      fprintf(stderr, "Memory allocation for testActuals[%d] fail\n", u);
+      exit(1);
+    }
+    memset(testPredictions[u], 0, movies * sizeof(int));
   }
 
   //**Timing**/

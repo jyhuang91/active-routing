@@ -708,6 +708,7 @@ namespace CasHMC
     switch (tran->transactionType) {
       case ACTIVE_ADD:
       case ACTIVE_MULT:
+      case ACTIVE_DOT:
       case ACTIVE_GET:
         return tran->dest_address;
       default:

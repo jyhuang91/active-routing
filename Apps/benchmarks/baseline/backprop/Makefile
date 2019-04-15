@@ -14,7 +14,7 @@ LIB_DEP=hooks
 LIBS += -lrt
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
   
 all: $(OBJS)
 	$(CC) $(CC_FLAGS) $(OBJS) $(LIBS) $(INCS) -o $(TARGET) -lm

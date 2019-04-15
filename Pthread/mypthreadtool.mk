@@ -50,7 +50,7 @@ INCS += -I/usr/local/include
 
 # add hooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
-INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 
 ifeq ($(TAG),dbg)
   DBG = -Wall

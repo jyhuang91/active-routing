@@ -12,6 +12,8 @@ using namespace PinPthread;
 extern ostream& operator<<(ostream & output, component_type ct);
 
 uint64_t  PTSHMCController::last_process_time = 0;
+map<uint64_t, pair<pair<int, int>, vector<int> > > PTSHMCController::gather_barrier;
+map<uint64_t, vector<bool> > PTSHMCController::active_forests;
 
 
 PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
@@ -25,6 +27,7 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   hmc_to_noc_t = get_param_uint64("to_noc_t", 50);
   interleave_xor_base_bit = get_param_uint64("interleave_xor_base_bit", 20);
   cube_interleave_base_bit = get_param_uint64("cube_interleave_base_bit", 32);
+  num_mcs_log2 = log2(mcsim->pts->get_param_uint64("pts.num_mcs", 2));
 
   uint32_t num_mcs = get_param_uint64("num_mcs", "pts.", 4);
   uint32_t net_dim = get_param_uint64("net_dim", "pts.", 4);
@@ -95,15 +98,25 @@ PTSHMCController::~PTSHMCController()
     << setw(8) << total_update_req_time / num_update / process_interval << ", "
     << setw(8) << total_update_stall_time / num_update_sent / process_interval << ")" << endl;
   display();
-  if (!pending_active_updates.empty())
+  /*if (!pending_active_updates.empty())
   {
     multimap<uint64_t, LocalQueueElement *>::iterator iter = pending_active_updates.begin();
     cout << "remaining pending updates:" << endl;
     for (; iter != pending_active_updates.end(); iter++)
     {
-      cout << "flow " << hex << iter->first << dec << endl;
+      switch (mcsim->art_scheme)
+      {
+        case art_naive:
+          cout << "flow " << hex << iter->first << dec << endl;
+          break;
+        case art_tid:
+        case art_addr:
+          cout << "subflow (flow_id): " << hex << iter->first << ", flow (dest_addr): " << (iter->first >> num_mcs_log2) << dec << endl;
+          break;
+        default:
+          assert(0);
     }
-  }
+  }*/
 
   assert(tran_buf.empty());
   tran_buf.clear();
@@ -126,7 +139,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
     geq->add_event(event_time, this);
   }
 
-  if (lqele->type == et_hmc_update_mult)
+  if (lqele->type == et_art_mult)
   {
     if (lqele->twin_lqe1 == NULL &&
         active_mult_twins.find(lqele->twin_lqe2) == active_mult_twins.end())
@@ -156,13 +169,15 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   switch (transaction_type)
   {
-    case 1: tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
-    case 2: tranType = DATA_WRITE;  data_size = 64; break;
-    case 3: tranType = DATA_WRITE;  data_size = 64;  break;
-    case 4: tranType = ACTIVE_GET;  data_size = 8;  break;
-    case 5: tranType = ACTIVE_ADD;  data_size = 16;  break; // flit size is 16 bit, at least 1 flit
-    case 6: tranType = ACTIVE_MULT; data_size = 16;  break;
-    case 7: tranType = PIMINS_DOT;  data_size = 32;  break;
+    case MEM_READ:  tranType = DATA_READ;   data_size = 64;/* size can vary from 32 to 256 */  break;
+    case MEM_WRITE: tranType = DATA_WRITE;  data_size = 64; break;
+    case MEM_EVICT: tranType = DATA_WRITE;  data_size = 64;  break;
+    case ART_GET:   tranType = ACTIVE_GET;  data_size = 8;  break;
+    case ART_ADD:   tranType = ACTIVE_ADD;  data_size = lqele->rlen;  break;
+    case ART_MULT:  tranType = ACTIVE_MULT; data_size = lqele->rlen;  break;
+    case ART_DOT:   tranType = ACTIVE_DOT;  data_size = lqele->rlen;  break;
+    case PEI_DOT:   tranType = PIM_DOT;     data_size = lqele->rlen;  break;
+    case PEI_ATOMIC:tranType = PIM_ATOMIC;  data_size = lqele->rlen;  break;
     default:
       cerr << "Error: Unknown transaction type" << endl;
       assert(0);
@@ -170,55 +185,189 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
   int src_cube = get_src_cubeID(num);
   Transaction *newTran = NULL;
+  uint64_t flow_id;
+  switch (mcsim->art_scheme)
+  {
+    case art_naive:
+      flow_id = lqele->dest_addr;
+      break;
+    case art_tid:
+    case art_addr:
+      flow_id = (lqele->dest_addr << num_mcs_log2) | num;
+      break;
+    default:
+      assert(0);
+  }
+  int nthreads = 0;
+  map<uint64_t, pair<pair<int, int>, vector<int> > >::iterator it = gather_barrier.find(lqele->dest_addr);
+
   switch (tranType)
   {
     case DATA_READ:
     case DATA_WRITE:
-    case PIMINS_DOT:
+    case PIM_DOT:
       newTran = new Transaction(tranType, lqele->address, data_size, hmc_net, src_cube, dest_cube);
       break;
+    case PIM_ATOMIC:
+      dest_cube = get_cube_num(lqele->dest_addr);
+      newTran = new Transaction(tranType, lqele->dest_addr, data_size, hmc_net, src_cube, dest_cube);
+      break;
 
-    case ACTIVE_ADD:
-      dest_cube = get_active_cube_num(lqele->src_addr1);
-      newTran = new Transaction(ACTIVE_ADD, lqele->dest_addr, lqele->src_addr1, data_size, hmc_net, 0, dest_cube);
+    case ACTIVE_GET:
+      active_gather_event.insert(make_pair(lqele->dest_addr, lqele));
+      num_gather++;
+      nthreads = lqele->nthreads;
+      if (it != gather_barrier.end())
+      {
+        assert(nthreads == it->second.first.first && it->second.first.second < nthreads);
+        gather_barrier[lqele->dest_addr].first.second++;
+        gather_barrier[lqele->dest_addr].second[num]++;
+#ifdef DEBUG_GATHER
+        cout << "Receive Gather for flow " << hex << lqele->dest_addr << dec << " at hmc controller " << num
+          << ", total gathers at this port: " << (gather_barrier[lqele->dest_addr].second)[num] << endl;
+#endif
+      }
+      else
+      {
+        gather_barrier.insert(make_pair(lqele->dest_addr, make_pair(make_pair(nthreads, 1),
+                vector<int>(mcsim->hmcs.size(), 0))));
+        gather_barrier[lqele->dest_addr].second[num]++;
+#ifdef DEBUG_GATHER
+        cout << "Receive Gather for flow " << hex << lqele->dest_addr << dec << " at hmc controller " << num
+          << ", total gathers at this port: " << (gather_barrier[lqele->dest_addr].second)[num] << endl;
+#endif
+      }
+      if (gather_barrier[lqele->dest_addr].first.second == nthreads)
+      {
+#ifdef DEBUG_GATHER
+        cout << "make gather transactions for flow " << hex << lqele->dest_addr << dec << "at hmccontroller " << num << ":";
+#endif
+        gather_barrier[lqele->dest_addr].first.second = 0;
+        for (uint32_t i = 0; i < mcsim->hmcs.size(); i++)
+        {
+          gather_barrier[lqele->dest_addr].second[i] = 0;
+          if (active_forests[lqele->dest_addr][i] == true)
+          {
+            gather_barrier[lqele->dest_addr].first.second++;
+            gather_barrier[lqele->dest_addr].second[i] = 1;
+            bool send_dummy_gather = true;
+            for (multimap<uint64_t, LocalQueueElement *>::iterator lqe_it = mcsim->hmcs[i]->active_gather_event.begin();
+                lqe_it != mcsim->hmcs[i]->active_gather_event.end(); lqe_it++)
+            {
+              if (lqe_it->first != lqele->dest_addr) continue;
+
+              switch (mcsim->art_scheme)
+              {
+                case art_naive:
+                  flow_id = lqele->dest_addr;
+                  break;
+                case art_tid:
+                case art_addr:
+                  flow_id = (lqele->dest_addr << num_mcs_log2) | i;
+                  break;
+                default:
+                  assert(0);
+              }
+              newTran = new Transaction(ACTIVE_GET, flow_id, lqe_it->second->src_addr1, data_size, hmc_net,
+                  get_src_cubeID(i), get_src_cubeID(i));
+              assert(lqe_it->second->dummy == false);
+              newTran->address = lqele->dest_addr;
+              newTran->nthreads = 1;
+              mcsim->hmcs[i]->tran_buf.insert(make_pair(event_time, newTran));
+              send_dummy_gather = false;
+              //geq->add_event(event_time, mcsim->hmcs[i]);
+              break; // only need to send one
+            }
+
+            if (send_dummy_gather == true)
+            {
+              assert(mcsim->art_scheme != art_naive);
+              LocalQueueElement * dummy_lqe = new LocalQueueElement();
+              dummy_lqe->from.push(this);
+              dummy_lqe->address = lqele->address;
+              dummy_lqe->dest_addr = lqele->dest_addr;
+              dummy_lqe->type = et_art_get;
+              dummy_lqe->nthreads = 1;
+              dummy_lqe->dummy = true;
+              mcsim->hmcs[i]->active_gather_event.insert(make_pair(lqele->dest_addr, dummy_lqe));
+              geq->add_event(event_time, mcsim->hmcs[i]);
+
+              flow_id = (lqele->dest_addr << num_mcs_log2) | i;
+              newTran = new Transaction(ACTIVE_GET, flow_id, lqele->src_addr1, data_size, hmc_net,
+                  get_src_cubeID(i), get_src_cubeID(i));
+              newTran->address = lqele->dest_addr;
+              newTran->nthreads = 1;
+              mcsim->hmcs[i]->tran_buf.insert(make_pair(event_time, newTran));
+            }
+#ifdef DEBUG_GATHER
+            cout << " hmc" << i << "(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : " ");
+#endif
+          }
+        }
+#ifdef DEBUG_GATHER
+        cout << endl;
+#endif
+      }
+      break;
+
+    case ACTIVE_DOT:
+      if (active_forests.find(lqele->dest_addr) == active_forests.end())
+      {
+        active_forests.insert(make_pair(lqele->dest_addr, vector<bool>(4, false)));
+      }
+      active_forests[lqele->dest_addr][num] = true;
+      dest_cube = get_active_cube_num(lqele->src_addr2);
+      newTran = new Transaction(ACTIVE_DOT, flow_id, lqele->src_addr2, data_size, hmc_net, src_cube, dest_cube);
+      newTran->address = lqele->dest_addr;
       assert(lqele->nthreads == -1);
       break;
-    case ACTIVE_GET:
-      newTran = new Transaction(ACTIVE_GET, lqele->dest_addr, lqele->src_addr1, data_size, hmc_net, 0, 0);
-      assert(lqele->nthreads >= 1);
-      //cout << "Gather's nthreads: " << lqele->nthreads << endl;
-      newTran->nthreads = lqele->nthreads;
+    case ACTIVE_ADD:
+      if (active_forests.find(lqele->dest_addr) == active_forests.end())
+      {
+        active_forests.insert(make_pair(lqele->dest_addr, vector<bool>(4, false)));
+      }
+      active_forests[lqele->dest_addr][num] = true;
+      dest_cube = get_active_cube_num(lqele->src_addr1);
+      newTran = new Transaction(ACTIVE_ADD, flow_id, lqele->src_addr1, data_size, hmc_net, src_cube, dest_cube);
+      newTran->address = lqele->dest_addr;
+      assert(lqele->nthreads == -1);
       break;
     case ACTIVE_MULT:
+      if (active_forests.find(lqele->dest_addr) == active_forests.end())
+      {
+        active_forests.insert(make_pair(lqele->dest_addr, vector<bool>(4, false)));
+      }
+      active_forests[lqele->dest_addr][num] = true;
       uint32_t dest_cube1 = get_cube_num(lqele->src_addr1);
       uint32_t dest_cube2 = get_cube_num(lqele->src_addr2);
-      newTran = new Transaction(ACTIVE_MULT, lqele->dest_addr, lqele->src_addr1, lqele->src_addr2, data_size,
-          hmc_net, 0, dest_cube1, dest_cube2);
+      newTran = new Transaction(ACTIVE_MULT, flow_id, lqele->src_addr1, lqele->src_addr2, data_size,
+          hmc_net, src_cube, dest_cube1, dest_cube2);
+      newTran->address = lqele->dest_addr;
       assert(lqele->nthreads == -1);
       break;
 
   }
  
-  uint64_t req_id = hmc_net->get_tran_tag(newTran);
-  tran_buf.insert(make_pair(event_time, newTran));
+  uint64_t req_id = -1;
+  if (lqele->type != et_art_get)
+  {
+    req_id = hmc_net->get_tran_tag(newTran);
+    tran_buf.insert(make_pair(event_time, newTran));
+  }
 
-  if (lqele->type == et_hmc_update_add || lqele->type == et_hmc_update_mult)
+  if (lqele->type == et_art_add ||
+      lqele->type == et_art_mult ||
+      lqele->type == et_art_dot)
   {
     active_update_event.insert(make_pair(req_id, lqele));
     num_update++;
     total_update_req_time += geq->curr_time - lqele->issue_time;
   }
-  else if (lqele->type == et_hmc_gather)
-  {
-    //active_gather_event.insert(make_pair(req_id, lqele));  // not neccessary though
-    active_gather_event.insert(make_pair(lqele->dest_addr, lqele));
-    num_gather++;
-  }
-  else
+  else if (lqele->type != et_art_get)
   {
     req_event.insert(pair<uint64_t, LocalQueueElement *>(req_id, lqele));
     num_reqs++;
-    if (lqele->type == et_hmc_pei)
+    if (lqele->type == et_pei_dot || lqele->type == et_pei_atomic)
     {
       num_update++;
       total_update_req_time += geq->curr_time - lqele->issue_time;
@@ -241,7 +390,10 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
 
 void PTSHMCController::add_rep_event(uint64_t event_time, LocalQueueElement * lqele, Component * from)
 {
-
+  if (event_time % process_interval != 0)
+  {
+    event_time += process_interval - event_time%process_interval;
+  }
   if (outstanding_req.empty() && tran_buf.empty() && active_update_event.empty() &&
       req_event.empty() && active_gather_event.empty() && resp_queue.empty())
       //active_gather_event.empty() && resp_queue.empty() && pending_active_updates.empty())
@@ -249,7 +401,76 @@ void PTSHMCController::add_rep_event(uint64_t event_time, LocalQueueElement * lq
     geq->add_event(event_time, this);
   }
 
-  rep_event.insert(pair<uint64_t, LocalQueueElement *>(event_time, lqele));
+  uint64_t dest_addr = lqele->dest_addr;
+
+  map<uint64_t, pair<pair<int, int>, vector<int> > >::iterator it = gather_barrier.find(dest_addr);
+  assert(it != gather_barrier.end());
+
+  it->second.first.second -= it->second.second[num];
+  it->second.second[num] = -1;
+  if (it->second.first.second == 0)
+  {
+#ifdef DEBUG_GATHER
+    cout << "Reply Gather for flow: " << hex << dest_addr << dec << endl;
+#endif
+    for (int i = 0; i < mcsim->hmcs.size(); i++)
+    {
+      assert(it->second.second[i] == -1 || it->second.second[i] == 0);
+      uint64_t flow_id;
+      switch (mcsim->art_scheme)
+      {
+        case art_naive:
+          flow_id = lqele->dest_addr;
+          break;
+        case art_tid:
+        case art_addr:
+          flow_id = (lqele->dest_addr << num_mcs_log2) | num;
+          break;
+        default:
+          assert(0);
+      }
+      multimap<uint64_t, LocalQueueElement *>::iterator get_it = mcsim->hmcs[i]->active_gather_event.begin();
+      bool found = false;
+      while (get_it != mcsim->hmcs[i]->active_gather_event.end())
+      {
+        if (get_it->first == dest_addr && get_it->second->dummy == false)
+        {
+          found = true;
+          mcsim->hmcs[i]->resp_queue.push_back(get_it->second);
+          geq->add_event(event_time, mcsim->hmcs[i]);
+        }
+        else if (get_it->first == dest_addr)
+        {
+          assert(get_it->second->from.top()->type == ct_hmc_controller);
+          delete get_it->second;
+        }
+        ++get_it;
+      }
+#ifdef DEBUG_GATHER
+      if (found)
+      {
+        cout << " - process for hmccontroller " << i << ", subflow_id " << hex << flow_id << dec;
+        if (active_forests[dest_addr][i] == true)
+        {
+          cout << " (real subflow)" << endl;
+          assert(mcsim->hmcs[i]->pending_active_updates.find(flow_id) != mcsim->hmcs[i]->pending_active_updates.end());
+        }
+        else
+        {
+          cout << " (fake subflow -- no updates but receive gather)" << endl;
+        }
+      }
+#endif
+      mcsim->hmcs[i]->pending_active_updates.erase(flow_id);
+      mcsim->hmcs[i]->active_gather_event.erase(dest_addr);
+
+      if (mcsim->art_scheme == art_naive)
+        break;
+    }
+    active_forests.erase(lqele->dest_addr);
+    gather_barrier.erase(it);
+  }
+  delete lqele;
 }
 
 
@@ -277,9 +498,11 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     Transaction *tran = tran_buf.begin()->second;
     if (hmc_net->ReceiveTran(tran, net_num))
     {
-      uint64_t addr = hmc_net->get_tran_addr(tran);
+      uint64_t flow_id = hmc_net->get_tran_addr(tran);
       uint64_t req_id = hmc_net->get_tran_tag(tran);
-      if (tran->transactionType == ACTIVE_ADD || tran->transactionType == ACTIVE_MULT)
+      if (tran->transactionType == ACTIVE_ADD ||
+          tran->transactionType == ACTIVE_MULT ||
+          tran->transactionType == ACTIVE_DOT)
       {
         if (active_update_event.find(req_id) != active_update_event.end())
         {
@@ -291,20 +514,19 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           num_update_sent++;
           total_update_stall_time += curr_time - tran_buf.begin()->first;
           noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
-          pending_active_updates.insert(make_pair(addr, lqele));
+          pending_active_updates.insert(make_pair(flow_id, lqele));
           active_update_event.erase(req_id);
         }
         else
         {
-          cerr << "ERROR: " << (tran->transactionType == ACTIVE_ADD ? "ACTIVE_ADD" : "ACTIVE_MULT")
-            << " req_id (" << req_id << ") lqele not found in active_update_event" << endl;
+          cerr << "ERROR: " << *tran << " req_id (" << req_id << ") lqele not found in active_update_event" << endl;
           assert(0);
         }
       }
       else if (tran->transactionType == ACTIVE_GET)
       {
 #ifdef DEBUG_GATHER
-        cout << "send Gather for flow " << hex << addr << dec << endl;
+        cout << "send Gather for flow " << hex << flow_id << dec << endl;
 #endif
         //display();
         // do nothing
@@ -318,7 +540,6 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         }
         else if(tran->transactionType == DATA_WRITE)
         {
-          assert(tran->transactionType == DATA_WRITE);
           LocalQueueElement *lqele = req_event.find(req_id)->second;
           if (lqele->type == et_write || lqele->type == et_write_nd ||
               lqele->type == et_s_rd_wr)
@@ -335,7 +556,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         }
         else
         {
-          assert(tran->transactionType == PIMINS_DOT);
+          assert(tran->transactionType == PIM_DOT || tran->transactionType == PIM_ATOMIC);
           num_update_sent++;
           total_update_stall_time += curr_time - tran_buf.begin()->first;
         }
@@ -354,27 +575,15 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     if (served_trans[0].second == ACT_GET)
     {
       is_active = true;
-      uint64_t get_addr = served_trans[0].first;
-      multimap<uint64_t, LocalQueueElement *>::iterator it = pending_active_updates.find(get_addr);
-      assert(it != pending_active_updates.end());
-      uint64_t dest_addr = it->first;
-      assert(dest_addr == get_addr);
+      uint64_t flow_id = served_trans[0].first;
 #ifdef DEBUG_GATHER
-      cout << "Get active response (should be gather) dest addr: " << hex << dest_addr << dec << ", type: ACT_GET" << endl;
+      multimap<uint64_t, LocalQueueElement *>::iterator it = pending_active_updates.find(flow_id);
+      assert(it != pending_active_updates.end());
 #endif
-
-      multimap<uint64_t, LocalQueueElement *>::iterator get_it = active_gather_event.begin();
-      while (get_it != active_gather_event.end())
-      {
-        if (get_it->first == dest_addr)
-        {
-          //get_it->second->display();
-          resp_queue.push_back(get_it->second);
-        }
-        ++get_it;
-      }
-      pending_active_updates.erase(dest_addr);
-      active_gather_event.erase(dest_addr);
+      LocalQueueElement *lqe = new LocalQueueElement();
+      lqe->from.push(this);
+      lqe->type = et_art_get;
+      add_rep_event(curr_time, lqe, this);
     }
 
     multimap<uint64_t,uint64_t>::iterator tran_it = outstanding_req.begin();
@@ -397,9 +606,10 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
     if (!is_active)
     {
       assert(tran_it != outstanding_req.end());
-      assert(tran_it->second != et_hmc_update_add &&
-          tran_it->second != et_hmc_update_mult &&
-          tran_it->second != et_hmc_gather);
+      assert(tran_it->second != et_art_get &&
+          tran_it->second != et_art_add &&
+          tran_it->second != et_art_mult &&
+          tran_it->second != et_art_dot);
       uint64_t req_id = tran_it->first;
       outstanding_req.erase(tran_it);
       served_trans[0].first = -1;
@@ -413,16 +623,17 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       int issue_time = tran_it->second;
       switch (tran_type)
       {
-        case 1: // read
+        case MEM_READ: // read
           total_rd_mem_time += curr_time - issue_time;
           break;
-        case 2: // write
+        case MEM_WRITE: // write
           total_wr_mem_time += curr_time - issue_time;
           break;
-        case 3: // evict
+        case MEM_EVICT: // evict
           total_ev_mem_time += curr_time - issue_time;
           break;
-        case 7: // pei
+        case PEI_DOT: // pei
+        case PEI_ATOMIC:
           break;
         default:
           cerr << "Unknown reply transaction type: " << tran_type  << endl;
@@ -430,13 +641,6 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       }
     }
 
-#ifdef DEBUG_GATEHR
-    if (served_trans[0].second == ACT_GET) {
-      cout << "outstanding requests: " << outstanding_req.size() << endl;
-      cout << "Get the gather response at cycle " << geq->curr_time << endl;
-    }
-#endif
-    
     served_trans.erase(served_trans.begin());
   }
 
@@ -469,8 +673,9 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           }
           resp_queue.erase(iter);
           break;
-        case et_hmc_gather:
-        case et_hmc_pei:
+        case et_art_get:
+        case et_pei_dot:
+        case et_pei_atomic:
           noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
           resp_queue.erase(iter);
           break;
@@ -490,7 +695,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       //!tran_buf.empty() || !active_update_event.empty() || !pending_active_updates.empty() ||
       !active_gather_event.empty() || !resp_queue.empty())
   {
-    geq->add_event(curr_time+process_interval, this);
+    geq->add_event(curr_time + process_interval, this);
   }
   else
   {
@@ -552,30 +757,36 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
     case et_tlb_rd:
     case et_rd_dir_info_req:
     case et_rd_dir_info_rep:
-      return 1;//type 1 is READ
+      return MEM_READ;//type 1 is READ
 
     case et_write:
     case et_write_nd:
     case et_s_rd_wr:
-      return 2;//type 2 is WRITE
+      return MEM_WRITE;
 
     case et_evict:
     case et_evict_nd:
     case et_dir_evict:
-      return 3;//type 3 is EVICT
+      return MEM_EVICT; // both write and evict are DATA_WRITE
 
-    case et_hmc_gather:
-      return 4; // Jiayi, type 4 is ACTIVE_GET
+    case et_art_get:
+      return ART_GET;
 
-    case et_hmc_update_add:
-      return 5; // Jiayi, type 5 is ACTIVE_ADD
+    case et_art_add:
+      return ART_ADD; // Jiayi, type 5 is ACTIVE_ADD
 
-    case et_hmc_update_mult:
-      return 6; // Jiayi, type 6 is ACTIVE_MULT
+    case et_art_mult:
+      return ART_MULT; // Jiayi, type 6 is ACTIVE_MULT
 
-    case et_hmc_pei:
-      return 7; // Jiayi, type 6 is ACTIVE_MULT
+    case et_art_dot:
+      return ART_DOT; // Jiayi, type 6 is ACTIVE_PEI
     
+    case et_pei_dot:
+      return PEI_DOT;
+
+    case et_pei_atomic:
+      return PEI_ATOMIC;
+
     case et_rd_bypass:   // this read is older than what is in the cache
     case et_e_to_m:
     case et_e_to_i:
@@ -592,7 +803,6 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
     case et_invalidate_nd:
     case et_i_to_e:
     case et_nop:
-    case et_hmc_gather_rep: // Jiayi added, 03/25/17
     default:
       cerr << lqe->type << " should not be sent to HMC network" << endl;
       assert(0);

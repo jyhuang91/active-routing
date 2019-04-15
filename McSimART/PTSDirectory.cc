@@ -463,13 +463,22 @@ uint32_t Directory::process_event(uint64_t curr_time)
         ASSERTX(d_entry.pending);
         if (d_entry.sharedl2.empty() == true)
         {
-          if (d_entry.pending->type == et_hmc_update_add ||
-              d_entry.pending->type == et_hmc_update_mult ||
-              d_entry.pending->type == et_hmc_pei)
+          if (d_entry.pending->type == et_art_add ||
+              d_entry.pending->type == et_art_mult ||
+              d_entry.pending->type == et_art_dot ||
+              d_entry.pending->type == et_pei_dot ||
+              d_entry.pending->type == et_pei_atomic)
           {
             num_tr_to_i++;
             // offloading active compute to memory network
-            if (num == 0 || d_entry.pending->type == et_hmc_pei)
+            if (d_entry.pending->type == et_pei_dot ||
+                d_entry.pending->type == et_pei_atomic ||
+                (mcsim->art_scheme == art_naive && num == 0) ||
+                ((mcsim->art_scheme == art_tid) && (d_entry.pending->th_id % 4 == num)) ||
+                (mcsim->art_scheme == art_addr &&
+                 ((d_entry.pending->type == et_art_add) ||
+                  (d_entry.pending->type == et_art_dot) ||
+                  (geq->which_mc(d_entry.pending->src_addr1) == num))))
             {
               hmccontroller->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
             }
@@ -478,8 +487,6 @@ uint32_t Directory::process_event(uint64_t curr_time)
               d_entry.pending->from.push(this);
               crossbar->add_req_event(curr_time + dir_to_xbar_t, d_entry.pending, this);
             }
-            //mcsim->hmcs[0]->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
-            //hmccontorller->add_req_event(curr_time + dir_to_mc_t, d_entry.pending);
             dir.erase(dir_entry);
             remove_directory_cache_entry(set, dir_entry);
           }
@@ -597,16 +604,26 @@ uint32_t Directory::process_event(uint64_t curr_time)
     }*/
     bool is_active_req = false;
     uint64_t address   = req_lqe->address;
-    if (req_lqe->type == et_hmc_update_add)
+    if (req_lqe->type == et_art_add)
     {
       address = req_lqe->src_addr1;
       is_active_req = true;
     }
-    else if (req_lqe->type == et_hmc_update_mult)
+    else if (req_lqe->type == et_art_mult)
     {
       address = (req_lqe->twin_lqe1 == NULL) ? req_lqe->src_addr1 : req_lqe->src_addr2;
       is_active_req = true;
-    }else if(req_lqe->type == et_hmc_pei) is_active_req = true;
+    }
+    else if (req_lqe->type == et_art_dot || req_lqe->type == et_pei_dot)
+    {
+      address = req_lqe->src_addr2;
+      is_active_req = true;
+    }
+    else if (req_lqe->type == et_pei_atomic)
+    {
+      address = req_lqe->dest_addr;
+      is_active_req = true;
+    }
 
     uint64_t dir_entry = (address >> set_lsb);
     uint32_t set       = dir_entry % num_sets;
@@ -676,7 +693,14 @@ uint32_t Directory::process_event(uint64_t curr_time)
     else if (dir.find(dir_entry) == dir.end())
     {
       // offloading active computation to memory network
-      if (num == 0 || req_lqe->type == et_hmc_pei)
+      if (req_lqe->type == et_pei_dot ||
+          req_lqe->type == et_pei_atomic ||
+          (mcsim->art_scheme == art_naive && num == 0) ||
+          ((mcsim->art_scheme == art_tid) && (req_lqe->th_id % 4 == num)) ||
+          (mcsim->art_scheme == art_addr &&
+           ((etype == et_art_add) ||
+            (etype == et_art_dot) ||
+            (geq->which_mc(req_lqe->src_addr1) == num))))
       {
         hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
       }
@@ -745,17 +769,22 @@ uint32_t Directory::process_event(uint64_t curr_time)
             // offloading active compute to memory network
             dir.erase(dir_entry);
             remove_directory_cache_entry(set, dir_entry);
-            if (num == 0 || req_lqe->type == et_hmc_pei)
+            if (req_lqe->type == et_pei_dot ||
+                req_lqe->type == et_pei_atomic ||
+                (mcsim->art_scheme == art_naive && num == 0) ||
+                ((mcsim->art_scheme == art_tid) && (req_lqe->th_id % 4 == num)) ||
+                (mcsim->art_scheme == art_addr &&
+                 ((etype == et_art_add) ||
+                  (etype == et_art_dot) ||
+                  (geq->which_mc(req_lqe->src_addr1) == num))))
             {
-              hmccontroller->add_req_event(curr_time + dir_to_xbar_t, req_lqe);
+              hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
             }
             else
             {
               req_lqe->from.push(this);
               crossbar->add_req_event(curr_time + dir_to_xbar_t, req_lqe, this);
             }
-            //mcsim->hmcs[0]->add_req_event(curr_time + dir_to_mc_t, req_lqe);
-            //hmccontroller->add_req_event(curr_time + dir_to_mc_t, req_lqe);
             return 0;
           }
 
@@ -1007,7 +1036,11 @@ uint32_t Directory::process_event(uint64_t curr_time)
             break;
         }
       }
-      else if (etype == et_hmc_update_add || etype == et_hmc_update_mult || etype == et_hmc_pei)
+      else if (etype == et_art_add ||
+          etype == et_art_mult ||
+          etype == et_art_dot ||
+          etype == et_pei_dot ||
+          etype == et_pei_atomic)
       {
         // in cs stable states, back-invalidate in caches
         switch (ctype)

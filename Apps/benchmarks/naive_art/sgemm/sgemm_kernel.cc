@@ -52,11 +52,11 @@ void* work_func(void *thread_arg)
   int nthreads = arg->nthreads;
   int      tid = arg->tid;
 
-  double m_d = m;
+  double t_d = m * n;
   double nthreads_d = nthreads;
   double tid_d = tid;
-  double start_d = tid_d * (m_d / nthreads_d);
-  double stop_d  = (tid_d + 1.0) * (m_d / nthreads_d);
+  double start_d = tid_d * (t_d / nthreads_d);
+  double stop_d  = (tid_d + 1.0) * (t_d / nthreads_d);
   int start = start_d;
   int stop = stop_d;
   int niteration = arg->niteration;
@@ -64,20 +64,20 @@ void* work_func(void *thread_arg)
 
   pthread_barrier_wait(arg->barrier);
 
-  for (int mm = start; mm < start + niteration; mm++) {
-    for (int nn = 0; nn < niteration2; nn++) {
-      //float c = 0.0f;
-      uint64_t flowID = mm+nn*ldc;
-      for (int i = 0; i < k; i++) {
-        /*float a = A[mm + i * lda];
+  for (int l = start; l < niteration * niteration2 && l < stop; l++) {
+    int mm = l / n;
+    int nn = l % n;
+    //float c = 0.0f;
+    uint64_t flowID = mm+nn*ldc;
+    for (int i = 0; i < k; i++) {
+      /*float a = A[mm + i * lda];
         float b = B[nn + i * ldb];
         c += a * b;*/
-        UPDATE(&A[mm + i * lda], &B[nn + i * ldb], (void *) flowID, MULT);
-      }
-      GATHER(0, 0, (void *) flowID, 1);
-      C[mm+nn*ldc] = C[mm+nn*ldc] * beta + alpha * flowID;
-      //std::cout << "thread " << tid << " - flow ID " << flowID << std::endl;
+      UpdateII(&A[mm * lda + i], &B[nn * ldb + i], (void *) flowID, FMULT);
     }
+    Gather(0, 0, (void *) flowID, 1);
+    C[mm * ldc + nn] = C[mm * ldc + nn] * beta + alpha * flowID;
+    //std::cout << "thread " << tid << " - flow ID " << flowID << std::endl;
   }
 
   //pthread_barrier_wait(arg->barrier);
