@@ -233,7 +233,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
                 vector<int>(mcsim->hmcs.size(), 0))));
         gather_barrier[lqele->dest_addr].second[num]++;
 #ifdef DEBUG_GATHER
-        cout << "Receive Gather for flow " << hex << lqele->dest_addr << dec << " at hmc controller " << num
+        cout << "(New) Receive Gather for flow " << hex << lqele->dest_addr << dec << " at hmc controller " << num
           << ", total gathers at this port: " << (gather_barrier[lqele->dest_addr].second)[num] << endl;
 #endif
       }
@@ -580,14 +580,23 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       multimap<uint64_t, LocalQueueElement *>::iterator it = pending_active_updates.find(flow_id);
       assert(it != pending_active_updates.end());
       cout << "Get active response (should be gather) flowID: " << hex << flow_id << ", dest_addr: "
-        <<  (flow_id >> num_mcs_log2) << dec << " at hmccontroller " << num << endl;
+        <<  (mcsim->art_scheme == art_naive ? flow_id : (flow_id >> num_mcs_log2)) << dec
+        << " at hmccontroller " << num << endl;
 #endif
       LocalQueueElement *lqe = new LocalQueueElement();
       lqe->from.push(this);
       lqe->type = et_art_get;
-      if (mcsim->art_scheme != art_naive)
+      switch (mcsim->art_scheme)
       {
+        case art_naive:
+          lqe->dest_addr = flow_id;
+          break;
+        case art_tid:
+        case art_addr:
           lqe->dest_addr = flow_id >> num_mcs_log2;
+          break;
+        default:
+          assert(0);
       }
       add_rep_event(curr_time, lqe, this);
     }
