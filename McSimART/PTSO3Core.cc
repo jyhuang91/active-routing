@@ -381,7 +381,6 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           o3rob_entry.mem_dep = (o3rob[mem_dep].state == o3irs_issued || o3rob[mem_dep].state == o3irs_executing) ? mem_dep : -1;
           o3rob_entry.memaddr = o3queue_entry.raddr2; // used to route to directory in noc
         }
-        o3rob_entry.mem_dep    = mem_dep;
         o3rob_entry.instr_dep  = instr_dep;
         o3rob_entry.branch_dep = branch_dep;
         o3rob_entry.type       = o3queue_entry.type;
@@ -637,7 +636,7 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         // make sure that gather is after all updates, XXX: may degrade performance
         if (o3rob_entry.type == ins_art_get && i != 0) continue;
 
-        if((o3rob_entry.type == ins_art_dot ||
+        if ((o3rob_entry.type == ins_art_dot ||
               o3rob_entry.type == ins_pei_dot ||
               o3rob_entry.type == ins_pei_atomic) && i == 0)
           assert(o3rob_entry.mem_dep == -1);
