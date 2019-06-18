@@ -15,7 +15,7 @@ pts.show_l2_stat_per_interval = false
 # Jiayi
 pts.is_nuca                  = true
 pts.hmc_top                  = DFLY
-pts.net_dim                  = 8
+pts.net_dim                  = 4
 pts.art_scheme               = threadid
 pts.core_frequency           = 2              # unit: GHz
 

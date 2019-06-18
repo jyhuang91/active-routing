@@ -51,6 +51,8 @@ int main(int argc, char * argv[])
   uint64_t remap_interval = 0;
   string remapfile;
   string benchname; // Jiayi, 01/30/2018
+  map<string, string> params;
+  params.clear();
   for (int i = 0; i < argc; i++)
   {
     if (argv[i] == string("-mdfile"))
@@ -84,14 +86,21 @@ int main(int argc, char * argv[])
       i++;
       remapfile = argv[i];
     }
-    else if (argv[i] == string("-benchname"))
+    else
     {
-      i++;
-      benchname = argv[i];
+      string param = argv[i];
+      if (param[0] == '-') {
+        assert(i + 1 < argc);
+        i++;
+        param.erase(param.begin());
+        param = string("pts.") + param;
+        string value = argv[i];
+        params[param] = value;
+      }
     }
   }
 
-  PthreadTimingSimulator * pts = new PthreadTimingSimulator(mdfile, benchname);
+  PthreadTimingSimulator * pts = new PthreadTimingSimulator(mdfile, params);
   string pin_name;
   string pintool_name;
   string ld_library_path_full;
