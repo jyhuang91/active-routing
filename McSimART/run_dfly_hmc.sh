@@ -11,7 +11,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-hmc.py \
     -runfile ../Apps/list/run-${bench}.py \
-    -benchname dfly_hmc_${bench} \
+    -benchname dfly${net_dim}dim_hmc_${bench} \
     -net_dim ${net_dim} \
     > ${logdir}/hmc_${bench}.log 2>&1 &
 done
@@ -22,7 +22,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-hmc.py \
     -runfile ../Apps/list/run-${microbench}.py \
-    -benchname dfly_hmc_${microbench} \
+    -benchname dfly${net_dim}dim_hmc_${microbench} \
     -net_dim ${net_dim} \
     > ${logdir}/hmc_${microbench}.log 2>&1 &
 done

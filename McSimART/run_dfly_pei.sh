@@ -10,7 +10,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-hmc.py \
     -runfile ../Apps/list/run-pei-${bench}.py \
-    -benchname dfly_pei_${bench} \
+    -benchname dfly${net_dim}dim_pei_${bench} \
     -net_dim ${net_dim} \
     > ${logdir}/pei_${bench}.log 2>&1 &
 done
@@ -21,7 +21,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-hmc.py \
     -runfile ../Apps/list/run-pei-${microbench}.py \
-    -benchname dfly_pei_${microbench} \
+    -benchname dfly${net_dim}dim_pei_${microbench} \
     -net_dim ${net_dim} \
     > ${logdir}/pei_${microbench}.log 2>&1 &
 done

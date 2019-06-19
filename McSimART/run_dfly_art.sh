@@ -12,7 +12,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-naive.py \
     -runfile ../Apps/list/run-naive-art-${bench}.py \
-    -benchname dfly_naive_art_${bench} \
+    -benchname dfly${net_dim}dim_naive_art_${bench} \
     -net_dim ${net_dim} \
     > ${logdir}/naive_art_${bench}.log 2>&1 &
 
@@ -20,7 +20,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-naive.py \
     -runfile ../Apps/list/run-art-${bench}.py \
-    -benchname dfly_static_art_${bench} \
+    -benchname dfly${net_dim}dim_static_art_${bench} \
     -net_dim ${net_dim} \
     > ${logdir}/static_art_${bench}.log 2>&1 &
 
@@ -28,7 +28,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-tid.py \
     -runfile ../Apps/list/run-art-${bench}.py \
-    -benchname dfly_art_tid_${bench} \
+    -benchname dfly${net_dim}dim_art_tid_${bench} \
     -net_dim ${net_dim} \
     > ${logdir}/art_tid_${bench}.log 2>&1 &
 
@@ -36,7 +36,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-addr.py \
     -runfile ../Apps/list/run-art-${bench}.py \
-    -benchname dfly_art_addr_${bench} \
+    -benchname dfly${net_dim}dim_art_addr_${bench} \
     -net_dim ${net_dim} \
     > ${logdir}/art_addr_${bench}.log 2>&1 &
 done
@@ -49,7 +49,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-naive.py \
     -runfile ../Apps/list/run-naive-art-${microbench}.py \
-    -benchname dfly_naive_art_${microbench} \
+    -benchname dfly${net_dim}dim_naive_art_${microbench} \
     -net_dim ${net_dim} \
     > ${logdir}/naive_art_${microbench}.log 2>&1 &
 
@@ -57,7 +57,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-naive.py \
     -runfile ../Apps/list/run-art-${microbench}.py \
-    -benchname dfly_static_art_${microbench} \
+    -benchname dfly${net_dim}dim_static_art_${microbench} \
     -net_dim ${net_dim} \
     > ${logdir}/static_art_${microbench}.log 2>&1 &
 
@@ -65,7 +65,7 @@ do
   ./mcsim \
     -mdfile ../Apps/md/md-16o3core2GHz-mesh-art-tid.py \
     -runfile $PWD/../Apps/list/run-art-${microbench}.py \
-    -benchname dfly_art_tid_${microbench} \
+    -benchname dfly${net_dim}dim_art_tid_${microbench} \
     -net_dim ${net_dim} \
     > ${logdir}/art_tid_${microbench}.log 2>&1 &
 
@@ -73,7 +73,7 @@ do
   ./mcsim \
     -mdfile $PWD/../Apps/md/md-16o3core2GHz-mesh-art-addr.py \
     -runfile ../Apps/list/run-art-${microbench}.py \
-    -benchname dfly_art_addr_${microbench} \
+    -benchname dfly${net_dim}dim_art_addr_${microbench} \
     -net_dim ${net_dim} \
     > ${logdir}/art_addr_${microbench}.log 2>&1 &
 done
