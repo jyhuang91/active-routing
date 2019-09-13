@@ -942,6 +942,27 @@ namespace CasHMC
   void CrossbarSwitch::PrintBuffers()
   {
     cout << "Crossbar (HMC) " << cubeID << endl;
+    int i = 0;
+    for (map<FlowID, FlowEntry>::iterator it = flowTable.begin();
+        it != flowTable.end(); it++) {
+      cout << " -- flow entry " << i << ":" << endl;
+      cout << "    [flowID: " << hex << it->first << dec
+        << "] [opcode: " << it->second.opcode
+        << "] [result: " << it->second.result
+        << "] [req_count: " << it->second.req_count
+        << "] [rep_count: " << it->second.rep_count
+        << "] [parent: " << it->second.parent
+        << "] [children_gflag_count:";
+      for (int c = 0; c < NUM_LINKS; c++) {
+        if (it->second.children_gflag[c]) {
+          cout << " true:" << it->second.children_count[c];
+        } else {
+          cout << " false:" << it->second.children_count[c];
+        }
+      }
+      cout << "] [gflag: " << it->second.g_flag << "]" << endl;
+      i++;
+    }
     for (int i = 0; i < inputBuffers.size(); i++) {
       vector<Packet *> downBuffer = inputBuffers[i]->downBuffers;
       vector<Packet *> upBuffer = inputBuffers[i]->upBuffers;

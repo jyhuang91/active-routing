@@ -101,7 +101,7 @@ namespace CasHMC
       vector<InputBuffer *> inputBuffers;
 
       // Jiayi, extended for active router, 02/06
-      map<uint64_t, FlowEntry> flowTable;
+      map<FlowID, FlowEntry> flowTable;
       vector<OperandEntry> operandBuffers;
       deque<int> freeOperandBufIDs;
       int operandBufSize;
