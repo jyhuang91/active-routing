@@ -71,8 +71,9 @@ namespace CasHMC
     bool     op1_ready;
     bool     op2_ready;
     bool     ready;
+    char     pipelineCounter;
 
-    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), ready(false) {}
+    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), pipelineCounter(5), ready(false) {}
   };
 
   class CrossbarSwitch : public DualVectorObject<Packet, Packet>

@@ -788,6 +788,11 @@ namespace CasHMC
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
+				if (flowEntry.opcode == MAC) {
+					operandEntry.pipelineCounter--;	// multiplies have a pipeline
+					if (operandEntry.pipelineCounter > 0)
+						continue;
+				}
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -826,6 +831,7 @@ namespace CasHMC
         operandEntry.op1_ready = false;
         operandEntry.op2_ready = false;
         operandEntry.ready = false;
+        operandEntry.pipelineCounter = 5;
         freeOperandBufIDs.push_back(i);
       }
     }
