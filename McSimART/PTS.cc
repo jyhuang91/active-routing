@@ -39,7 +39,8 @@
 using namespace PinPthread;
 
 
-PthreadTimingSimulator::PthreadTimingSimulator(const string & mdfile, const string & benchname)
+PthreadTimingSimulator::PthreadTimingSimulator(const string & mdfile,
+    const map<string, string> & override_params)
  :params(), trace_files()
 {
   ifstream fin(mdfile.c_str());
@@ -93,8 +94,11 @@ PthreadTimingSimulator::PthreadTimingSimulator(const string & mdfile, const stri
     }
   }
 
-  if (benchname.empty() == false)
-    params["pts.benchname"] = benchname;
+  for (map<string, string>::const_iterator it = override_params.begin();
+      it != override_params.end(); ++it)
+  {
+    params[it->first] = it->second;
+  }
 
   mcsim = new McSim(this);
 }

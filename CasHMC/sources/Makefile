@@ -12,6 +12,9 @@
 all: cashmc.mk obj
 	@$(MAKE) -C . -f cashmc.mk
 
+dbg: cashmc.mk obj
+	@$(MAKE) -C . -f cashmc.mk dbg
+
 obj:
 	mkdir $@
 

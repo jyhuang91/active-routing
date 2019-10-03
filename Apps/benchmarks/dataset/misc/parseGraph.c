@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   while (fgets(line, sizeof(line), graph_fp)) {
     if (line[0] == '#') {
       if (strstr(line, "Nodes") != NULL) {
-        fprintf(stdout, "%s\n", line);
+        //fprintf(stdout, "%s\n", line);
         sscanf(line, "%*[^0-9]%d%*[^0-9]%d", &nodes, &edges);
       }
     } else {
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     }
   }
 
-  fprintf(stdout, "Nodes: %d Edges: %d\n", nodes, edges);
+  //fprintf(stdout, "Nodes: %d Edges: %d\n", nodes, edges);
   fprintf(stdout, "# NodeIDs: %d Degree: %d max_deg_node: %d\n", max_node, max_degree, max_deg_node);
 
   fclose(graph_fp);
