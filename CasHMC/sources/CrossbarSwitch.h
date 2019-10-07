@@ -71,9 +71,10 @@ namespace CasHMC
     bool     op1_ready;
     bool     op2_ready;
     bool     ready;
-    char     pipelineCounter;
+    char     multStageCounter;
 
-    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), pipelineCounter(5), ready(false) {}
+    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false) {}
+    OperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false) {}
   };
 
   class CrossbarSwitch : public DualVectorObject<Packet, Packet>
@@ -106,6 +107,8 @@ namespace CasHMC
       vector<OperandEntry> operandBuffers;
       deque<int> freeOperandBufIDs;
       int operandBufSize;
+      int multPipeOccupancy;
+			int numMultStages;
 
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
