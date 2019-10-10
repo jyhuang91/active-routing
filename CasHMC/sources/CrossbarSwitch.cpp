@@ -18,7 +18,8 @@ namespace CasHMC
   // Ram & Jiayi, 03/13/17
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_,unsigned id_, RoutingFunction *rf_ = NULL):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF), cubeID(id_), rf(rf_),
-    operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0)
+    operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0), 
+		numMultStages(5), multPipeOccupancy(0)
   {
     classID << cubeID;
     header = "        (CS";
@@ -33,7 +34,7 @@ namespace CasHMC
 
     // Jiayi, 03/15/17
     neighborCubeID = vector<int>(NUM_LINKS, -1);
-    operandBuffers.resize(operandBufSize, OperandEntry());
+    operandBuffers.resize(operandBufSize, OperandEntry(numMultStages));
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
@@ -782,12 +783,34 @@ namespace CasHMC
 
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
+		bool startedMult = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
+				//cout << CYCLE() << "cubeID " << cubeID << " Current Occupancy: " << multPipeOccupancy << endl;
+				if (flowEntry.opcode == MAC) {
+					if (operandEntry.multStageCounter == numMultStages) {
+						if (!startedMult && multPipeOccupancy < numMultStages) {
+							//cout << CYCLE() << "cubeID " << cubeID << " Starting operand (incrementing counter)..." << endl;
+							startedMult = true;
+							multPipeOccupancy++;
+							operandEntry.multStageCounter--;
+						}
+						// Otherwise wait to start until pipeline is not full
+						continue;	// don't free the buffer
+					} else {
+						//cout << CYCLE() << "cubeID " << cubeID << " Moving operand in stage " << (int) operandEntry.multStageCounter << endl;
+						operandEntry.multStageCounter--;
+						if (operandEntry.multStageCounter > 0) 
+							continue;
+						else 
+							multPipeOccupancy--;
+					}
+				}
+        //cout << CYCLE() << "cubeID " << cubeID << " ...Finised an operand" << endl;
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -826,6 +849,7 @@ namespace CasHMC
         operandEntry.op1_ready = false;
         operandEntry.op2_ready = false;
         operandEntry.ready = false;
+        operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
       }
     }
