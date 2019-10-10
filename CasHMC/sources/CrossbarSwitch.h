@@ -14,7 +14,7 @@
 
 //CrossbarSwitch.h
 
-#include <vector>		//vector
+#include <vector>   //vector
 #include <map>      // map, Jiayi, 02/06
 #include <deque>
 
@@ -84,7 +84,7 @@ namespace CasHMC
       //Functions
       //
       CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_);
-	    CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_, unsigned id, RoutingFunction *rf); // Ram
+      CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_, unsigned id, RoutingFunction *rf); // Ram
       virtual ~CrossbarSwitch();
       void CallbackReceiveDown(Packet *downEle, bool chkReceive);
       void CallbackReceiveUp(Packet *upEle, bool chkReceive);
@@ -98,8 +98,8 @@ namespace CasHMC
       vector<DualVectorObject<Packet, Packet> *> downBufferDest;
       vector<LinkMaster *> upBufferDest;
       int inServiceLink;
-      vector<unsigned> pendingSegTag;		//Store segment packet tag for returning
-      vector<Packet *> pendingSegPacket;	//Store segment packets
+      vector<unsigned> pendingSegTag;     //Store segment packet tag for returning
+      vector<Packet *> pendingSegPacket;  //Store segment packets
       vector<InputBuffer *> inputBuffers;
 
       // Jiayi, extended for active router, 02/06
@@ -108,7 +108,7 @@ namespace CasHMC
       deque<int> freeOperandBufIDs;
       int operandBufSize;
       int multPipeOccupancy;
-			int numMultStages;
+      int numMultStages;
 
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
