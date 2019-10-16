@@ -109,6 +109,7 @@ namespace CasHMC
       int operandBufSize;
       int multPipeOccupancy;
       int numMultStages;
+      int numAdds;
 
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
