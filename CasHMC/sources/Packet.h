@@ -118,7 +118,7 @@ namespace CasHMC
       int SRCCUB, DESTCUB, DESTCUB1, DESTCUB2; // CUB ID varies from topology to topology
       uint64_t orig_addr, tran_tag;
       int operandBufID; // 03/24/17
-      int VoperandBufID; // 03/24/17
+      int VoperandBufID; // copy for testing
 
       unsigned URTC, DRTC;  // up return token (response) and down return token (request)
   };
