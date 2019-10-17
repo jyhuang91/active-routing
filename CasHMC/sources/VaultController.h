@@ -60,6 +60,10 @@ namespace CasHMC
       int operandBufSize;
       int multPipeOccupancy;
       int numMultStages;
+      int numFlows;
+      int cubeID;
+      int numAdds;
+			int returnPackets;
       uint64_t opbufStalls;
       uint64_t numUpdates;
       uint64_t numOperands;

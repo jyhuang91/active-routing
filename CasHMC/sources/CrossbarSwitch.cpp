@@ -75,7 +75,7 @@ namespace CasHMC
     neighborCubeID.clear();
 
 		if (numAdds > 0)
-			cout << "CUBE " << cubeID << " did " << numAdds << " ADDs with " << numOperands << " Operands" << endl;
+			cout << "CUBE " << cubeID << " did " << numAdds << " ADDs..." << endl;
 
     for (int l = 0; l < NUM_LINKS+1; l++) {
       delete inputBuffers[l];
