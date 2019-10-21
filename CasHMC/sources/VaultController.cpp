@@ -101,19 +101,13 @@ namespace CasHMC
     writeDataToSend.clear(); 
     writeDataCountdown.clear(); 
 
-		// Debugging Vault-Level Parallelism:
-		if (numUpdates > 0) { 
-			//cout << "CUBE " << cubeID << " VC " << vaultContID << " : " << numUpdates << " UPDATES " << numFlows << " FLOWS" << endl; 
-		}
-		if (opbufStalls > 0) {
-			cout << "\twith " << opbufStalls << " stalls" << endl; 
-		}
-		if (numAdds > 0)
-			cout << "==> CUBE " << cubeID << " VC " << vaultContID << " : " << numAdds << " ADDs " << returnPackets << " packets " 
-				<< numUpdates << " updates " << numFlows << " flows" << endl;
+    // Debugging Vault-Level Parallelism:
+    if (numAdds > 0)
+      cout << "==> CUBE " << cubeID << " VC " << vaultContID << " : " << numAdds << " ADDs " 
+        << numUpdates << " updates " << numFlows << " flows" << endl;
 
-		// For vault-level parallelism:
-		flowTable.clear();
+    // For vault-level parallelism:
+    flowTable.clear();
     operandBuffers.clear(); // Jiayi, 03/24/17
     freeOperandBufIDs.clear();
 
@@ -308,8 +302,7 @@ namespace CasHMC
 			ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
     }
 
-/*
-		// Free available operand buffer entries and commit ready flows:
+    // Free available operand buffer entries and commit ready flows:
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
     for (int i = 0; i < operandBuffers.size(); i++) {
@@ -352,20 +345,21 @@ namespace CasHMC
         freeOperandBufIDs.push_back(i);
       }
     }
+    /*
     // 2) reply ready GET response to commit the flow
     map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
-      FlowID flowID = iter->first;
-      FlowEntry &flowEntry = iter->second;
-      if (flowEntry.req_count == flowEntry.rep_count && flowEntry.g_flag) {
-        MakeRespondPacket(...);
-				flowTable.erase(iter);
-      }
-      if (flowTable.empty())
-        break;
-      iter++;
+    FlowID flowID = iter->first;
+    FlowEntry &flowEntry = iter->second;
+    if (flowEntry.req_count == flowEntry.rep_count && flowEntry.g_flag) {
+    MakeRespondPacket(...);
+    flowTable.erase(iter);
     }
-*/ 
+    if (flowTable.empty())
+    break;
+    iter++;
+    }
+     */ 
     //Update DRAM state and various countdown
     UpdateCountdown();
 
@@ -377,56 +371,111 @@ namespace CasHMC
       for(int i=0; i<downBuffers.size(); i++) {
         //Make sure that buffer[0] is not virtual tail packet.
         if(downBuffers[i] != NULL) {
-					// Just before converting the packet to a command,
-					// keep track of ADDs in the operand buffer entries
-					// the same way it is done in the crossbar switch:
-					bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
-					if (operand_buf_avail) {
-						if (downBuffers[i]->CMD == ACT_ADD) numAdds++;
-           	numOperands++;
-            numUpdates++;
-						uint64_t dest_addr = downBuffers[i]->DESTADRS;
-            map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
-            if (it == flowTable.end()) {
-             	flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
-							numFlows++;
-							cubeID = xbar->cubeID;
-              flowTable[dest_addr].parent = xbar->cubeID;							// "Parent" being the current cube means we are in a Vault Controller
-              flowTable[dest_addr].req_count++;
-#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
-              cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
-#endif
-            } else {
-              assert(it->second.parent == xbar->cubeID);
-              it->second.req_count++;
+          if (downBuffers[i]->CMD == ACT_GET) {
+            cout << "VC " << vaultContID << " got a ACT_GET" << endl;
+            uint64_t dest_addr = downBuffers[i]->DESTADRS;
+            // Jiayi, force the ordering for gather after update, 07/02/17
+            bool is_inorder = true;
+            for (int j = 0; j < i; j++) {
+              if (downBuffers[j] != NULL &&
+                  ((downBuffers[j]->CMD == ACT_ADD ||
+                    downBuffers[j]->CMD == ACT_DOT ||
+                    downBuffers[j]->CMD == ACT_MULT) &&
+                   downBuffers[j]->DESTADRS == dest_addr)) {
+                is_inorder = false;
+                break;
+              }
             }
-            int operand_buf_id = freeOperandBufIDs.front();
-            freeOperandBufIDs.pop_front();
-						downBuffers[i]->VoperandBufID = operand_buf_id;
-            OperandEntry &operandEntry = operandBuffers[operand_buf_id];
-            assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
-            assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
-            operandEntry.flowID = dest_addr;
-            operandEntry.src_addr1 = downBuffers[i]->SRCADRS1; // only use the first operand
-#ifdef DEBUG_UPDATE
-            cout << "Packet " << *curDownBuffers[i] << " reserves operand buffer " << operand_buf_id
-            	<< " at cube " << xbar->cubeID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
+#ifdef DEBUG_VERIFY
+            for (int j = i + 1; j < downBuffers.size(); j++) {
+              if (downBuffers[j] != NULL &&
+                  (downBuffers[j]->CMD == ACT_ADD ||
+                   downBuffers[j]->CMD == ACT_DOT ||
+                   downBuffers[j]->CMD == ACT_MULT))
+                assert(downBuffers[j]->DESTADRS != dest_addr);
+            }
 #endif
-					}
-						if(ConvPacketIntoCMDs(downBuffers[i])) {
-           		int tempLNG = downBuffers[i]->LNG;
-           		// Jiayi, 02/06, print out if active packet
-           		if (downBuffers[i]->CMD == ACT_ADD ||
-             			downBuffers[i]->CMD == ACT_DOT) {
-           			assert(downBuffers[i]->SRCADRS1 != 0);
+            if (!is_inorder) continue;
+            map<FlowID, FlowEntry>::iterator it  = flowTable.find(dest_addr);
+            if(it == flowTable.end()) cout << "HMC " << xbar->cubeID <<" at VC "<<vaultContID<<" assert for flow " << hex << dest_addr << dec << endl;
+            assert(it != flowTable.end());
+
+            // mark the g flag to indicate gather requtest arrives
+            flowTable[dest_addr].g_flag = true;
+
+            int tempLNG = downBuffers[i]->LNG;
+            // Jiayi, 02/06, print out if active packet
+            if (downBuffers[i]->CMD == ACT_ADD ||
+                downBuffers[i]->CMD == ACT_DOT) {
+              assert(downBuffers[i]->SRCADRS1 != 0);
 #ifdef DEBUG_ACTIVE
-           			cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
+              cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
 #endif
-          		}
-           		delete downBuffers[i];
-           		downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
-          	}
-					}
+            }
+            delete downBuffers[i];
+            downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+            continue;
+          }
+          else if (downBuffers[i]->CMD != RD64 && downBuffers[i]->CMD != ACT_ADD) {
+            cout << "CUBE " << xbar->cubeID << " VC " << vaultContID << " Got a " << downBuffers[i]->CMD << endl;
+            delete downBuffers[i];
+            int tempLNG = downBuffers[i]->LNG;
+            downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+            continue;
+          }
+          // Just before converting the packet to a command,
+          // keep track of ADDs in the operand buffer entries
+          // the same way it is done in the crossbar switch:
+          bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
+          if (downBuffers[i]->CMD == ACT_ADD) {
+            numAdds++;
+            numUpdates++;
+            if (operand_buf_avail) {
+              numOperands++;
+              uint64_t dest_addr = downBuffers[i]->DESTADRS;
+              map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
+              if (it == flowTable.end()) {
+                flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
+                //cout << "VC " << vaultContID << " CUBE " << xbar->cubeID << " ADD Flow " << hex << dest_addr << dec << endl;
+                numFlows++;
+                cubeID = xbar->cubeID;
+                flowTable[dest_addr].parent = xbar->cubeID;							// "Parent" being the current cube means we are in a Vault Controller
+                flowTable[dest_addr].req_count++;
+#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
+                cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
+#endif
+              } else {
+                assert(it->second.parent == xbar->cubeID);
+                it->second.req_count++;
+              }
+              int operand_buf_id = freeOperandBufIDs.front();
+              freeOperandBufIDs.pop_front();
+              downBuffers[i]->VoperandBufID = operand_buf_id;
+              OperandEntry &operandEntry = operandBuffers[operand_buf_id];
+              assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
+              assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
+              operandEntry.flowID = dest_addr;
+              operandEntry.src_addr1 = downBuffers[i]->SRCADRS1; // only use the first operand
+#ifdef DEBUG_UPDATE
+              cout << "Packet " << *curDownBuffers[i] << " reserves operand buffer " << operand_buf_id
+                << " at cube " << xbar->cubeID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
+#endif
+            }
+          }
+          if(ConvPacketIntoCMDs(downBuffers[i])) {
+            int tempLNG = downBuffers[i]->LNG;
+            // Jiayi, 02/06, print out if active packet
+            if (downBuffers[i]->CMD == ACT_ADD ||
+                downBuffers[i]->CMD == ACT_DOT) {
+              assert(downBuffers[i]->SRCADRS1 != 0);
+#ifdef DEBUG_ACTIVE
+              cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
+#endif
+            }
+            delete downBuffers[i];
+            downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+          }
+        }
       }
     }
 
@@ -438,9 +487,11 @@ namespace CasHMC
         exit(0);
       }
       else{
-				// here: make sure the flow is ready to send result back to ARE
+        // First make sure the result of the flow is ready before sending back to
+        // the parent vault
+
         if(upBufferDest->ReceiveUp(upBuffers[0])) {
-					returnPackets++;
+          returnPackets++;
           DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<"Up)   SENDING packet to crossbar switch (CS)");
           upBuffers.erase(upBuffers.begin(), upBuffers.begin()+upBuffers[0]->LNG);
         }
