@@ -106,6 +106,18 @@ namespace CasHMC
       cout << "==> CUBE " << cubeID << " VC " << vaultContID << " : " << numAdds << " ADDs " 
         << numUpdates << " updates " << numFlows << " flows" << endl;
 
+    for (int i = 0; i < operandBuffers.size(); i++)
+      if (operandBuffers[i].flowID != 0)
+        cout << "For VC " << vaultContID << " operand entry " << i << "still in use" << endl;
+
+    
+    map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
+    while (iter != flowTable.end()) {
+      FlowID flowID = iter->first;
+      cout << "For VC " << vaultContID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << endl;
+      iter++;
+    }
+
     // For vault-level parallelism:
     flowTable.clear();
     operandBuffers.clear(); // Jiayi, 03/24/17
@@ -198,6 +210,16 @@ namespace CasHMC
     if(retCMD->trace != NULL) {
       retCMD->trace->vaultFullLat = currentClockCycle - retCMD->trace->vaultIssueTime;
     }
+    if(retCMD->packetCMD == ACT_ADD) {
+      // Search for the operand entry and mark as ready
+      int voperandID = retCMD->VoperandBufID;
+      OperandEntry &operandEntry = operandBuffers[voperandID];
+      operandEntry.op1_ready = true;
+      operandEntry.ready = true;
+      //return;
+    }
+
+
     Packet *newPacket;
     if(retCMD->atomic) {
       if(retCMD->packetCMD == _2ADD8 || retCMD->packetCMD == ADD16 || retCMD->packetCMD == INC8
@@ -345,21 +367,20 @@ namespace CasHMC
         freeOperandBufIDs.push_back(i);
       }
     }
-    /*
+
     // 2) reply ready GET response to commit the flow
     map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
-    FlowID flowID = iter->first;
-    FlowEntry &flowEntry = iter->second;
-    if (flowEntry.req_count == flowEntry.rep_count && flowEntry.g_flag) {
-    MakeRespondPacket(...);
-    flowTable.erase(iter);
+      FlowID flowID = iter->first;
+      FlowEntry &flowEntry = iter->second;
+      if (flowEntry.req_count == flowEntry.rep_count && flowEntry.g_flag) {
+        flowTable.erase(iter);
+      }
+      if (flowTable.empty())
+        break;
+      iter++;
     }
-    if (flowTable.empty())
-    break;
-    iter++;
-    }
-     */ 
+ 
     //Update DRAM state and various countdown
     UpdateCountdown();
 
@@ -372,7 +393,6 @@ namespace CasHMC
         //Make sure that buffer[0] is not virtual tail packet.
         if(downBuffers[i] != NULL) {
           if (downBuffers[i]->CMD == ACT_GET) {
-            cout << "VC " << vaultContID << " got a ACT_GET" << endl;
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
             // Jiayi, force the ordering for gather after update, 07/02/17
             bool is_inorder = true;
@@ -412,13 +432,10 @@ namespace CasHMC
               cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
 #endif
             }
-            delete downBuffers[i];
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
             continue;
           }
           else if (downBuffers[i]->CMD != RD64 && downBuffers[i]->CMD != ACT_ADD) {
-            cout << "CUBE " << xbar->cubeID << " VC " << vaultContID << " Got a " << downBuffers[i]->CMD << endl;
-            delete downBuffers[i];
             int tempLNG = downBuffers[i]->LNG;
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
             continue;
@@ -436,7 +453,6 @@ namespace CasHMC
               map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
               if (it == flowTable.end()) {
                 flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
-                //cout << "VC " << vaultContID << " CUBE " << xbar->cubeID << " ADD Flow " << hex << dest_addr << dec << endl;
                 numFlows++;
                 cubeID = xbar->cubeID;
                 flowTable[dest_addr].parent = xbar->cubeID;							// "Parent" being the current cube means we are in a Vault Controller
@@ -527,6 +543,10 @@ namespace CasHMC
                 poppedCMD->packetCMD == ACT_ADD ||
                 poppedCMD->packetCMD == ACT_DOT)
               DRAM_act_data += poppedCMD->dataSize;
+            if (poppedCMD->packetCMD == ACT_ADD) {
+              
+              
+            }
             if(!poppedCMD->atomic) {
               pendingDataSize += (poppedCMD->dataSize/16)+1;
               //DEBUG(ALI(18)<<header<<ALI(15)<<*poppedCMD<<"Down) pendingDataSize "<<(poppedCMD->dataSize/16)+1<<" increased   (current pendingDataSize : "<<pendingDataSize<<")");

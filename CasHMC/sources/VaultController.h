@@ -45,6 +45,7 @@ namespace CasHMC
       void CallbackReceiveUp(Packet *packet, bool chkReceive);
       void ReturnCommand(DRAMCommand *retRead);
       void MakeRespondPacket(DRAMCommand *retCMD);
+      void MakeRespondPacket_ACT_ADD(DRAMCommand *retCMD);
       void Update();
       void UpdateCountdown();
       bool ConvPacketIntoCMDs(Packet *packet);
