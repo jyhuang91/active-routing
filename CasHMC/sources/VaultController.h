@@ -31,6 +31,30 @@ using namespace std;
 
 namespace CasHMC
 {
+  struct VaultFlowEntry {
+    Opcode   opcode;                    // function code: ADD, MAC, etc.
+    double   result;                    // partial result
+    uint64_t req_count;                 // number of requests
+    uint64_t rep_count;                 // number of responses
+    int      parent;                    // parent cubeID of ARTree (all have ARE as parent for now)
+    bool     g_flag;                    // flag indicating gather command received or not
+
+    VaultFlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), g_flag(false) {}
+    VaultFlowEntry(Opcode op) : opcode(op), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {}
+  };
+
+  struct VaultOperandEntry {
+    FlowID   flowID;
+    uint64_t src_addr1;
+    uint64_t src_addr2;
+    bool     op1_ready;
+    bool     op2_ready;
+    bool     ready;
+    char     multStageCounter;
+
+    VaultOperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false) {}
+    VaultOperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false) {}
+  };
 
   class VaultController : public DualVectorObject<Packet, Packet>
   {
@@ -55,8 +79,8 @@ namespace CasHMC
       void PrintBuffers();
 
       // Extension for vault-level parallelism:
-      map<FlowID, FlowEntry> flowTable;
-      vector<OperandEntry> operandBuffers;
+			map<FlowID, VaultFlowEntry> flowTable;
+      vector<VaultOperandEntry> operandBuffers;
       deque<int> freeOperandBufIDs;
       int operandBufSize;
       int multPipeOccupancy;
@@ -95,7 +119,9 @@ namespace CasHMC
       DRAMCommand *dataBus;
       unsigned dataCyclesLeft;
       vector<DRAMCommand *> writeDataToSend;
-      vector<unsigned> writeDataCountdown;
+      vector<unsigned> writeDataCountdown;	
+      
+      TranStatistic *transtat;
   };
 
 }

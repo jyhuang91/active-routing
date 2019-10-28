@@ -245,6 +245,21 @@ namespace CasHMC
               delete curUpBuffers[i];
               curUpBuffers.erase(curUpBuffers.begin()+i, curUpBuffers.begin()+i+pktLNG);
               --i;
+            } else if (curUpBuffers[i]->CMD == ACT_GET && curUpBuffers[i]->DESTCUB == cubeID && curUpBuffers[i]->SRCCUB == cubeID) {  // AKA: It's a vault reply
+              uint64_t dest_addr = curUpBuffers[i]->DESTADRS;
+              map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
+              assert(it != flowTable.end());
+              unsigned vault = curUpBuffers[i]->SRCADRS1;
+              if (cubeID == 2) cout << "<== CUBE " << cubeID << " GET " << hex << dest_addr << dec << " VAULT " << vault << endl;
+              int vault_count = flowTable[dest_addr].vault_count[vault];
+              flowTable[dest_addr].rep_count += vault_count;
+              if (cubeID == 2) cout << "\tCUBE " << cubeID << " now has req_count " << flowTable[dest_addr].req_count << " and rep_count " << flowTable[dest_addr].rep_count << endl;
+              flowTable[dest_addr].vault_count[vault] = 0;
+              int pktLNG = curUpBuffers[i]->LNG;
+              delete curUpBuffers[i]->trace;
+              delete curUpBuffers[i];
+              curUpBuffers.erase(curUpBuffers.begin()+i, curUpBuffers.begin()+i+pktLNG);
+              --i;
             } else {
               int link = rf->findNextLink(inServiceLink, cubeID, curUpBuffers[i]->DESTCUB);
               assert(link != -1);
@@ -322,6 +337,29 @@ namespace CasHMC
                 unsigned vaultMap = (curDownBuffers[i]->ADRS >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
                 if (curDownBuffers[i]->CMD == ACT_ADD ||
                     curDownBuffers[i]->CMD == ACT_DOT) {
+                  // For ACT_ADDs, check if there is already an operand entry buffer for that vault
+                  if (curDownBuffers[i]->CMD == ACT_ADD) {
+                    bool foundOperandEntry = false;
+                    for (int i = 0; i < operandBuffers.size(); i++) {
+                      OperandEntry &operandEntry = operandBuffers[i];
+                      if (operandEntry.vault == vaultMap) {
+                        foundOperandEntry = true;
+                        if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
+                          numUpdates++;
+                          numAdds++;
+                          uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
+                          map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
+                          assert(it != flowTable.end());
+                          it->second.req_count++;
+                          flowTable[dest_addr].vault_count[vaultMap]++;
+                          curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                          i--;
+                        }
+                      }
+                    }
+                    if (foundOperandEntry)
+                      continue;
+                  }
                   bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
                   if (operand_buf_avail && vault_mask[vaultMap] == false && downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
                     vault_mask[vaultMap] = true;
@@ -337,7 +375,7 @@ namespace CasHMC
                     map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                     int link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
                     int parent_cube = neighborCubeID[link];
-                    flowTable[dest_addr].vault_list[vaultMap] = true;
+                    flowTable[dest_addr].vault_count[vaultMap]++;
                     if (it == flowTable.end()) {
                       flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
                       flowTable[dest_addr].parent = parent_cube;
@@ -428,7 +466,6 @@ namespace CasHMC
                         int link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
                         int parent_cube = neighborCubeID[link];
                         if (it == flowTable.end()) {
-                          cout << "CUBE " << cubeID << " VC " << vaultMap << " new MULT Flow" << endl;
                           flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
                           flowTable[dest_addr].parent = parent_cube;
                           flowTable[dest_addr].req_count++;
@@ -619,16 +656,23 @@ namespace CasHMC
 #endif
                     // mark the g flag to indicate gather request arrives
                     flowTable[dest_addr].g_flag = true;
-                    // Also send the ACT_GET packet to the vault controllers...
+                    // Also send the ACT_GET packet to ALL the vault controllers...
+                    bool all_vc_received = true;
                     for (int j = 0; j < NUM_VAULTS; j++) {
-                      if (flowTable[dest_addr].vault_list[j]) {
-                        downBufferDest[j]->ReceiveDown(curDownBuffers[i]);
+                      if (flowTable[dest_addr].vault_gflag[j] == false && flowTable[dest_addr].vault_count[j] > 0) {
+                        if (downBufferDest[j]->ReceiveDown(curDownBuffers[i])) {
+                          flowTable[dest_addr].vault_gflag[j] = true;
+                        } else {
+                          all_vc_received = false;  // at least one VC could not receive their "GET" packet: try again next time but continue sending
+                        }
                       }
                     }
-                    int pktLNG = curDownBuffers[i]->LNG;
-                    //delete curDownBuffers[i];
-                    curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
-                    --i;
+                    if (all_vc_received) {
+                      int pktLNG = curDownBuffers[i]->LNG;
+                      //delete curDownBuffers[i];
+                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
+                      --i;
+                    }
                   }
                 }
                 else if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
