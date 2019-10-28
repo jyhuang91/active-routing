@@ -45,7 +45,7 @@ namespace CasHMC
     commandQueue = new CommandQueue(debugOut, stateOut, this, vaultContID);
     
 		// For vault-level parallelism:
-		operandBuffers.resize(operandBufSize, OperandEntry(numMultStages));
+		operandBuffers.resize(operandBufSize, VaultOperandEntry(numMultStages));
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
@@ -82,7 +82,7 @@ namespace CasHMC
     commandQueue = new CommandQueue(debugOut, stateOut, this, vaultContID);
 		
 		// For vault-level parallelism:
-		operandBuffers.resize(operandBufSize, OperandEntry(numMultStages));
+		operandBuffers.resize(operandBufSize, VaultOperandEntry(numMultStages));
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
@@ -111,7 +111,7 @@ namespace CasHMC
         cout << "For VC " << vaultContID << " operand entry " << i << "still in use" << endl;
 
     
-    map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
+    map<FlowID, VaultFlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
       FlowID flowID = iter->first;
       cout << "For VC " << vaultContID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << endl;
@@ -148,6 +148,7 @@ namespace CasHMC
         case ACT_ADD:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");		break;
         case ACT_MULT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet");  break;
         case ACT_DOT:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_dot response packet");		break;
+        case ACT_GET:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_get response packet");		break;
         case PEI_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING pei dot response packet");  break;
         case PEI_ATOMIC: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING pei atomic response packet");  break;
         default:
@@ -213,10 +214,11 @@ namespace CasHMC
     if(retCMD->packetCMD == ACT_ADD) {
       // Search for the operand entry and mark as ready
       int voperandID = retCMD->VoperandBufID;
-      OperandEntry &operandEntry = operandBuffers[voperandID];
+      VaultOperandEntry &operandEntry = operandBuffers[voperandID];
       operandEntry.op1_ready = true;
       operandEntry.ready = true;
-      //return;
+      pendingDataSize -= (retCMD->dataSize/16)+1;
+      return;   // Don't actually send a response yet
     }
 
 
@@ -320,6 +322,10 @@ namespace CasHMC
   //
   void VaultController::Update()
   {
+    InputBuffer *ibuf = dynamic_cast<InputBuffer *> (upBufferDest);
+    assert(ibuf);
+    CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (ibuf->xbar);
+    cubeID = xbar->cubeID;
     if(!pcuPacket.empty() && (pcuPacket.front())->bufPopDelay == 0){
 			ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
     }
@@ -328,11 +334,11 @@ namespace CasHMC
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
     for (int i = 0; i < operandBuffers.size(); i++) {
-      OperandEntry &operandEntry = operandBuffers[i];
+      VaultOperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
-        FlowEntry &flowEntry = flowTable[flowID];
+        VaultFlowEntry &flowEntry = flowTable[flowID];
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -367,13 +373,22 @@ namespace CasHMC
         freeOperandBufIDs.push_back(i);
       }
     }
-
+    
     // 2) reply ready GET response to commit the flow
-    map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
+    map<FlowID, VaultFlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
       FlowID flowID = iter->first;
-      FlowEntry &flowEntry = iter->second;
+      VaultFlowEntry &flowEntry = iter->second;
       if (flowEntry.req_count == flowEntry.rep_count && flowEntry.g_flag) {
+        TranTrace *trace = new TranTrace(transtat);
+        int parent_cube = flowEntry.parent;
+        Packet *gpkt = new Packet(RESPONSE, ACT_GET, flowID, vaultContID, 0, 2, trace, parent_cube, parent_cube); // for now, these are the same, signifying that a packet is coming from a vault with vaultContID in src_addr field
+        if (pcuPacket.empty()) { 
+          gpkt->bufPopDelay = PCU_DELAY;
+        } else {
+          gpkt->bufPopDelay = max(PCU_DELAY,(pcuPacket.back())->bufPopDelay + 1);
+        }
+        pcuPacket.push_back(gpkt);
         flowTable.erase(iter);
       }
       if (flowTable.empty())
@@ -385,9 +400,6 @@ namespace CasHMC
     UpdateCountdown();
 
     //Convert request packet into DRAM commands
-    InputBuffer *ibuf = dynamic_cast<InputBuffer *> (upBufferDest);
-    assert(ibuf);
-    CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (ibuf->xbar);
     if(bufPopDelay == 0) {
       for(int i=0; i<downBuffers.size(); i++) {
         //Make sure that buffer[0] is not virtual tail packet.
@@ -415,8 +427,10 @@ namespace CasHMC
                 assert(downBuffers[j]->DESTADRS != dest_addr);
             }
 #endif
-            if (!is_inorder) continue;
-            map<FlowID, FlowEntry>::iterator it  = flowTable.find(dest_addr);
+            if (!is_inorder) {  
+              continue;
+            }
+            map<FlowID, VaultFlowEntry>::iterator it  = flowTable.find(dest_addr);
             if(it == flowTable.end()) cout << "HMC " << xbar->cubeID <<" at VC "<<vaultContID<<" assert for flow " << hex << dest_addr << dec << endl;
             assert(it != flowTable.end());
 
@@ -450,12 +464,12 @@ namespace CasHMC
             if (operand_buf_avail) {
               numOperands++;
               uint64_t dest_addr = downBuffers[i]->DESTADRS;
-              map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
+              map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
               if (it == flowTable.end()) {
-                flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
+                flowTable.insert(make_pair(dest_addr, VaultFlowEntry(ADD)));
                 numFlows++;
                 cubeID = xbar->cubeID;
-                flowTable[dest_addr].parent = xbar->cubeID;							// "Parent" being the current cube means we are in a Vault Controller
+                flowTable[dest_addr].parent = xbar->cubeID; // for now
                 flowTable[dest_addr].req_count++;
 #if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
                 cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
@@ -467,7 +481,7 @@ namespace CasHMC
               int operand_buf_id = freeOperandBufIDs.front();
               freeOperandBufIDs.pop_front();
               downBuffers[i]->VoperandBufID = operand_buf_id;
-              OperandEntry &operandEntry = operandBuffers[operand_buf_id];
+              VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
               assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
               assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
               operandEntry.flowID = dest_addr;
@@ -503,10 +517,8 @@ namespace CasHMC
         exit(0);
       }
       else{
-        // First make sure the result of the flow is ready before sending back to
-        // the parent vault
-
         if(upBufferDest->ReceiveUp(upBuffers[0])) {
+          if (upBuffers[0]->CMD == ACT_GET && upBuffers[0]->DESTCUB == 2) 
           returnPackets++;
           DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<"Up)   SENDING packet to crossbar switch (CS)");
           upBuffers.erase(upBuffers.begin(), upBuffers.begin()+upBuffers[0]->LNG);
@@ -541,11 +553,8 @@ namespace CasHMC
             DRAM_rd_data += poppedCMD->dataSize;
             if (poppedCMD->packetCMD == ACT_MULT ||
                 poppedCMD->packetCMD == ACT_ADD ||
-                poppedCMD->packetCMD == ACT_DOT)
+                poppedCMD->packetCMD == ACT_DOT) {
               DRAM_act_data += poppedCMD->dataSize;
-            if (poppedCMD->packetCMD == ACT_ADD) {
-              
-              
             }
             if(!poppedCMD->atomic) {
               pendingDataSize += (poppedCMD->dataSize/16)+1;
@@ -788,6 +797,8 @@ namespace CasHMC
       actCMD->dest_cube = packet->DESTCUB;
       commandQueue->Enqueue(bankAdd, actCMD);
 
+      if (cubeID == 2 && vaultContID == 15 && packet->TAG == 379) cout << "Found: " << ceil((double)packet->reqDataSize/32) << endl;
+
       for(int i=0; i<ceil((double)packet->reqDataSize/32); i++) {
         DRAMCommand *rwCMD;
         if(i < ceil((double)packet->reqDataSize/32)-1) {
@@ -808,6 +819,7 @@ namespace CasHMC
         rwCMD->src_cube = packet->SRCCUB;
         rwCMD->dest_cube = packet->DESTCUB;
         commandQueue->Enqueue(bankAdd, rwCMD);
+        if (cubeID == 2 && vaultContID == 15 && packet->TAG == 379) cout << "Enqueued..." << endl;
         if(tempCMD == READ || tempCMD == READ_P) {
           pendingReadData.push_back(packet->TAG);
           if (packet->CMD == ACT_ADD ||

@@ -49,7 +49,8 @@ namespace CasHMC
     int      children_count[NUM_LINKS]; // number of updates sent to children
     bool     children_gflag[NUM_LINKS];
     bool     g_flag;                    // flag indicating gather command received or not
-    bool     vault_list[32/*NUM_VAULTS*/];		// which vaults are working in this flow
+    int      vault_count[32/*NUM_VAULTS*/];		// how many requests were sent to each vault
+    bool     vault_gflag[32/*NUM_VAULTS*/];		// how many get requests were sent to each vault
 
     FlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
       for (int i = 0; i < NUM_LINKS; i++) {
@@ -57,7 +58,8 @@ namespace CasHMC
         children_gflag[i] = false;
       }
       for (int i = 0; i < 32/*NUM_VAULTS*/; i++) {
-        vault_list[i] = false;
+        vault_count[i] = 0;
+        vault_gflag[i] = false;
       }
     }
     FlowEntry(Opcode op) : opcode(op), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
@@ -66,7 +68,8 @@ namespace CasHMC
         children_gflag[i] = false;
       }
       for (int i = 0; i < 32/*NUM_VAULTS*/; i++) {
-        vault_list[i] = false;
+        vault_count[i] = 0;
+        vault_gflag[i] = false;
       }
     }
   };
@@ -79,9 +82,10 @@ namespace CasHMC
     bool     op2_ready;
     bool     ready;
     char     multStageCounter;
+    unsigned vault;             // for each vault, an operand gives a partial result from that vault
 
-    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false) {}
-    OperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false) {}
+    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false), vault(-1) {}
+    OperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false), vault(-1) {}
   };
 
   class CrossbarSwitch : public DualVectorObject<Packet, Packet>
