@@ -591,13 +591,16 @@ namespace CasHMC
                           flowTable[dest_addr].vault_gflag[j] = true;
                         } else {
                           delete vault_pkt;
+                          all_vc_received = false;
                         }
                       }
                     }
-                    int pktLNG = curDownBuffers[i]->LNG;
-                    //delete curDownBuffers[i];
-                    curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
-                    --i;
+                    if (!all_vc_received) {
+                      int pktLNG = curDownBuffers[i]->LNG;
+                      delete curDownBuffers[i];
+                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
+                      --i;
+                    }
                   }
                 }
                 else if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
