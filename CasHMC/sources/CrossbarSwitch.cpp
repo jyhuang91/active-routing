@@ -76,8 +76,8 @@ namespace CasHMC
     rf = NULL;
     neighborCubeID.clear();
 
-		if (numAdds > 0)
-			cout << "CUBE " << cubeID << " did " << numAdds << " ADDs..." << endl;
+    if (numAdds > 0)
+      cout << "CUBE " << cubeID << " did " << numAdds << " ADDs..." << endl;
 
     for (int l = 0; l < NUM_LINKS+1; l++) {
       delete inputBuffers[l];
@@ -250,10 +250,15 @@ namespace CasHMC
               map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
               assert(it != flowTable.end());
               unsigned vault = curUpBuffers[i]->SRCADRS1;
-              if (cubeID == 2) cout << "<== CUBE " << cubeID << " GET " << hex << dest_addr << dec << " VAULT " << vault << endl;
+              // Free the operand buffer entry associated with that vault:
+              for (int j = 0; j < operandBuffers.size(); j++) {
+                if (operandBuffers[j].flowID == dest_addr && operandBuffers[j].vault == vault) {
+                  operandBuffers[j].op1_ready = true;
+                  operandBuffers[j].ready = true;
+                }
+              }
               int vault_count = flowTable[dest_addr].vault_count[vault];
               flowTable[dest_addr].rep_count += vault_count;
-              if (cubeID == 2) cout << "\tCUBE " << cubeID << " now has req_count " << flowTable[dest_addr].req_count << " and rep_count " << flowTable[dest_addr].rep_count << endl;
               flowTable[dest_addr].vault_count[vault] = 0;
               int pktLNG = curUpBuffers[i]->LNG;
               delete curUpBuffers[i]->trace;
@@ -368,9 +373,9 @@ namespace CasHMC
 #endif
                     numOperands++;
                     numUpdates++;
-										if (curDownBuffers[i]->CMD == ACT_ADD) {
-											numAdds++;
-										}
+                    if (curDownBuffers[i]->CMD == ACT_ADD) {
+                      numAdds++;
+                    }
                     uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                     map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                     int link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
@@ -660,19 +665,18 @@ namespace CasHMC
                     bool all_vc_received = true;
                     for (int j = 0; j < NUM_VAULTS; j++) {
                       if (flowTable[dest_addr].vault_gflag[j] == false && flowTable[dest_addr].vault_count[j] > 0) {
-                        if (downBufferDest[j]->ReceiveDown(curDownBuffers[i])) {
+                        Packet *vault_pkt = new Packet(*curDownBuffers[i]);
+                        if (downBufferDest[j]->ReceiveDown(vault_pkt)) {
                           flowTable[dest_addr].vault_gflag[j] = true;
                         } else {
-                          all_vc_received = false;  // at least one VC could not receive their "GET" packet: try again next time but continue sending
+                          delete vault_pkt;
                         }
                       }
                     }
-                    if (all_vc_received) {
-                      int pktLNG = curDownBuffers[i]->LNG;
-                      //delete curDownBuffers[i];
-                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
-                      --i;
-                    }
+                    int pktLNG = curDownBuffers[i]->LNG;
+                    //delete curDownBuffers[i];
+                    curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
+                    --i;
                   }
                 }
                 else if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
