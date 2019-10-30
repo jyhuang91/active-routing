@@ -21,7 +21,7 @@
 #include <deque>
 
 #include "DualVectorObject.h"
-#include "CrossbarSwitch.h"		// for OperandEntry and FlowEntry, for now
+#include "CrossbarSwitch.h"		// for FlowID
 #include "SimConfig.h"
 #include "DRAMConfig.h"
 #include "DRAMCommand.h"
@@ -69,7 +69,6 @@ namespace CasHMC
       void CallbackReceiveUp(Packet *packet, bool chkReceive);
       void ReturnCommand(DRAMCommand *retRead);
       void MakeRespondPacket(DRAMCommand *retCMD);
-      void MakeRespondPacket_ACT_ADD(DRAMCommand *retCMD);
       void Update();
       void UpdateCountdown();
       bool ConvPacketIntoCMDs(Packet *packet);
@@ -79,7 +78,7 @@ namespace CasHMC
       void PrintBuffers();
 
       // Extension for vault-level parallelism:
-			map<FlowID, VaultFlowEntry> flowTable;
+      map<FlowID, VaultFlowEntry> flowTable;
       vector<VaultOperandEntry> operandBuffers;
       deque<int> freeOperandBufIDs;
       int operandBufSize;
@@ -88,7 +87,6 @@ namespace CasHMC
       int numFlows;
       int cubeID;
       int numAdds;
-			int returnPackets;
       uint64_t opbufStalls;
       uint64_t numUpdates;
       uint64_t numOperands;
