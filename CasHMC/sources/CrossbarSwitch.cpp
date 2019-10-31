@@ -668,6 +668,7 @@ namespace CasHMC
                         Packet *vault_pkt = new Packet(*curDownBuffers[i]);
                         if (downBufferDest[j]->ReceiveDown(vault_pkt)) {
                           flowTable[dest_addr].vault_gflag[j] = true;
+                          break;
                         } else {
                           delete vault_pkt;
                           all_vc_received = false;
