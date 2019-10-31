@@ -443,46 +443,38 @@ namespace CasHMC
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
             continue;
           }
-          else if (downBuffers[i]->CMD != RD64 && downBuffers[i]->CMD != ACT_ADD) {
-            int tempLNG = downBuffers[i]->LNG;
-            downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
-            continue;
-          }
-          // Just before converting the packet to a command,
-          // keep track of ADDs in the operand buffer entries
-          // the same way it is done in the crossbar switch:
-          bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
-          if (downBuffers[i]->CMD == ACT_ADD) {
+          else if (downBuffers[i]->CMD == ACT_ADD) {
+            bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
             if (operand_buf_avail) {
               numOperands++;
-              uint64_t dest_addr = downBuffers[i]->DESTADRS;
-              map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
-              if (it == flowTable.end()) {
-                flowTable.insert(make_pair(dest_addr, VaultFlowEntry(ADD)));
-                numFlows++;
-                cubeID = xbar->cubeID;
-                flowTable[dest_addr].parent = xbar->cubeID; // for now
-                flowTable[dest_addr].req_count++;
-#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
-                cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
-#endif
-              } else {
-                assert(it->second.parent == xbar->cubeID);
-                it->second.req_count++;
-              }
               int operand_buf_id = freeOperandBufIDs.front();
               freeOperandBufIDs.pop_front();
               downBuffers[i]->VoperandBufID = operand_buf_id;
-              VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
-              assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
-              assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
-              operandEntry.flowID = dest_addr;
-              operandEntry.src_addr1 = downBuffers[i]->SRCADRS1; // only use the first operand
-#ifdef DEBUG_UPDATE
-              cout << "Packet " << *curDownBuffers[i] << " reserves operand buffer " << operand_buf_id
-                << " at cube " << xbar->cubeID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
-#endif
               if(ConvPacketIntoCMDs(downBuffers[i])) {
+                uint64_t dest_addr = downBuffers[i]->DESTADRS;
+                map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
+                if (it == flowTable.end()) {
+                  flowTable.insert(make_pair(dest_addr, VaultFlowEntry(ADD)));
+                  numFlows++;
+                  cubeID = xbar->cubeID;
+                  flowTable[dest_addr].parent = xbar->cubeID; // for now
+                  flowTable[dest_addr].req_count++;
+#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
+                  cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
+#endif
+                } else {
+                  assert(it->second.parent == xbar->cubeID);
+                  it->second.req_count++;
+                }
+                VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
+                assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
+                assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
+                operandEntry.flowID = dest_addr;
+                operandEntry.src_addr1 = downBuffers[i]->SRCADRS1; // only use the first operand
+#ifdef DEBUG_UPDATE
+                cout << "Packet " << *curDownBuffers[i] << " reserves operand buffer " << operand_buf_id
+                  << " at cube " << xbar->cubeID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
+#endif
                 int tempLNG = downBuffers[i]->LNG;
                 assert(downBuffers[i]->SRCADRS1 != 0);
 #ifdef DEBUG_ACTIVE
@@ -492,6 +484,10 @@ namespace CasHMC
                 numUpdates++;
                 delete downBuffers[i];
                 downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+              }
+              else {
+                freeOperandBufIDs.push_back(operand_buf_id);
+                numOperands--;
               }
             }
           } else {

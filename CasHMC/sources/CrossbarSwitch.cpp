@@ -582,21 +582,21 @@ namespace CasHMC
 #endif
                     // mark the g flag to indicate gather request arrives
                     flowTable[dest_addr].g_flag = true;
-                    // Also send the ACT_GET packet to ALL the vault controllers...
+                    // Also send the ACT_GET packet to one vault controllers...
                     bool all_vc_received = true;
                     for (int j = 0; j < NUM_VAULTS; j++) {
                       if (flowTable[dest_addr].vault_gflag[j] == false && flowTable[dest_addr].vault_count[j] > 0) {
+                        all_vc_received = false;
                         Packet *vault_pkt = new Packet(*curDownBuffers[i]);
                         if (downBufferDest[j]->ReceiveDown(vault_pkt)) {
                           flowTable[dest_addr].vault_gflag[j] = true;
                           break;
                         } else {
                           delete vault_pkt;
-                          all_vc_received = false;
                         }
                       }
                     }
-                    if (!all_vc_received) {
+                    if (all_vc_received) {
                       int pktLNG = curDownBuffers[i]->LNG;
                       delete curDownBuffers[i];
                       curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
