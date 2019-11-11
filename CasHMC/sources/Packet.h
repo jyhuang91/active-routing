@@ -119,6 +119,7 @@ namespace CasHMC
       uint64_t orig_addr, tran_tag;
       int operandBufID; // 03/24/17
       int VoperandBufID; // copy for testing
+      int computeVault; // which vault to send operands to for computation
 
       unsigned URTC, DRTC;  // up return token (response) and down return token (request)
   };

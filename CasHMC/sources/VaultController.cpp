@@ -218,7 +218,21 @@ namespace CasHMC
       pendingDataSize -= (retCMD->dataSize/16)+1;
       return;   // Don't actually send a response yet
     }
-
+    else if (retCMD->packetCMD == ACT_MULT && retCMD->computeVault == vaultContID) {
+      int voperandID = retCMD->VoperandBufID;
+      VaultOperandEntry &operandEntry = operandBuffers[voperandID];
+      if (retCMD->srcAddr1 == 0) {
+        assert(retCMD->srcAddr2 != 0);
+        operandEntry.op2_ready = true;
+      } else {
+        assert(retCMD->srcAddr1 != 0 && retCMD->srcAddr2 == 0);
+        operandEntry.op1_ready = true;
+      }
+      if (operandEntry.op1_ready && operandEntry.op2_ready)
+        operandEntry.ready;
+      pendingDataSize -= (retCMD->dataSize/16)+1;
+      return;   // When computation vault is here, don't send a response packet
+    }
 
     Packet *newPacket;
     if(retCMD->atomic) {
@@ -273,10 +287,12 @@ namespace CasHMC
           //newPacket->DESTCUB = retCMD->src_cube;
           newPacket->active = true;
           newPacket->DESTADRS = retCMD->destAddr;
-          assert((retCMD->srcAddr1 && !retCMD->srcAddr2) || (!retCMD->srcAddr1 && retCMD->srcAddr2));
+          assert(retCMD->srcAddr1 || retCMD->srcAddr2);
           newPacket->SRCADRS1 = retCMD->srcAddr1;
           newPacket->SRCADRS2 = retCMD->srcAddr2;
           newPacket->operandBufID = retCMD->operandBufID;
+          newPacket->VoperandBufID = retCMD->VoperandBufID;
+          newPacket->computeVault = retCMD->computeVault;
           newPacket->LNG = 2;//TODO
 #ifdef DEBUG_UPDATE
           cout << CYCLE() << "Active-Routing: Active MULT packet " << newPacket->TAG;
@@ -331,12 +347,34 @@ namespace CasHMC
     // Free available operand buffer entries and commit ready flows:
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
+    bool startedMult = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       VaultOperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         VaultFlowEntry &flowEntry = flowTable[flowID];
+        cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Current Occupancy: " << multPipeOccupancy << endl;
+        if (flowEntry.opcode == MAC) {
+          if (operandEntry.multStageCounter == numMultStages) {
+            if (!startedMult && multPipeOccupancy < numMultStages) {
+              cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Starting MULT for operand " << i << endl;
+              startedMult = true;
+              multPipeOccupancy++;
+              operandEntry.multStageCounter--;
+            }
+            // Otherwise wait to start until pipeline is not full
+            continue; // don't free the buffer
+          } else {
+            cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Moving MULT operand in stage " << (int) operandEntry.multStageCounter << endl;
+            operandEntry.multStageCounter--;
+            if (operandEntry.multStageCounter > 0)
+              continue;
+            else
+              multPipeOccupancy--;
+          }
+        }
+        cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Finished MULT from operand  " << i << endl;
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -490,6 +528,30 @@ namespace CasHMC
                 numOperands--;
               }
             }
+          }
+          else if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->packetType == RESPONSE) {
+            assert(downBuffers[i]->computeVault == vaultContID);
+            int operand_buf_id = downBuffers[i]->VoperandBufID;
+            uint64_t dest_addr = downBuffers[i]->DESTADRS;
+            VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
+            cout << "VC " << vaultContID << " CUBE " << cubeID << " DEST " << hex << dest_addr << " SRC1 " << downBuffers[i]->SRCADRS1 << " SRC2 " << downBuffers[i]->SRCADRS2 << endl;
+            cout << "\tOperandEntry #" << operand_buf_id << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
+            assert (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1 || operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
+            if (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1) {
+              cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src1 with " << hex << operandEntry.src_addr1 << dec << endl;
+              operandEntry.op1_ready = true;
+            } else { 
+              cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src2 with " << hex << operandEntry.src_addr2 << dec << endl;
+              assert(operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
+              operandEntry.op2_ready = true;
+            }
+            if (operandEntry.op1_ready && operandEntry.op2_ready) {
+              operandEntry.ready = true;
+              numUpdates++;
+            }
+            int tempLNG = downBuffers[i]->LNG;
+            delete downBuffers[i];
+            downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
           } else {
             if(ConvPacketIntoCMDs(downBuffers[i])) {
               int tempLNG = downBuffers[i]->LNG;
@@ -837,6 +899,8 @@ namespace CasHMC
             }
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
+            rwCMD->VoperandBufID = packet->VoperandBufID;
+            rwCMD->computeVault = packet->computeVault;
           }
         }
         rwCMD->addr = packet->orig_addr;//packet->ADRS; // Jiayi, 03/27/17
@@ -997,6 +1061,52 @@ namespace CasHMC
         }
       }
     }
+  }
+
+  /* returns true if there are operand buffers to reserve and reserves one if
+    there are any available */
+  //
+  //Returns true if there are any operands available and reserves one
+  //
+  bool VaultController::OperandBufferStatus(Packet* pkt) {
+    bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
+    if (operand_buf_avail) {
+      InputBuffer *ibuf = dynamic_cast<InputBuffer *> (upBufferDest);
+      assert(ibuf);
+      CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (ibuf->xbar);
+      numOperands++;
+      int operand_buf_id = freeOperandBufIDs.front();
+      freeOperandBufIDs.pop_front();
+      pkt->VoperandBufID = operand_buf_id;
+      pkt->computeVault = vaultContID;
+      uint64_t dest_addr = pkt->DESTADRS;
+      map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
+      if (it == flowTable.end()) {
+        flowTable.insert(make_pair(dest_addr, VaultFlowEntry(MAC)));
+        numFlows++;
+        cubeID = xbar->cubeID;
+        flowTable[dest_addr].parent = xbar->cubeID; // for now
+        flowTable[dest_addr].req_count++;
+#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
+        cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
+#endif
+      } else {
+        assert(it->second.parent == xbar->cubeID);
+        it->second.req_count++;
+      }
+      VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
+      cout << "VC " << vaultContID << " CUBE " << cubeID << " reserving operand buffer " << operand_buf_id << endl;
+      assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
+      assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
+      operandEntry.flowID = dest_addr;
+      operandEntry.src_addr1 = pkt->SRCADRS1;
+      if (operandEntry.src_addr1 == 0) cout << "VC " << vaultContID << " CUBE " << xbar->cubeID << " got an update with 0 in src1" << endl;
+      operandEntry.src_addr2 = pkt->SRCADRS2;
+      if (operandEntry.src_addr2 == 0) cout << "VC " << vaultContID << " CUBE " << xbar->cubeID << " got an update with 0 in src2" << endl;
+      return true;
+    }
+    else
+      return false;
   }
 
 } //namespace CasHMC

@@ -84,6 +84,11 @@ namespace CasHMC
       //Upstream
       vaultControllers[v]->upBufferDest = crossbarSwitch->inputBuffers[NUM_LINKS];
     }
+
+    // For vault-level parallelism: give Crossbar Switch the vault controllers
+    for (int i = 0; i < vaultControllers.size(); i++) {
+      crossbarSwitch->vaultControllers.push_back(vaultControllers[i]);
+    }
   }
 
   HMC::~HMC()
