@@ -25,21 +25,18 @@
 //#include "TranStatistic.h"
 #include "RoutingFunction.h"
 #include "InputBuffer.h"
+#include "VaultController.h"
 
 using namespace std;
 
 static unsigned maxSize=0;
 
+#define ROUND_ROBIN   0
+#define CONTENT_AWARE 1
+// may add more here...
+
 namespace CasHMC
 {
-  typedef uint64_t FlowID;
-
-  enum Opcode {
-    ADD,
-    MAC,
-    INVALID
-  };
-
   struct FlowEntry {
     Opcode   opcode;                    // function code: ADD, MAC, etc.
     double   result;                    // partial result
@@ -100,6 +97,7 @@ namespace CasHMC
       void CallbackReceiveDown(Packet *downEle, bool chkReceive);
       void CallbackReceiveUp(Packet *upEle, bool chkReceive);
       void Update();
+      void UpdateDispatch(Packet* p);
       void PrintState();
       void PrintBuffers();
 
@@ -112,6 +110,7 @@ namespace CasHMC
       vector<unsigned> pendingSegTag;     //Store segment packet tag for returning
       vector<Packet *> pendingSegPacket;  //Store segment packets
       vector<InputBuffer *> inputBuffers;
+      vector<VaultController *> vaultControllers;   // Just for specialized HW to query for open OperandBuffers (OperandBufferStatus())
 
       // Jiayi, extended for active router, 02/06
       map<FlowID, FlowEntry> flowTable;
@@ -121,6 +120,8 @@ namespace CasHMC
       int multPipeOccupancy;
       int numMultStages;
       int numAdds;
+      int multVault;
+      char dispatchPolicy;
 
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;

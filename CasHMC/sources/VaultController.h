@@ -21,7 +21,6 @@
 #include <deque>
 
 #include "DualVectorObject.h"
-#include "CrossbarSwitch.h"		// for FlowID
 #include "SimConfig.h"
 #include "DRAMConfig.h"
 #include "DRAMCommand.h"
@@ -31,6 +30,14 @@ using namespace std;
 
 namespace CasHMC
 {
+  typedef uint64_t FlowID;
+
+  enum Opcode {
+    ADD,
+    MAC,
+    INVALID
+  };
+
   struct VaultFlowEntry {
     Opcode   opcode;                    // function code: ADD, MAC, etc.
     double   result;                    // partial result
@@ -76,6 +83,7 @@ namespace CasHMC
       void EnablePowerdown();
       void PrintState();
       void PrintBuffers();
+      bool OperandBufferStatus(Packet* p);
 
       // Extension for vault-level parallelism:
       map<FlowID, VaultFlowEntry> flowTable;

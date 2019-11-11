@@ -290,6 +290,8 @@ namespace CasHMC
     // Jiayi, 03/27
     orig_addr = f.orig_addr; tran_tag = f.tran_tag;
     URTC = f.URTC;  DRTC = f.DRTC;
+    VoperandBufID = f.VoperandBufID;
+    computeVault = f.computeVault;
 
     AF = f.AF;		ERRSTAT = f.ERRSTAT;
     DINV = f.DINV;
