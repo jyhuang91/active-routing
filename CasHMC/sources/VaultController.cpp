@@ -354,11 +354,11 @@ namespace CasHMC
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         VaultFlowEntry &flowEntry = flowTable[flowID];
-        cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Current Occupancy: " << multPipeOccupancy << endl;
+        //cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Current Occupancy: " << multPipeOccupancy << endl;
         if (flowEntry.opcode == MAC) {
           if (operandEntry.multStageCounter == numMultStages) {
             if (!startedMult && multPipeOccupancy < numMultStages) {
-              cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Starting MULT for operand " << i << endl;
+              //cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Starting MULT for operand " << i << endl;
               startedMult = true;
               multPipeOccupancy++;
               operandEntry.multStageCounter--;
@@ -366,7 +366,7 @@ namespace CasHMC
             // Otherwise wait to start until pipeline is not full
             continue; // don't free the buffer
           } else {
-            cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Moving MULT operand in stage " << (int) operandEntry.multStageCounter << endl;
+            //cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Moving MULT operand in stage " << (int) operandEntry.multStageCounter << endl;
             operandEntry.multStageCounter--;
             if (operandEntry.multStageCounter > 0)
               continue;
@@ -374,7 +374,7 @@ namespace CasHMC
               multPipeOccupancy--;
           }
         }
-        cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Finished MULT from operand  " << i << endl;
+        //cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Finished MULT from operand  " << i << endl;
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -407,6 +407,7 @@ namespace CasHMC
         operandEntry.ready = false;
         operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
+        cout << "VC " << vaultContID << " CUBE " << cubeID << " FREE OPERAND " << i << endl;
       }
     }
     
@@ -419,6 +420,7 @@ namespace CasHMC
         TranTrace *trace = new TranTrace(transtat);
         int parent_cube = flowEntry.parent;
         Packet *gpkt = new Packet(RESPONSE, ACT_GET, flowID, vaultContID, 0, 2, trace, parent_cube, parent_cube); // for now, these are the same, signifying that a packet is coming from a vault with vaultContID in src_addr field
+        cout << "VC " << vaultContID << " CUBE " << cubeID << " FREE FLOW " << hex << flowID << dec << endl;
         ReceiveUp(gpkt);
         flowTable.erase(iter);
       }
@@ -534,8 +536,8 @@ namespace CasHMC
             int operand_buf_id = downBuffers[i]->VoperandBufID;
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
             VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
-            cout << "VC " << vaultContID << " CUBE " << cubeID << " DEST " << hex << dest_addr << " SRC1 " << downBuffers[i]->SRCADRS1 << " SRC2 " << downBuffers[i]->SRCADRS2 << endl;
-            cout << "\tOperandEntry #" << operand_buf_id << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
+            cout << "VC " << vaultContID << " CUBE " << cubeID << " RESPONSE DEST " << hex << dest_addr << " SRC1 " << downBuffers[i]->SRCADRS1 << " SRC2 " << downBuffers[i]->SRCADRS2 << endl;
+            cout << "\tOperandEntry #" << dec << operand_buf_id << hex << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
             assert (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1 || operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
             if (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1) {
               cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src1 with " << hex << operandEntry.src_addr1 << dec << endl;
