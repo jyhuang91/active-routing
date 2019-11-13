@@ -83,7 +83,8 @@ namespace CasHMC
       void EnablePowerdown();
       void PrintState();
       void PrintBuffers();
-      bool OperandBufferStatus(Packet* p);
+      int  OperandBufferStatus(Packet* p);
+      void FreeOperandBuffer(int i);
 
       // Extension for vault-level parallelism:
       map<FlowID, VaultFlowEntry> flowTable;
@@ -95,6 +96,7 @@ namespace CasHMC
       int numFlows;
       int cubeID;
       int numAdds;
+      int numMults;
       uint64_t opbufStalls;
       uint64_t numUpdates;
       uint64_t numOperands;
