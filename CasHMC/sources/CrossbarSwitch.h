@@ -121,6 +121,7 @@ namespace CasHMC
       int multPipeOccupancy;
       int numMultStages;
       int numAdds;
+      int numMults;
       int multVault;
       char dispatchPolicy;
 
