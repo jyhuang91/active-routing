@@ -108,7 +108,7 @@ namespace CasHMC
 
     if (numMults > 0)
       cout << "==> CUBE " << cubeID << " VC " << vaultContID << " : " << numMults << " MACs " 
-        << numUpdates << " updates (not meaningful here) " << numFlows << " flows" << endl;
+        << numUpdates << " updates " << numFlows << " flows" << endl;
 
     for (int i = 0; i < operandBuffers.size(); i++)
       if (operandBuffers[i].flowID != 0)
@@ -550,10 +550,10 @@ namespace CasHMC
             //cout << "\tOperandEntry #" << dec << operand_buf_id << hex << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
             assert (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1 || operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
             if (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1) {
-              cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src1 with " << hex << operandEntry.src_addr1 << dec << endl;
+              //cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src1 with " << hex << operandEntry.src_addr1 << dec << endl;
               operandEntry.op1_ready = true;
             } else { 
-              cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src2 with " << hex << operandEntry.src_addr2 << dec << endl;
+              //cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src2 with " << hex << operandEntry.src_addr2 << dec << endl;
               assert(operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
               operandEntry.op2_ready = true;
             }
@@ -1109,7 +1109,7 @@ namespace CasHMC
         it->second.req_count++;
       }
       VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
-      cout << "VC " << vaultContID << " CUBE " << cubeID << " reserving operand buffer " << operand_buf_id << endl;
+      //cout << "VC " << vaultContID << " CUBE " << cubeID << " reserving operand buffer " << operand_buf_id << endl;
       assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
       assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
       operandEntry.flowID = dest_addr;
