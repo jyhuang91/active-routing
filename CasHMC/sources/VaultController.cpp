@@ -299,7 +299,7 @@ namespace CasHMC
           //newPacket->DESTCUB = retCMD->src_cube;
           newPacket->active = true;
           newPacket->DESTADRS = retCMD->destAddr;
-          assert(retCMD->srcAddr1 || retCMD->srcAddr2);
+          assert((retCMD->srcAddr1 && !retCMD->srcAddr2) || (!retCMD->srcAddr1 && retCMD->srcAddr2));
           newPacket->SRCADRS1 = retCMD->srcAddr1;
           newPacket->SRCADRS2 = retCMD->srcAddr2;
           newPacket->operandBufID = retCMD->operandBufID;

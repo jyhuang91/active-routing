@@ -65,6 +65,7 @@ namespace CasHMC
     dest_cube = dc.dest_cube;
     operandBufID = dc.operandBufID;
     VoperandBufID = dc.VoperandBufID;
+    computeVault = dc.computeVault;
   }
 
   DRAMCommand::~DRAMCommand()

@@ -186,8 +186,7 @@ namespace CasHMC
           }
           else {
             if (curUpBuffers[i]->CMD == ACT_ADD ||
-                curUpBuffers[i]->CMD == ACT_DOT) {  // This should never happen..
-              cout << "This should never happen..." << endl;
+                curUpBuffers[i]->CMD == ACT_DOT) {
               assert(curUpBuffers[i]->DESTCUB == cubeID);
               uint64_t dest_addr = curUpBuffers[i]->DESTADRS;
               uint64_t src_addr = curUpBuffers[i]->SRCADRS1;
@@ -448,19 +447,6 @@ namespace CasHMC
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                   is_full_pkt = (curDownBuffers[i]->SRCADRS1 != 0 && curDownBuffers[i]->SRCADRS2 != 0);
                   // Half-packets from other cubes should be forwarded without consulting the flow table
-                  if (!is_full_pkt && curDownBuffers[i]->SRCCUB != cubeID) {
-                    //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") to VC " << vaultMap << " from CUBE " << curDownBuffers[i]->SRCCUB << endl;
-                    if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
-#ifdef DEBUG_ROUTING
-                      cout << "CUBE " << cubeID << ": Route MULT (second) packet " << *curDownBuffers[i] << " to my VaultCtrl" << endl;
-#endif
-                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
-                      i--;
-                    } else {
-                      // do nothing, try next cycle
-                    }
-                    continue;
-                  }
                   map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                   int parent_link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
                   int parent_cube = neighborCubeID[parent_link];
@@ -556,8 +542,6 @@ namespace CasHMC
                       //cout << "CUBE " << cubeID << " REQUEST (SRCADRS1 " << hex << pkt->SRCADRS1 << " SRCADRS2 " << pkt->SRCADRS2 << dec << ") COMPUTE VAULT " << vault_to_send << " src2-> VC " << vaultMap << endl;
                       //cout << "\tAlready reserved for operand entry " << pkt->VoperandBufID << endl;
                     }
-                    pkt->SRCCUB = cubeID;
-                    pkt->DESTCUB = cubeID;
                     if (downBufferDest[vaultMap]->ReceiveDown(pkt)) {
                       numUpdates++;
                       numMults++;
@@ -586,6 +570,7 @@ namespace CasHMC
                       }
                       curDownBuffers[i]->SRCCUB = cubeID;
                       pkt->SRCCUB = cubeID;
+                      pkt->DESTCUB = cubeID;
                       i--;
                     } else {
                       /*#ifdef DEBUG_UPDATE
@@ -657,6 +642,8 @@ namespace CasHMC
 #endif
                         flowTable[dest_addr].children_gflag[link] = true;
                         /*if (child_links.size() == 1) {  // last child
+                        flowTable[dest_addr].children_gflag[link] = true;
+                        /*if (child_links.size() == 1) {  // last child
                           int pktLNG = curDownBuffers[i]->LNG;
                           delete curDownBuffers[i];
                           curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
@@ -724,8 +711,6 @@ namespace CasHMC
 #ifdef DEBUG_ROUTING
                   cout << "CUBE#" << cubeID << ": Route packet " << *curDownBuffers[i] << " to my VaultCtrl" << endl;
 #endif
-                  DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) SENDING packet to vault controller "<<vaultMap<<" (VC_"<<vaultMap<<")");
-                  curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
                   i--;
                 }
                 else {
@@ -925,20 +910,6 @@ namespace CasHMC
                   }
                 } else { // half packet
                   if (upBufferDest[link]->currentState != LINK_RETRY && upBufferDest[link]->ReceiveDown(curDownBuffers[i])) {
-                    map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
-                    int parent_link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
-                    int parent_cube = neighborCubeID[parent_link];
-                    if (it == flowTable.end()) {
-                      flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
-                      flowTable[dest_addr].parent = parent_cube;
-                      flowTable[dest_addr].req_count = 1;
-#if defined(EBUG_FLOW) || defined(DEBUG_UPDATE)
-                      cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << cubeID << endl;
-#endif
-                    } else {
-                      assert(it->second.parent == parent_cube);
-                      //it->second.req_count++;
-                    }
                     curDownBuffers[i]->RTC = 0;
                     curDownBuffers[i]->URTC = 0;
                     curDownBuffers[i]->DRTC = 0;
@@ -1325,6 +1296,8 @@ namespace CasHMC
           int link = rf->findNextLink(inServiceLink, cubeID, upBuffer[i]->DESTCUB);
           int next_cube = neighborCubeID[link];
           cout << (upBuffer[i]->packetType == REQUEST ? "    Request " : "    Response ")
+            << *upBuffer[i] << " from current cube " << cubeID << " to next cube " << next_cube
+            << " (src_cube: " << upBuffer[i]->SRCCUB << ", dest_cube: " << upBuffer[i]->DESTCUB
             << *upBuffer[i] << " from current cube " << cubeID << " to next cube " << next_cube
             << " (src_cube: " << upBuffer[i]->SRCCUB << ", dest_cube: " << upBuffer[i]->DESTCUB
             << ", packet length: " << upBuffer[i]->LNG;
