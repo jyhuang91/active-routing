@@ -78,8 +78,8 @@ namespace CasHMC
       uint64_t srcAddr1;
       uint64_t srcAddr2;
       int operandBufID;
-      int VoperandBufID;
-      unsigned computeVault;
+      int vaultOperandBufID;
+      int computeVault;
 
       // Ram & Jiayi, 03/13/17
       unsigned src_cube;
