@@ -217,15 +217,15 @@ namespace CasHMC
     }
     if(retCMD->packetCMD == ACT_ADD) {
       // Search for the operand entry and mark as ready
-      int voperandID = retCMD->VoperandBufID;
+      int voperandID = retCMD->vaultOperandBufID;
       VaultOperandEntry &operandEntry = operandBuffers[voperandID];
       operandEntry.op1_ready = true;
       operandEntry.ready = true;
       pendingDataSize -= (retCMD->dataSize/16)+1;
       return;   // Don't actually send a response yet
     }
-    else if (retCMD->packetCMD == ACT_MULT && retCMD->computeVault == vaultContID) {
-      int voperandID = retCMD->VoperandBufID;
+    else if (retCMD->packetCMD == ACT_MULT && retCMD->src_cube == cubeID && retCMD->computeVault == vaultContID) {
+      int voperandID = retCMD->vaultOperandBufID;
       VaultOperandEntry &operandEntry = operandBuffers[voperandID];
       if (retCMD->srcAddr1 == 0) {
         assert(retCMD->srcAddr2 != 0);
@@ -239,8 +239,7 @@ namespace CasHMC
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         VaultFlowEntry &flowEntry = flowTable[flowID];
-        //flowEntry.rep_count++;
-        operandEntry.ready;
+        operandEntry.ready = true;
       }
       pendingDataSize -= (retCMD->dataSize/16)+1;
       return;   // When computation vault is here, don't send a response packet
@@ -283,7 +282,7 @@ namespace CasHMC
           newPacket->DESTADRS = retCMD->destAddr;
           newPacket->SRCADRS1 = retCMD->srcAddr1;
           newPacket->operandBufID = retCMD->operandBufID;
-          newPacket->VoperandBufID = retCMD->VoperandBufID;
+          newPacket->vaultOperandBufID = retCMD->vaultOperandBufID;
           //newPacket->LNG = 2; // comment it, LNG is calculated from dataSize/16+1
 #ifdef DEBUG_UPDATE
           cout << "Active ADD packet " << *newPacket << " is returned for (ADD) operand addr " << hex << newPacket->SRCADRS1 << dec << endl;
@@ -303,7 +302,7 @@ namespace CasHMC
           newPacket->SRCADRS1 = retCMD->srcAddr1;
           newPacket->SRCADRS2 = retCMD->srcAddr2;
           newPacket->operandBufID = retCMD->operandBufID;
-          newPacket->VoperandBufID = retCMD->VoperandBufID;
+          newPacket->vaultOperandBufID = retCMD->vaultOperandBufID;
           newPacket->computeVault = retCMD->computeVault;
           newPacket->LNG = 2;//TODO
 #ifdef DEBUG_UPDATE
@@ -348,10 +347,12 @@ namespace CasHMC
   //
   void VaultController::Update()
   {
-    InputBuffer *ibuf = dynamic_cast<InputBuffer *> (upBufferDest);
-    assert(ibuf);
-    CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (ibuf->xbar);
-    cubeID = xbar->cubeID;
+    if (cubeID == -1) {
+      InputBuffer *ibuf = dynamic_cast<InputBuffer *> (upBufferDest);
+      assert(ibuf);
+      CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (ibuf->xbar);
+      cubeID = xbar->cubeID;
+    }
     if(!pcuPacket.empty() && (pcuPacket.front())->bufPopDelay == 0){
       ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
     }
@@ -447,6 +448,7 @@ namespace CasHMC
       for(int i=0; i<downBuffers.size(); i++) {
         //Make sure that buffer[0] is not virtual tail packet.
         if(downBuffers[i] != NULL) {
+          //cout << "VC " << vaultContID << " CUBE " << cubeID << " UPDATE" << endl;
           if (downBuffers[i]->CMD == ACT_GET) {
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
             // Jiayi, force the ordering for gather after update, 07/02/17
@@ -474,7 +476,7 @@ namespace CasHMC
               continue;
             }
             map<FlowID, VaultFlowEntry>::iterator it  = flowTable.find(dest_addr);
-            if(it == flowTable.end()) cout << "HMC " << xbar->cubeID <<" at VC "<<vaultContID<<" assert for flow " << hex << dest_addr << dec << endl;
+            if(it == flowTable.end()) cout << "HMC " << cubeID <<" at VC "<<vaultContID<<" assert for flow " << hex << dest_addr << dec << endl;
             assert(it != flowTable.end());
 
             // mark the g flag to indicate gather requtest arrives
@@ -491,6 +493,7 @@ namespace CasHMC
             }
             delete downBuffers[i];
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+            --i;
             continue;
           }
           else if (downBuffers[i]->CMD == ACT_ADD) {
@@ -499,21 +502,20 @@ namespace CasHMC
               numOperands++;
               int operand_buf_id = freeOperandBufIDs.front();
               freeOperandBufIDs.pop_front();
-              downBuffers[i]->VoperandBufID = operand_buf_id;
+              downBuffers[i]->vaultOperandBufID = operand_buf_id;
               if(ConvPacketIntoCMDs(downBuffers[i])) {
                 uint64_t dest_addr = downBuffers[i]->DESTADRS;
                 map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
                 if (it == flowTable.end()) {
                   flowTable.insert(make_pair(dest_addr, VaultFlowEntry(ADD)));
                   numFlows++;
-                  cubeID = xbar->cubeID;
-                  flowTable[dest_addr].parent = xbar->cubeID; // for now
+                  flowTable[dest_addr].parent = cubeID; // for now
                   flowTable[dest_addr].req_count = 1;
 #if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
                   cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
 #endif
                 } else {
-                  assert(it->second.parent == xbar->cubeID);
+                  assert(it->second.parent == cubeID);
                   it->second.req_count++;
                 }
                 VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
@@ -534,6 +536,7 @@ namespace CasHMC
                 numUpdates++;
                 delete downBuffers[i];
                 downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+                --i;
               }
               else {
                 freeOperandBufIDs.push_back(operand_buf_id);
@@ -543,9 +546,9 @@ namespace CasHMC
           }
           else if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->packetType == RESPONSE) {
             assert(downBuffers[i]->computeVault == vaultContID);
-            int operand_buf_id = downBuffers[i]->VoperandBufID;
+            int vault_operand_buf_id = downBuffers[i]->vaultOperandBufID;
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
-            VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
+            VaultOperandEntry &operandEntry = operandBuffers[vault_operand_buf_id];
             //cout << "VC " << vaultContID << " CUBE " << cubeID << " RESPONSE DEST " << hex << dest_addr << " SRC1 " << downBuffers[i]->SRCADRS1 << " SRC2 " << downBuffers[i]->SRCADRS2 << endl;
             //cout << "\tOperandEntry #" << dec << operand_buf_id << hex << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
             assert (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1 || operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
@@ -565,6 +568,7 @@ namespace CasHMC
             int tempLNG = downBuffers[i]->LNG;
             delete downBuffers[i];
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+            --i;
           } else {
             if(ConvPacketIntoCMDs(downBuffers[i])) {
               int tempLNG = downBuffers[i]->LNG;
@@ -579,6 +583,7 @@ namespace CasHMC
               numUpdates++;
               delete downBuffers[i];
               downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
+              --i;
             }
           }
         }
@@ -900,7 +905,7 @@ namespace CasHMC
             rwCMD->srcAddr1 = packet->SRCADRS1;
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
-            rwCMD->VoperandBufID = packet->VoperandBufID;
+            rwCMD->vaultOperandBufID = packet->vaultOperandBufID;
           } else if (packet->CMD == ACT_MULT) {
             totalOperandRequests++;
             assert((!packet->SRCADRS1 && packet->SRCADRS2) || (packet->SRCADRS1 && !packet->SRCADRS2));
@@ -912,7 +917,7 @@ namespace CasHMC
             }
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
-            rwCMD->VoperandBufID = packet->VoperandBufID;
+            rwCMD->vaultOperandBufID = packet->vaultOperandBufID;
             rwCMD->computeVault = packet->computeVault;
           }
         }
@@ -1091,7 +1096,7 @@ namespace CasHMC
       numOperands++;
       int operand_buf_id = freeOperandBufIDs.front();
       freeOperandBufIDs.pop_front();
-      pkt->VoperandBufID = operand_buf_id;
+      pkt->vaultOperandBufID = operand_buf_id;
       pkt->computeVault = vaultContID;
       uint64_t dest_addr = pkt->DESTADRS;
       map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
@@ -1138,7 +1143,7 @@ namespace CasHMC
     operandEntry.ready = false;
     operandEntry.multStageCounter = numMultStages;
     freeOperandBufIDs.push_back(i);
-    cout << "VC " << vaultContID << " CUBE " << cubeID << " freeing operand entry " << i << endl;
+    //cout << "VC " << vaultContID << " CUBE " << cubeID << " freeing operand entry " << i << endl;
   }
 
 } //namespace CasHMC
