@@ -36,7 +36,7 @@ namespace CasHMC
     src_cube(0),
     dest_cube(0),
     operandBufID(-1),
-    VoperandBufID(-1)
+    vaultOperandBufID(-1)
   {
   }
 
@@ -64,7 +64,7 @@ namespace CasHMC
     src_cube = dc.src_cube;
     dest_cube = dc.dest_cube;
     operandBufID = dc.operandBufID;
-    VoperandBufID = dc.VoperandBufID;
+    vaultOperandBufID = dc.vaultOperandBufID;
     computeVault = dc.computeVault;
   }
 
