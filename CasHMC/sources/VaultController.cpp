@@ -233,12 +233,12 @@ namespace CasHMC
       } else {
         assert(retCMD->srcAddr1 != 0 && retCMD->srcAddr2 == 0);
         operandEntry.op1_ready = true;
-        numMults++;
       }
       if (operandEntry.op1_ready && operandEntry.op2_ready) {
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         VaultFlowEntry &flowEntry = flowTable[flowID];
+        numMults++;
         operandEntry.ready = true;
       }
       pendingDataSize -= (retCMD->dataSize/16)+1;

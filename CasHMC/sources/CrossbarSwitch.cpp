@@ -19,7 +19,7 @@ namespace CasHMC
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_,unsigned id_, RoutingFunction *rf_ = NULL):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF), cubeID(id_), rf(rf_),
     operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0),
-    numMultStages(5), multPipeOccupancy(0), numAdds(0), numMults(0), multVault(-1)
+    numMultStages(5), multPipeOccupancy(0), numAdds(0), numMults(0), multVault(0)
   {
     dispatchPolicy = ROUND_ROBIN;
     classID << cubeID;
@@ -51,7 +51,7 @@ namespace CasHMC
 
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF),
-    opbufStalls(0), numUpdates(0), numOperands(0), numAdds(0), numMults(0), multVault(-1)
+    opbufStalls(0), numUpdates(0), numOperands(0), numAdds(0), numMults(0), multVault(0)
   {
     dispatchPolicy = ROUND_ROBIN;
     header = "        (CS)";
@@ -433,7 +433,6 @@ namespace CasHMC
                   }
 
                   // For new MULT operations with two operands, choose a vault to dispatch to
-                  UpdateDispatch(curDownBuffers[i]);
                   //it = flowTable.find(dest_addr);
                   //it->second.computeVault = multVault;
                   //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << multVault << " received flow..." << endl;
@@ -459,6 +458,7 @@ namespace CasHMC
                       //cout << "\tAlready reserved for operand entry " << pkt->vaultOperandBufID << endl;
                     }
                     if (downBufferDest[vaultMap]->ReceiveDown(pkt)) {
+                      UpdateDispatch(curDownBuffers[i]);
                       numUpdates++;
                       numMults++;
 #ifdef DEBUG_ROUTING
@@ -631,7 +631,6 @@ namespace CasHMC
                     }*/
 
                     // For new MULT operations with two operands, choose a vault to dispatch to
-                    UpdateDispatch(curDownBuffers[i]);
                     //flowTable[dest_addr].computeVault = multVault;
                     //cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << multVault << " received..." << endl;
                     //cout << "\tSRCCUB " << curDownBuffers[i]->SRCCUB << " DESTCUB " << curDownBuffers[i]->DESTCUB << " ADRS " << hex << curDownBuffers[i]->ADRS << dec << endl;
@@ -641,6 +640,7 @@ namespace CasHMC
                       curDownBuffers[i]->computeVault = multVault;
                       Packet *pkt = new Packet(*curDownBuffers[i]);
                       if (upBufferDest[link1]->currentState != LINK_RETRY && upBufferDest[link1]->ReceiveDown(pkt)) {
+                        UpdateDispatch(curDownBuffers[i]);
                         numUpdates++;
                         numMults++;
                         pkt->RTC = 0;
@@ -678,6 +678,7 @@ namespace CasHMC
                         pkt->SRCCUB = cubeID;
                         i--;
                       } else if (upBufferDest[link2]->currentState != LINK_RETRY && upBufferDest[link2]->ReceiveDown(pkt)) {
+                        UpdateDispatch(curDownBuffers[i]);
                         numUpdates++;
                         pkt->RTC = 0;
                         pkt->URTC = 0;
