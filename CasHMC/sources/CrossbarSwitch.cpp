@@ -539,7 +539,7 @@ namespace CasHMC
                         << " to vault " << vaultMap << endl;
 #endif*/
                       //pkt->ReductGlobalTAG();
-                      vaultControllers[vaultMap]->FreeOperandBuffer(operandBufID);
+                      vaultControllers[multVault]->FreeOperandBuffer(operandBufID);
                       delete pkt;
                     }
                   }
