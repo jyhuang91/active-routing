@@ -46,15 +46,15 @@ namespace CasHMC
     int      children_count[NUM_LINKS]; // number of updates sent to children
     bool     children_gflag[NUM_LINKS];
     bool     g_flag;                    // flag indicating gather command received or not
-    int      vault_count[32/*NUM_VAULTS*/];		// how many requests were sent to each vault
-    bool     vault_gflag[32/*NUM_VAULTS*/];		// how many get requests were sent to each vault
+    int      vault_count[NUM_VAULTS];		// how many requests were sent to each vault
+    bool     vault_gflag[NUM_VAULTS];		// how many get requests were sent to each vault
 
     FlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
       for (int i = 0; i < NUM_LINKS; i++) {
         children_count[i] = 0;
         children_gflag[i] = false;
       }
-      for (int i = 0; i < 32/*NUM_VAULTS*/; i++) {
+      for (int i = 0; i < NUM_VAULTS; i++) {
         vault_count[i] = 0;
         vault_gflag[i] = false;
       }
@@ -64,7 +64,7 @@ namespace CasHMC
         children_count[i] = 0;
         children_gflag[i] = false;
       }
-      for (int i = 0; i < 32/*NUM_VAULTS*/; i++) {
+      for (int i = 0; i < NUM_VAULTS; i++) {
         vault_count[i] = 0;
         vault_gflag[i] = false;
       }
@@ -135,6 +135,7 @@ namespace CasHMC
       uint64_t opbufStalls;
       uint64_t numUpdates;
       uint64_t numOperands;
+      uint64_t numFlows;
 
       int total_ready_operands;
       int total_results_ready;
