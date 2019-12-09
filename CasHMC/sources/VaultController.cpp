@@ -49,13 +49,19 @@ namespace CasHMC
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
-    numUpdates = 0;
+    numADDUpdates = 0;
     numOperands = 0;
     opbufStalls = 0;
     numFlows = 0;
     numAdds = 0;
     numMults = 0;
     cubeID = -1;
+    // Update Counts for MULTs:
+    numLocalReqRecv = 0;
+    numLocalRespRecv = 0;
+    numRemoteReqRecv = 0;
+    numFlowRespSent = 0;
+    numRemoteRespSent = 0;
   }
 
   VaultController::VaultController(ofstream &debugOut_, ofstream &stateOut_, unsigned id, string headerPrefix):
@@ -86,13 +92,19 @@ namespace CasHMC
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
-    numUpdates = 0;
+    numADDUpdates = 0;
     numOperands = 0;
     opbufStalls = 0;
     numFlows = 0;
     numAdds = 0;
     numMults = 0;
     cubeID = -1;
+    // Update Counts for MULTs:
+    numLocalReqRecv = 0;
+    numLocalRespRecv = 0;
+    numRemoteReqRecv = 0;
+    numFlowRespSent = 0;
+    numRemoteRespSent = 0;
   }
 
   VaultController::~VaultController()
@@ -103,22 +115,30 @@ namespace CasHMC
 
     // Debugging Vault-Level Parallelism:
     if (numAdds > 0)
-      cout << "==> CUBE " << cubeID << " VC " << vaultContID << " : " << numAdds << " ADDs "
-        << numUpdates << " updates " << numFlows << " flows" << endl;
+      cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numAdds << " ADDs:" << endl 
+        << "\t" << numADDUpdates << " Updates" << endl
+        << "\t" << numFlowRespSent << " Flow Responses " << endl
+        << "\t" << numFlows << " Flows" << endl;
+        
 
     if (numMults > 0)
-      cout << "==> CUBE " << cubeID << " VC " << vaultContID << " : " << numMults << " MACs "
-        << numUpdates << " updates " << numFlows << " flows" << endl;
+      cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numMults << " MULTs:" << endl 
+        << "\t" << numLocalReqRecv << " Local Requests Received" << endl 
+        << "\t" << numLocalRespRecv << " Local Responses Received" << endl 
+        << "\t" << numRemoteReqRecv << " Remote Requests Received" << endl
+        << "\t" << numRemoteRespSent << " Remote Responses Sent" << endl
+        << "\t" << numFlowRespSent << " Flow Responses Sent" << endl 
+        << "\t" << numFlows << " Flows" << endl;
 
     for (int i = 0; i < operandBuffers.size(); i++)
       if (operandBuffers[i].flowID != 0)
-        cout << "For VC " << vaultContID << " operand entry " << i << "still in use" << endl;
+        cout << "Error: For VC " << vaultContID << " CUBE " << cubeID << " operand entry " << i << "still in use" << endl;
 
 
     map<FlowID, VaultFlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
       FlowID flowID = iter->first;
-      cout << "For VC " << vaultContID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << " and g_flag " << iter->second.g_flag << endl;
+      cout << "Error: For VC " << vaultContID << " CUBE " << cubeID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << " and g_flag " << iter->second.g_flag << endl;
       iter++;
     }
 
@@ -233,6 +253,7 @@ namespace CasHMC
       return true;   // Don't actually send a response yet
     }
     else if (retCMD->packetCMD == ACT_MULT && retCMD->src_cube == cubeID && retCMD->computeVault == vaultContID) {
+      numLocalReqRecv++;
       int voperandID = retCMD->vaultOperandBufID;
       VaultOperandEntry &operandEntry = operandBuffers[voperandID];
       if (retCMD->srcAddr1 == 0) {
@@ -346,6 +367,8 @@ namespace CasHMC
     newPacket->segment = retCMD->segment;
     if (newPacket->CMD != PEI_DOT) {
       consumeRetCMD = ReceiveUp(newPacket);
+      if (newPacket->CMD == ACT_MULT)
+        numRemoteRespSent++;
     } else {
       if (pcuPacket.empty()) {
         newPacket->bufPopDelay = PCU_DELAY;
@@ -488,6 +511,7 @@ namespace CasHMC
         int parent_cube = flowEntry.parent;
         Packet *gpkt = new Packet(RESPONSE, ACT_GET, flowID, vaultContID, 0, 2, trace, parent_cube, parent_cube); // for now, these are the same, signifying that a packet is coming from a vault with vaultContID in src_addr field
         if (ReceiveUp(gpkt)) {
+          numFlowRespSent++;
           gather_sent = true;
         } else {
           delete trace;
@@ -562,11 +586,13 @@ namespace CasHMC
           else if (downBuffers[i]->CMD == ACT_ADD) {
             bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
             if (operand_buf_avail) {
-              numOperands++;
               int operand_buf_id = freeOperandBufIDs.front();
               freeOperandBufIDs.pop_front();
               downBuffers[i]->vaultOperandBufID = operand_buf_id;
               if(ConvPacketIntoCMDs(downBuffers[i])) {
+                numOperands++;
+                numADDUpdates++;
+                numAdds++;
                 uint64_t dest_addr = downBuffers[i]->DESTADRS;
                 map<FlowID, VaultFlowEntry>::iterator it = flowTable.find(dest_addr);
                 if (it == flowTable.end()) {
@@ -595,19 +621,17 @@ namespace CasHMC
 #ifdef DEBUG_ACTIVE
                   cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
 #endif
-                numAdds++;
-                numUpdates++;
                 delete downBuffers[i];
                 downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
                 --i;
               }
               else {
                 freeOperandBufIDs.push_back(operand_buf_id);
-                numOperands--;
               }
             }
           }
           else if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->packetType == RESPONSE) {
+            numLocalRespRecv++;
             assert(downBuffers[i]->computeVault == vaultContID);
             int vault_operand_buf_id = downBuffers[i]->vaultOperandBufID;
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
@@ -626,7 +650,6 @@ namespace CasHMC
             if (operandEntry.op1_ready && operandEntry.op2_ready) {
               operandEntry.ready = true;
               numMults++;
-              numUpdates++;
             }
             int tempLNG = downBuffers[i]->LNG;
             delete downBuffers[i];
@@ -634,6 +657,8 @@ namespace CasHMC
             --i;
           } else {
             if(ConvPacketIntoCMDs(downBuffers[i])) {
+              if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->computeVault != vaultContID)
+                numRemoteReqRecv++;
               int tempLNG = downBuffers[i]->LNG;
               // Jiayi, 02/06, print out if active packet
               if (downBuffers[i]->CMD == ACT_ADD ||
@@ -643,7 +668,6 @@ namespace CasHMC
                 cout << ":::convert active packet " << downBuffers[i]->TAG << " to commands" << endl;
 #endif
               }
-              numUpdates++;
               delete downBuffers[i];
               downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
               --i;

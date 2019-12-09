@@ -94,12 +94,19 @@ namespace CasHMC
       int multPipeOccupancy;
       int numMultStages;
       int numFlows;
+      int numOperands;
       int cubeID;
       int numAdds;
       int numMults;
+      int numResponses;
       uint64_t opbufStalls;
-      uint64_t numUpdates;
-      uint64_t numOperands;
+      uint64_t numADDUpdates;
+      // Update Counts For MULTs:
+      uint64_t numRemoteReqRecv;
+      uint64_t numLocalRespRecv;
+      uint64_t numLocalReqRecv;
+      uint64_t numFlowRespSent;
+      uint64_t numRemoteRespSent;
 
       //
       //Fields
