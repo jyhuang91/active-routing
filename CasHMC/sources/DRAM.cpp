@@ -254,23 +254,25 @@ namespace CasHMC
   void DRAM::UpdateState()
   {
     if(readData != NULL) {
-      dataCyclesLeft--;
+      if (dataCyclesLeft > 0)
+        dataCyclesLeft--;
       if(dataCyclesLeft == 0) {
-        vaultContP->ReturnCommand(readData);
-        readData = NULL;
+        if (vaultContP->ReturnCommand(readData))
+          readData = NULL;
       }
     }
 
     //Send back return command to vault controller
-    if(readReturnCountdown.size() > 0 && readReturnCountdown[0]==0) {
+    if (readData == NULL && readReturnCountdown.size() > 0 && readReturnCountdown[0]==0) {
       readData = readReturnDATA[0];
       dataCyclesLeft = BL;
       readReturnDATA.erase(readReturnDATA.begin());
       readReturnCountdown.erase(readReturnCountdown.begin());
     }
 
-    for(int i=0; i<readReturnCountdown.size(); i++) {
-      readReturnCountdown[i]--;
+    for (int i=0; i<readReturnCountdown.size(); i++) {
+      if (readReturnCountdown[i] > 0)
+        readReturnCountdown[i]--;
     }
   }
 

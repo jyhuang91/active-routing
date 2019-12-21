@@ -45,6 +45,7 @@
 #define ALI(n)		setw(n)<<setfill(' ')
 
 #define CYCLE() "[cycle: " << currentClockCycle << "] "
+#define WARN(str)   std::cerr << "[WARN (" << __FILE__ << ":" << __LINE__ << ")]: " << str << std::endl;
 
 static uint64_t LOG_EPOCH = 1000000;
 static bool DEBUG_SIM = false;		//Debug log file generation (true / false)

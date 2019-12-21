@@ -74,8 +74,8 @@ namespace CasHMC
       virtual ~VaultController();
       void CallbackReceiveDown(Packet *packet, bool chkReceive);
       void CallbackReceiveUp(Packet *packet, bool chkReceive);
-      void ReturnCommand(DRAMCommand *retRead);
-      void MakeRespondPacket(DRAMCommand *retCMD);
+      bool ReturnCommand(DRAMCommand *retRead);
+      bool MakeRespondPacket(DRAMCommand *retCMD);
       void Update();
       void UpdateCountdown();
       bool ConvPacketIntoCMDs(Packet *packet);
