@@ -60,7 +60,9 @@ namespace CasHMC
   }
 
   CrossbarSwitch::~CrossbarSwitch()
-  {	
+  {
+    cout << "CUBE " << cubeID << " had " << opbufStalls << " operand buffer stalls" << endl;
+	
     downBufferDest.clear();
     upBufferDest.clear();
     pendingSegTag.clear(); 
@@ -350,6 +352,8 @@ namespace CasHMC
                     curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
                     i--;
                   }
+                  if (!operand_buf_avail)
+                    opbufStalls++;
                 }
                 else if (curDownBuffers[i]->CMD == ACT_MULT) {  // 03/24/17
                   bool operand_buf_avail = false;
