@@ -996,6 +996,7 @@ namespace CasHMC
     while (iter != flowTable.end()) {
       FlowID flowID = iter->first;
       FlowEntry &flowEntry = iter->second;
+      bool gather_sent = false;
       if (flowEntry.req_count == flowEntry.rep_count && flowEntry.g_flag) {
         int parent_cube = flowEntry.parent;
         int link = rf->findNextLink(inServiceLink, cubeID, parent_cube);
@@ -1003,6 +1004,7 @@ namespace CasHMC
         Packet *gpkt = new Packet(RESPONSE, ACT_GET, flowID, 0, 0, 2, trace, cubeID, parent_cube);
         if (upBufferDest[link]->currentState != LINK_RETRY) {
           if (upBufferDest[link]->ReceiveUp(gpkt)) {
+            gather_sent = true;
 #ifdef COMPUTE
         int *dest = (int *) flowID;
         int org_res = *dest;
@@ -1014,10 +1016,8 @@ namespace CasHMC
         cout << CYCLE() << "AR (flow " << hex << flowID << dec << ") deallocates an flow entry at cube " << cubeID << endl;
         cout << "flow table size: " << flowTable.size() << endl;
 #endif
-            // deallocate flow table entry
-            flowTable.erase(iter);
-            //cout << "CUBE " << cubeID << " FREE FLOW " << hex << flowID << dec << endl;
           } else {
+            delete trace;
             delete gpkt;
           }
         } else {
@@ -1026,7 +1026,13 @@ namespace CasHMC
       }
       if (flowTable.empty())
         break;
-      iter++;
+      if (gather_sent) {
+        // deallocate flow table entry
+        flowTable.erase(iter++);
+        //cout << "CUBE " << cubeID << " FREE FLOW " << hex << flowID << dec << endl;
+      } else {
+        iter++;
+      }
     }
 
     for (int l = 0; l < inputBuffers.size(); l++) {
