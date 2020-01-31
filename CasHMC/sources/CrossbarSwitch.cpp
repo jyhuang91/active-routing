@@ -423,6 +423,8 @@ namespace CasHMC
                       //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << pkt->SRCADRS1 << " SRCADRS2 " << pkt->SRCADRS2 << dec << ") COMPUTE VAULT " << pkt->computeVault << " src2-> VC " << vaultMap << endl;
                       //cout << "\tAlready reserved for operand entry " << pkt->vaultOperandBufID << endl;
                     }
+                    pkt->SRCCUB = cubeID;
+                    pkt->DESTCUB = cubeID;
                     if (downBufferDest[vaultMap]->ReceiveDown(pkt)) {
                       UpdateDispatch(curDownBuffers[i]);
                       numUpdates++;
@@ -451,8 +453,6 @@ namespace CasHMC
                         curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB1;
                       }
                       curDownBuffers[i]->SRCCUB = cubeID;
-                      pkt->SRCCUB = cubeID;
-                      pkt->DESTCUB = cubeID;
                       i--;
                     } else {
                       /*#ifdef DEBUG_UPDATE
