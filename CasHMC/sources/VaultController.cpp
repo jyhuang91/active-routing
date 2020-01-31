@@ -253,6 +253,7 @@ namespace CasHMC
       return true;   // Don't actually send a response yet
     }
     else if (retCMD->packetCMD == ACT_MULT && retCMD->src_cube == cubeID && retCMD->computeVault == vaultContID) {
+      //cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local request" << endl;
       numLocalReqRecv++;
       int voperandID = retCMD->vaultOperandBufID;
       VaultOperandEntry &operandEntry = operandBuffers[voperandID];
@@ -269,6 +270,7 @@ namespace CasHMC
         VaultFlowEntry &flowEntry = flowTable[flowID];
         numMults++;
         operandEntry.ready = true;
+        //cout << "VC " << vaultContID << " CUBE " << cubeID << " local request made operand entry #" << voperandID << " ready" << endl;
       }
       pendingDataSize -= (retCMD->dataSize/16)+1;
       if(retCMD->trace != NULL) {
@@ -367,8 +369,10 @@ namespace CasHMC
     newPacket->segment = retCMD->segment;
     if (newPacket->CMD != PEI_DOT) {
       consumeRetCMD = ReceiveUp(newPacket);
-      if (newPacket->CMD == ACT_MULT)
+      if (newPacket->CMD == ACT_MULT) {
+        //cout << "VC " << vaultContID << " CUBE " << cubeID << " sent a remote response" << endl;
         numRemoteRespSent++;
+      }
     } else {
       if (pcuPacket.empty()) {
         newPacket->bufPopDelay = PCU_DELAY;
@@ -497,6 +501,7 @@ namespace CasHMC
         operandEntry.ready = false;
         operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
+        //cout << "VC " << vaultContID << " CUBE " << cubeID << " freeing operand entry " << i << endl;
       }
     }
 
@@ -535,7 +540,6 @@ namespace CasHMC
       for(int i=0; i<downBuffers.size(); i++) {
         //Make sure that buffer[0] is not virtual tail packet.
         if(downBuffers[i] != NULL) {
-          //cout << "VC " << vaultContID << " CUBE " << cubeID << " UPDATE" << endl;
           if (downBuffers[i]->CMD == ACT_GET) {
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
             // Jiayi, force the ordering for gather after update, 07/02/17
@@ -584,6 +588,7 @@ namespace CasHMC
             continue;
           }
           else if (downBuffers[i]->CMD == ACT_ADD) {
+            //cout << "VC " << vaultContID << " CUBE " << cubeID << " UPDATE" << endl;
             bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
             if (operand_buf_avail) {
               int operand_buf_id = freeOperandBufIDs.front();
@@ -631,13 +636,14 @@ namespace CasHMC
             }
           }
           else if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->packetType == RESPONSE) {
+            //cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local response (from crossbar)" << endl;
             numLocalRespRecv++;
             assert(downBuffers[i]->computeVault == vaultContID);
             int vault_operand_buf_id = downBuffers[i]->vaultOperandBufID;
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
             VaultOperandEntry &operandEntry = operandBuffers[vault_operand_buf_id];
             //cout << "VC " << vaultContID << " CUBE " << cubeID << " RESPONSE DEST " << hex << dest_addr << " SRC1 " << downBuffers[i]->SRCADRS1 << " SRC2 " << downBuffers[i]->SRCADRS2 << endl;
-            //cout << "\tOperandEntry #" << dec << operand_buf_id << hex << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
+            //cout << "\tOperandEntry #" << dec << vault_operand_buf_id << hex << " op.dest " << operandEntry.flowID << " op.src1 = " << operandEntry.src_addr1 << " op.src2 = " << operandEntry.src_addr2 << dec << endl;
             assert (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1 || operandEntry.src_addr2 == downBuffers[i]->SRCADRS2);
             if (operandEntry.src_addr1 == downBuffers[i]->SRCADRS1) {
               //cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << operandEntry.flowID << dec << " updated src1 with " << hex << operandEntry.src_addr1 << dec << endl;
@@ -649,6 +655,7 @@ namespace CasHMC
             }
             if (operandEntry.op1_ready && operandEntry.op2_ready) {
               operandEntry.ready = true;
+              //cout << "VC " << vaultContID << " CUBE " << cubeID << " remote response made operand entry #" << vault_operand_buf_id << " ready" << endl;
               numMults++;
             }
             int tempLNG = downBuffers[i]->LNG;
@@ -657,8 +664,11 @@ namespace CasHMC
             --i;
           } else {
             if(ConvPacketIntoCMDs(downBuffers[i])) {
-              if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->computeVault != vaultContID)
+              if (downBuffers[i]->CMD == ACT_MULT && 
+                  (downBuffers[i]->SRCCUB != cubeID || downBuffers[i]->computeVault != vaultContID)) {
+                //cout << "VC " << vaultContID << " CUBE " << cubeID << " got a remote request" << endl;
                 numRemoteReqRecv++;
+              }
               int tempLNG = downBuffers[i]->LNG;
               // Jiayi, 02/06, print out if active packet
               if (downBuffers[i]->CMD == ACT_ADD ||
@@ -1207,8 +1217,14 @@ namespace CasHMC
       VaultOperandEntry &operandEntry = operandBuffers[operand_buf_id];
       //cout << "VC " << vaultContID << " CUBE " << cubeID << " reserving operand buffer " << operand_buf_id << endl;
       assert(operandEntry.src_addr1 == 0 && operandEntry.src_addr2 == 0);
+      if (!(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready)) {
+        //cout << "VC " << vaultContID << " CUBE " << cubeID << " operand entry #" << operand_buf_id << endl;
+        //cout << "\tflowID " << hex << operandEntry.flowID << dec << " op1 ready " << operandEntry.op1_ready << " op2 ready " << operandEntry.op2_ready <<
+          //" op ready " << operandEntry.ready << endl;
+      }
       assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
       operandEntry.flowID = dest_addr;
+      // Should we go ahead and put these here?
       operandEntry.src_addr1 = pkt->SRCADRS1;
       if (operandEntry.src_addr1 == 0) cout << "VC " << vaultContID << " CUBE " << xbar->cubeID << " got an update with 0 in src1" << endl;
       operandEntry.src_addr2 = pkt->SRCADRS2;
@@ -1235,6 +1251,11 @@ namespace CasHMC
     operandEntry.multStageCounter = numMultStages;
     freeOperandBufIDs.push_back(i);
     //cout << "VC " << vaultContID << " CUBE " << cubeID << " freeing operand entry " << i << endl;
+    if (!(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready)) {
+      //cout << "VC " << vaultContID << " CUBE " << cubeID << " operand entry #" << i << endl;
+      //cout << "\tflowID " << hex << operandEntry.flowID << dec << " op1 ready " << operandEntry.op1_ready << " op2 ready " << operandEntry.op2_ready <<
+        //" op ready " << operandEntry.ready << endl;
+    }
   }
 
 } //namespace CasHMC
