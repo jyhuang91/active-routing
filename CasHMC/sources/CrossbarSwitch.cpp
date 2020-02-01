@@ -79,6 +79,7 @@ namespace CasHMC
     neighborCubeID.clear();
 
     // Debugging Vault-Level Parallelism:
+#ifdef DEBUG_VAULT
     if (numAdds > 0)
       cout << "CUBE " << cubeID << ", " << numAdds << " ADDs: " 
         << numUpdates << " Updates and " << numFlows << " Flows" << endl;
@@ -91,13 +92,13 @@ namespace CasHMC
       if (operandBuffers[i].flowID != 0)
         cout << "Error: For CUBE " << cubeID << " operand entry " << i << "still in use" << endl;
 
-    
     map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
       FlowID flowID = iter->first;
       cout << "Error: For CUBE " << cubeID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << " and g_flag " << iter->second.g_flag << endl;
       iter++;
     }
+#endif
 
     for (int l = 0; l < NUM_LINKS+1; l++) {
       delete inputBuffers[l];
@@ -227,7 +228,9 @@ namespace CasHMC
               --i;
             } else if (curUpBuffers[i]->CMD == ACT_MULT && curUpBuffers[i]->DESTCUB == cubeID) { // Jiayi, 03/24/17
               int computeVault = curUpBuffers[i]->computeVault;
-              //cout << "CUBE " << cubeID << " FW RESPONSE FLOW " << hex << curUpBuffers[i]->DESTADRS << " (ADRS " << curUpBuffers[i]->ADRS << " SRCADRS1 " << curUpBuffers[i]->SRCADRS1 << " SRCADRS2 " << curUpBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << computeVault << endl;
+#ifdef DEBUG_VAULT
+              cout << "CUBE " << cubeID << " FW RESPONSE FLOW " << hex << curUpBuffers[i]->DESTADRS << " (ADRS " << curUpBuffers[i]->ADRS << " SRCADRS1 " << curUpBuffers[i]->SRCADRS1 << " SRCADRS2 " << curUpBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << computeVault << endl;
+#endif
               if (downBufferDest[computeVault]->ReceiveDown(curUpBuffers[i])) {
                 int pktLNG = curUpBuffers[i]->LNG;
                 curUpBuffers.erase(curUpBuffers.begin()+i, curUpBuffers.begin()+i+pktLNG);
@@ -386,7 +389,9 @@ namespace CasHMC
                   map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                   // Half packet coming back around for this cube - already have an operand entry for this one (don't do parent lookup)
                   if (!is_full_pkt) {
-                    //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") COMPUTE VAULT " << curDownBuffers[i]->computeVault << " src2-> VC " << vaultMap << endl;
+#ifdef DEBUG_VAULT
+                    cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") COMPUTE VAULT " << curDownBuffers[i]->computeVault << " src2-> VC " << vaultMap << endl;
+#endif
                     if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
 #ifdef DEBUG_ROUTING
                       cout << "CUBE " << cubeID << ": Route MULT (second) packet " << *curDownBuffers[i] << " to my VaultCtrl" << endl;
@@ -458,14 +463,18 @@ namespace CasHMC
                     if (pkt->SRCADRS1 && pkt->DESTCUB1 == cubeID) {
                       pkt->SRCADRS2 = 0;
                       vaultMap = (curDownBuffers[i]->SRCADRS1 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
-                      //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << pkt->SRCADRS1 << " SRCADRS2 " << pkt->SRCADRS2 << dec << ") COMPUTE VAULT " << pkt->computeVault << " src1-> VC " << vaultMap << endl;
-                      //cout << "\tAlready reserved for operand entry " << pkt->vaultOperandBufID << endl;
+#ifdef DEBUG_VAULT
+                      cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << pkt->SRCADRS1 << " SRCADRS2 " << pkt->SRCADRS2 << dec << ") COMPUTE VAULT " << pkt->computeVault << " src1-> VC " << vaultMap << endl;
+                      cout << "\tAlready reserved for operand entry " << pkt->vaultOperandBufID << endl;
+#endif
                     } else {
                       assert(pkt->SRCADRS2 && pkt->DESTCUB2 == cubeID);
                       pkt->SRCADRS1 = 0;
                       vaultMap = (curDownBuffers[i]->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
-                      //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << pkt->SRCADRS1 << " SRCADRS2 " << pkt->SRCADRS2 << dec << ") COMPUTE VAULT " << pkt->computeVault << " src2-> VC " << vaultMap << endl;
-                      //cout << "\tAlready reserved for operand entry " << pkt->vaultOperandBufID << endl;
+#ifdef DEBUG_VAULT
+                      cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << pkt->SRCADRS1 << " SRCADRS2 " << pkt->SRCADRS2 << dec << ") COMPUTE VAULT " << pkt->computeVault << " src2-> VC " << vaultMap << endl;
+                      cout << "\tAlready reserved for operand entry " << pkt->vaultOperandBufID << endl;
+#endif
                     }
                     pkt->SRCCUB = cubeID;
                     pkt->DESTCUB = cubeID;
@@ -508,9 +517,11 @@ namespace CasHMC
                       delete pkt;
                     }
                   }
+#ifdef DEBUG_VAULT
                   else {
-                    //cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << vaultMap << " has no buffers available..." << endl;
+                    cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << vaultMap << " has no buffers available..." << endl;
                   }
+#endif
                 }
                 else if (curDownBuffers[i]->CMD == ACT_GET) {
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
@@ -629,8 +640,10 @@ namespace CasHMC
                     //map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                     int parent_link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
                     int parent_cube = neighborCubeID[parent_link];
-                    //cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << multVault << " received..." << endl;
-                    //cout << "\tSRCCUB " << curDownBuffers[i]->SRCCUB << " DESTCUB " << curDownBuffers[i]->DESTCUB << " ADRS " << hex << curDownBuffers[i]->ADRS << dec << endl;
+#ifdef DEBUG_VAULT
+                    cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << multVault << " received..." << endl;
+                    cout << "\tSRCCUB " << curDownBuffers[i]->SRCCUB << " DESTCUB " << curDownBuffers[i]->DESTCUB << " ADRS " << hex << curDownBuffers[i]->ADRS << dec << endl;
+#endif
                     assert(vaultControllers[multVault]);
                     int operandBufID = vaultControllers[multVault]->OperandBufferStatus(curDownBuffers[i]);
                     if (operandBufID >= 0) {
@@ -749,9 +762,11 @@ namespace CasHMC
                         delete pkt; // try next time
                       }
                     }
+#ifdef DEBUG_VAULT
                     else {
-                      //cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << multVault << " has no buffers available..." << endl;
+                      cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << multVault << " has no buffers available..." << endl;
                     }
+#endif
                   } else { // no need for spliting
                     if (upBufferDest[link]->currentState != LINK_RETRY && upBufferDest[link]->ReceiveDown(curDownBuffers[i])) {
                       map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
@@ -976,7 +991,9 @@ namespace CasHMC
         operandEntry.counted = false;
         operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
-        //cout << "CUBE " << cubeID << " FREE OPERAND " << i << endl;
+#ifdef DEBUG_VAULT
+        cout << "CUBE " << cubeID << " FREE OPERAND " << i << endl;
+#endif
       }
     }
 
@@ -1029,7 +1046,9 @@ namespace CasHMC
       if (gather_sent) {
         // deallocate flow table entry
         flowTable.erase(iter++);
-        //cout << "CUBE " << cubeID << " FREE FLOW " << hex << flowID << dec << endl;
+#ifdef DEBUG_VAULT
+        cout << "CUBE " << cubeID << " FREE FLOW " << hex << flowID << dec << endl;
+#endif
       } else {
         iter++;
       }

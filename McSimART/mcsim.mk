@@ -25,6 +25,7 @@ endif
 
 #DBG += -DDEBUG_CACHE
 #DBG += -DDEBUG_GATHER
+DBG += -DDEBUG_VAULT
 #OPT = -O3 -DNDEBUG -axS -march=core2 -mtune=core2
 #OPT = -O3 -DNDEBUG -msse2 -march=pentium-m -mfpmath=sse
 #CXXFLAGS = -Wall -Wno-unknown-pragmas -Winline $(DBG) $(OPT) 
