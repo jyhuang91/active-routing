@@ -257,7 +257,6 @@ namespace CasHMC
               assert(it != flowTable.end());
               unsigned vault = curUpBuffers[i]->SRCADRS1;
               int vault_count = flowTable[dest_addr].vault_count[vault];
-              //if (flowTable[dest_addr].opcode == MAC) flowTable[dest_addr].rep_count++;
               flowTable[dest_addr].rep_count += vault_count;
               flowTable[dest_addr].vault_count[vault] = 0;
               int pktLNG = curUpBuffers[i]->LNG;
@@ -361,7 +360,6 @@ namespace CasHMC
                       flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
                       numFlows++;
                       flowTable[dest_addr].parent = parent_cube;
-                      //flowTable[dest_addr].computeVault = vaultMap;
                       flowTable[dest_addr].req_count = 1;
 #if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
                       cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << cubeID << endl;
@@ -370,6 +368,9 @@ namespace CasHMC
                       assert(it->second.parent == parent_cube);
                       it->second.req_count++;
                     }
+#ifdef DEBUG_VAULT
+                    cout << "CUBE " << cubeID << " sending REQUEST to VC " << vaultMap << " for flow " << hex << dest_addr << dec << endl;
+#endif
                     flowTable[dest_addr].vault_count[vaultMap]++;
                     curDownBuffers[i]->SRCCUB = cubeID;
                     curDownBuffers[i]->DESTCUB = cubeID;
@@ -382,10 +383,8 @@ namespace CasHMC
                 }
                 else if (curDownBuffers[i]->CMD == ACT_MULT) {  // 03/24/17
                   bool is_full_pkt = false;
-                  // make sure there is free operand buffer
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                   is_full_pkt = (curDownBuffers[i]->SRCADRS1 != 0 && curDownBuffers[i]->SRCADRS2 != 0);
-                  // Half-packets from other cubes should be forwarded without consulting the flow table
                   map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                   // Half packet coming back around for this cube - already have an operand entry for this one (don't do parent lookup)
                   if (!is_full_pkt) {
@@ -597,6 +596,9 @@ namespace CasHMC
                         all_vc_received = false;
                         Packet *vault_pkt = new Packet(*curDownBuffers[i]);
                         if (downBufferDest[j]->ReceiveDown(vault_pkt)) {
+#ifdef DEBUG_VAULT
+                          cout << "CUBE " << cubeID << " sending GATHER for " << hex << dest_addr << dec << " to VC " << j << endl;
+#endif
                           flowTable[dest_addr].vault_gflag[j] = true;
                           break;
                         } else {
