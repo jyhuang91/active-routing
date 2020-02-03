@@ -12,7 +12,6 @@
 default: all
 
 CXXFLAGS=-g -DDEBUG_LOG
-CXXFLAGS+= -DDEBUG_VAULT
 #DFLAGS=-DDEBUG_FLOW_CONTROL -DDEBUG_GATHER
 #DFLAGS += -DDEBUG_UPDATE -DDEBUG_GATHER
 #DFLAGS += -DCOMPUTE
@@ -35,7 +34,7 @@ REBUILDABLES=$(OBJ) $(EXE_NAME)
 all: CXXFLAGS+=-O3
 all: ${OBJ}
 
-dbg: CXXFLAGS+=-O0
+dbg: CXXFLAGS+=-O0 -DDEBUG_VAULT
 dbg: ${OBJ}
 
 #   $@ target name, $^ target deps, $< matched pattern
