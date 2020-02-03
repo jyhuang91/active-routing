@@ -213,6 +213,8 @@ namespace CasHMC
               map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
               assert(it != flowTable.end());
               OperandEntry &operandEntry = operandBuffers[operand_buf_id];
+              if (!(operandEntry.flowID == dest_addr && operandEntry.src_addr1 == src_addr))
+                cout << "CUBE " << cubeID << " got an ADD RESPONSE from VC " << curUpBuffers[i]->computeVault << " for flow " << hex << operandEntry.flowID << dec << endl;
               assert(operandEntry.flowID == dest_addr && operandEntry.src_addr1 == src_addr);
               assert(!operandEntry.op1_ready && !operandEntry.op2_ready && !operandEntry.ready);
               operandEntry.op1_ready = true;
@@ -518,6 +520,9 @@ namespace CasHMC
                   }
 #ifdef DEBUG_VAULT
                   else {
+                    // Should we call UpdateDispatcher() here? If we could not get an operand from the current multVault, should we try
+                    // the next one? Maybe we need a new function for this situation to tell the dispatcher that a vault doesn't have
+                    // any operand buffers available?
                     cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << vaultMap << " has no buffers available..." << endl;
                   }
 #endif
@@ -652,7 +657,6 @@ namespace CasHMC
                       curDownBuffers[i]->computeVault = multVault;
                       Packet *pkt = new Packet(*curDownBuffers[i]);
                       if (upBufferDest[link1]->currentState != LINK_RETRY && upBufferDest[link1]->ReceiveDown(pkt)) {
-                        UpdateDispatch(curDownBuffers[i]);
                         numUpdates++;
                         numMults++;
                         pkt->RTC = 0;
@@ -712,8 +716,8 @@ namespace CasHMC
                         pkt->halfPkt1 = true;
                         pkt->LINES = 1;
                         i--;
-                      } else if (upBufferDest[link2]->currentState != LINK_RETRY && upBufferDest[link2]->ReceiveDown(pkt)) {
                         UpdateDispatch(curDownBuffers[i]);
+                      } else if (upBufferDest[link2]->currentState != LINK_RETRY && upBufferDest[link2]->ReceiveDown(pkt)) {
                         numUpdates++;
                         numMults++;
                         pkt->RTC = 0;
@@ -754,6 +758,7 @@ namespace CasHMC
                         pkt->halfPkt2 = true;
                         pkt->LINES = 1;
                         i--;
+                        UpdateDispatch(curDownBuffers[i]);
                       } else {
 /*#ifdef DEBUG_UPDATE
                         cout << "CUBE " << cubeID << " downBufferDest Receive fails for packet " << *pkt

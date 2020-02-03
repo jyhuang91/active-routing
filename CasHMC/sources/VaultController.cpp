@@ -242,7 +242,10 @@ namespace CasHMC
   //
   bool VaultController::MakeRespondPacket(DRAMCommand *retCMD)
   {
-    if(retCMD->packetCMD == ACT_ADD) {
+    if(retCMD->packetCMD == ACT_ADD || retCMD->packetCMD == ACT_DOT) {
+#ifdef DEBUG_VAULT
+      cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local ADD/DOT request" << endl;
+#endif
       // Search for the operand entry and mark as ready
       int voperandID = retCMD->vaultOperandBufID;
       VaultOperandEntry &operandEntry = operandBuffers[voperandID];
@@ -256,7 +259,7 @@ namespace CasHMC
     }
     else if (retCMD->packetCMD == ACT_MULT && retCMD->src_cube == cubeID && retCMD->computeVault == vaultContID) {
 #ifdef DEBUG_VAULT
-      cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local request" << endl;
+      cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local MULT request" << endl;
       numLocalReqRecv++;
 #endif
       int voperandID = retCMD->vaultOperandBufID;
@@ -324,10 +327,11 @@ namespace CasHMC
           newPacket->active = true;
           newPacket->DESTADRS = retCMD->destAddr;
           newPacket->SRCADRS1 = retCMD->srcAddr1;
+          newPacket->computeVault = retCMD->computeVault;
           newPacket->operandBufID = retCMD->operandBufID;
           newPacket->vaultOperandBufID = retCMD->vaultOperandBufID;
           //newPacket->LNG = 2; // comment it, LNG is calculated from dataSize/16+1
-#ifdef DEBUG_UPDATE
+#if defined(DEBUG_UPDATE) || defined(DEBUG_VAULT)
           cout << "Active ADD packet " << *newPacket << " is returned for (ADD) operand addr " << hex << newPacket->SRCADRS1 << dec << endl;
 #endif
 
@@ -597,7 +601,7 @@ namespace CasHMC
             --i;
             continue;
           }
-          else if (downBuffers[i]->CMD == ACT_ADD) {
+          else if (downBuffers[i]->CMD == ACT_ADD || downBuffers[i]->CMD == ACT_DOT) {
 #ifdef DEBUG_VAULT
             cout << "VC " << vaultContID << " CUBE " << cubeID << " ADD UPDATE" << endl;
 #endif
