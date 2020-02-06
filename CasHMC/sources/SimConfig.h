@@ -78,7 +78,7 @@ static int CPU_LINKS = 4;//1;
 //
 //Jiayi, Operand Buffer
 //
-static int MAX_OPERAND_BUF = 128;
+static int MAX_OPERAND_BUF = 4 /*NUM_VAULTS*/;
 
 //
 //Link(SerDes) setting

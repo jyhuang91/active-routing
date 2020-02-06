@@ -535,6 +535,11 @@ namespace CasHMC
           delete gpkt;
         }
       }
+#ifdef DEBUG_VAULT
+      else if (flowEntry.g_flag) {
+        cout << "VC " << vaultContID << " CUBE " << cubeID << " FLOW " << hex << flowID << dec << " has g_flag but req_count = " << flowEntry.req_count << " && rep_count = " << flowEntry.rep_count << endl;
+      }
+#endif
       if (flowTable.empty()) // To Troy: why need the check and break here? Whether the while loop check includes this scenario?
         break;
       if (gather_sent) {
@@ -578,6 +583,9 @@ namespace CasHMC
             if (!is_inorder) {
               continue;
             }
+#ifdef DEBUG_VAULT
+            cout << "VC " << vaultContID << " CUBE " << cubeID << " GATHER FLOW " << hex << dest_addr << dec << endl;
+#endif
             map<FlowID, VaultFlowEntry>::iterator it  = flowTable.find(dest_addr);
             if(it == flowTable.end()) cout << "HMC " << cubeID <<" at VC "<<vaultContID<<" assert for flow " << hex << dest_addr << dec << endl;
             assert(it != flowTable.end());
