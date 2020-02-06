@@ -254,7 +254,11 @@ namespace CasHMC
               if(it == flowTable.end()) cout << "HMC " << cubeID <<" assert for flow " << hex << dest_addr << dec << endl;
               assert(it != flowTable.end());
               unsigned vault = curUpBuffers[i]->SRCADRS1;
+#ifdef DEBUG_VAULT
+              cout << "CUBE " << cubeID << " received VC " << vault << " GATHER for FLOW " << hex << dest_addr << dec << endl;
+#endif
               int vault_count = flowTable[dest_addr].vault_count[vault];
+              assert(flowTable[dest_addr].vault_count[vault] > 0);
               flowTable[dest_addr].rep_count += vault_count;
               flowTable[dest_addr].vault_count[vault] = 0;
               int pktLNG = curUpBuffers[i]->LNG;
@@ -392,27 +396,12 @@ namespace CasHMC
                     }
                     continue;
                   }
-                  int parent_link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
-                  int parent_cube = neighborCubeID[parent_link];
-                  if (it == flowTable.end()) {
-                    flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
-                    numFlows++;
-                    flowTable[dest_addr].parent = parent_cube;
-                    flowTable[dest_addr].req_count = 1;
-#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
-                    cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << cubeID << endl;
-#endif
-                  } else {
-                    assert(it->second.parent == parent_cube);
-                    it->second.req_count++;
-                  }
 
                   assert(vaultControllers[multVault]);
                   int operandBufID = vaultControllers[multVault]->OperandBufferStatus(curDownBuffers[i]);
                   if (operandBufID >= 0) {
                     curDownBuffers[i]->computeVault = multVault;
                     assert(is_full_pkt);
-                    flowTable[dest_addr].vault_count[multVault]++;
                     // make sure there is free operand buffer
                     Packet *pkt = new Packet(*curDownBuffers[i]);
                     if (pkt->SRCADRS1 && pkt->DESTCUB1 == cubeID) {
@@ -433,7 +422,23 @@ namespace CasHMC
                     }
                     pkt->SRCCUB = cubeID;
                     pkt->DESTCUB = cubeID;
+                    // Only update this when the packet is sent down:
                     if (downBufferDest[vaultMap]->ReceiveDown(pkt)) {
+                      flowTable[dest_addr].vault_count[multVault]++;
+                      int parent_link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
+                      int parent_cube = neighborCubeID[parent_link];
+                      if (it == flowTable.end()) {
+                        flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
+                        numFlows++;
+                        flowTable[dest_addr].parent = parent_cube;
+                        flowTable[dest_addr].req_count = 1;
+#if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
+                        cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << cubeID << endl;
+#endif
+                      } else {
+                        assert(it->second.parent == parent_cube);
+                        it->second.req_count++;
+                      }
                       UpdateDispatch(curDownBuffers[i]);
                       numUpdates++;
                       numMults++;
@@ -472,14 +477,15 @@ namespace CasHMC
                       delete pkt;
                     }
                   }
-#ifdef DEBUG_VAULT
                   else {
+#ifdef DEBUG_VAULT
                     // Should we call UpdateDispatcher() here? If we could not get an operand from the current multVault, should we try
                     // the next one? Maybe we need a new function for this situation to tell the dispatcher that a vault doesn't have
                     // any operand buffers available?
-                    cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << vaultMap << " has no buffers available..." << endl;
-                  }
+                    cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << vaultMap << " has no buffers available... multVault = " << multVault << endl;
 #endif
+                    UpdateDispatch(curDownBuffers[i]);
+                  }
                 }
                 else if (curDownBuffers[i]->CMD == ACT_GET) {
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
@@ -700,7 +706,7 @@ namespace CasHMC
                     }
 #ifdef DEBUG_VAULT
                     else {
-                      cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << multVault << " has no buffers available..." << endl;
+                      cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << multVault << " has no buffers available...multVault = " << multVault << endl;
                     }
 #endif
                   } else { // no need for spliting
@@ -910,6 +916,11 @@ namespace CasHMC
           delete gpkt;
         }
       }
+#ifdef DEBUG_VAULT
+      else if (flowEntry.g_flag) {
+        cout << "CUBE " << cubeID << " FLOW " << hex << flowID << dec << " has g_flag but req_count = " << flowEntry.req_count << " && rep_count = " << flowEntry.rep_count << endl;
+      }
+#endif
       if (flowTable.empty())
         break;
       if (gather_sent) {
