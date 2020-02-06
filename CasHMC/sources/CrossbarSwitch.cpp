@@ -77,7 +77,6 @@ namespace CasHMC
     neighborCubeID.clear();
 
     // Debugging Vault-Level Parallelism:
-#ifdef DEBUG_VAULT
     if (numAdds > 0)
       cout << "CUBE " << cubeID << ", " << numAdds << " ADDs: " 
         << numUpdates << " Updates and " << numFlows << " Flows" << endl;
@@ -96,7 +95,6 @@ namespace CasHMC
       cout << "Error: For CUBE " << cubeID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << " and g_flag " << iter->second.g_flag << endl;
       iter++;
     }
-#endif
 
     for (int l = 0; l < NUM_LINKS+1; l++) {
       delete inputBuffers[l];

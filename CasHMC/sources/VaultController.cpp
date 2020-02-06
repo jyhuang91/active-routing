@@ -114,7 +114,6 @@ namespace CasHMC
     writeDataCountdown.clear();
 
     // Debugging Vault-Level Parallelism:
-#ifdef DEBUG_VAULT
     if (numAdds > 0)
       cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numAdds << " ADDs:" << endl 
         << "\t" << numADDUpdates << " Updates" << endl
@@ -142,7 +141,6 @@ namespace CasHMC
       cout << "Error: For VC " << vaultContID << " CUBE " << cubeID << " found flow table still has req_count " << iter->second.req_count << " and rep_count " << iter->second.rep_count << " and g_flag " << iter->second.g_flag << endl;
       iter++;
     }
-#endif
 
     // For vault-level parallelism:
     flowTable.clear();
@@ -260,8 +258,8 @@ namespace CasHMC
     else if (retCMD->packetCMD == ACT_MULT && retCMD->src_cube == cubeID && retCMD->computeVault == vaultContID) {
 #ifdef DEBUG_VAULT
       cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local MULT request" << endl;
-      numLocalReqRecv++;
 #endif
+      numLocalReqRecv++;
       int voperandID = retCMD->vaultOperandBufID;
       VaultOperandEntry &operandEntry = operandBuffers[voperandID];
       if (retCMD->srcAddr1 == 0) {
@@ -278,8 +276,8 @@ namespace CasHMC
         operandEntry.ready = true;
 #ifdef DEBUG_VAULT
         cout << "VC " << vaultContID << " CUBE " << cubeID << " local request made operand entry #" << voperandID << " ready" << endl;
-        numMults++;
 #endif
+        numMults++;
       }
       pendingDataSize -= (retCMD->dataSize/16)+1;
       if(retCMD->trace != NULL) {
@@ -382,8 +380,8 @@ namespace CasHMC
       if (newPacket->CMD == ACT_MULT) {
 #ifdef DEBUG_VAULT
         cout << "VC " << vaultContID << " CUBE " << cubeID << " sent a remote response" << endl;
-        numRemoteRespSent++;
 #endif
+        numRemoteRespSent++;
       }
     } else {
       if (pcuPacket.empty()) {
@@ -654,8 +652,8 @@ namespace CasHMC
           else if (downBuffers[i]->CMD == ACT_MULT && downBuffers[i]->packetType == RESPONSE) {
 #ifdef DEBUG_VAULT
             cout << "VC " << vaultContID << " CUBE " << cubeID << " got a local response (from crossbar)" << endl;
-            numLocalRespRecv++;
 #endif
+            numLocalRespRecv++;
             assert(downBuffers[i]->computeVault == vaultContID);
             int vault_operand_buf_id = downBuffers[i]->vaultOperandBufID;
             uint64_t dest_addr = downBuffers[i]->DESTADRS;
@@ -681,8 +679,8 @@ namespace CasHMC
               operandEntry.ready = true;
 #ifdef DEBUG_VAULT
               cout << "VC " << vaultContID << " CUBE " << cubeID << " remote response made operand entry #" << vault_operand_buf_id << " ready" << endl;
-              numMults++;
 #endif
+              numMults++;
             }
             int tempLNG = downBuffers[i]->LNG;
             delete downBuffers[i];
@@ -690,13 +688,13 @@ namespace CasHMC
             --i;
           } else {
             if(ConvPacketIntoCMDs(downBuffers[i])) {
-#ifdef DEBUG_VAULT
               if (downBuffers[i]->CMD == ACT_MULT && 
                   (downBuffers[i]->SRCCUB != cubeID || downBuffers[i]->computeVault != vaultContID)) {
+#ifdef DEBUG_VAULT
                 cout << "VC " << vaultContID << " CUBE " << cubeID << " got a remote request" << endl;
+#endif
                 numRemoteReqRecv++;
               }
-#endif
               int tempLNG = downBuffers[i]->LNG;
               // Jiayi, 02/06, print out if active packet
               if (downBuffers[i]->CMD == ACT_ADD ||
