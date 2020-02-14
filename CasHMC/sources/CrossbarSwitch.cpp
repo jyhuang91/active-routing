@@ -47,6 +47,10 @@ namespace CasHMC
       inputBuffers.push_back(new InputBuffer(debugOut_, stateOut_, l, classID.str()));
       inputBuffers[l]->xbar = this;
     }
+
+    for (int i = 1; i <= NUM_VAULTS; i++) {
+      hist[i] = 0;
+    }
   }
 
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_):
@@ -60,6 +64,9 @@ namespace CasHMC
 
     downBufferDest = vector<DualVectorObject<Packet, Packet> *>(NUM_VAULTS, NULL);
     upBufferDest = vector<LinkMaster *>(NUM_LINKS, NULL);
+    for (int i = 1; i <= NUM_VAULTS; i++) {
+      hist[i] = 0;
+    }
   }
 
   CrossbarSwitch::~CrossbarSwitch()
@@ -77,6 +84,15 @@ namespace CasHMC
     neighborCubeID.clear();
 
     // Debugging Vault-Level Parallelism:
+    if (numMults > 0) {
+      cout << endl << "Histogram for Cube " << cubeID << " (all flows):" << endl;
+
+      for (map<int,int>::iterator it = hist.begin(); it != hist.end(); it++) {
+        if (it->second > 0)
+          cout << it->first << "\t" << it->second << endl;
+      }
+    }
+
     if (numAdds > 0)
       cout << "CUBE " << cubeID << ", " << numAdds << " ADDs: " 
         << numUpdates << " Updates and " << numFlows << " Flows" << endl;
@@ -128,7 +144,7 @@ namespace CasHMC
   //
   void CrossbarSwitch::Update()
   {
-
+    int total_gather_count = 0;
     //Upstream buffer state, RESPONSE have higher priority
     for (int l = 0; l < inputBuffers.size(); l++) {
       int ll = (upLink + l) % inputBuffers.size();
@@ -261,6 +277,8 @@ namespace CasHMC
               assert(flowTable[dest_addr].vault_count[vault] > 0);
               flowTable[dest_addr].rep_count += vault_count;
               flowTable[dest_addr].vault_count[vault] = 0;
+              flowTable[dest_addr].gather_count++;
+              total_gather_count++;
               int pktLNG = curUpBuffers[i]->LNG;
               delete curUpBuffers[i]->trace;
               delete curUpBuffers[i];
@@ -297,6 +315,15 @@ namespace CasHMC
       }
     }
     upLink = (upLink + 1) % inputBuffers.size();
+
+    map<FlowID, FlowEntry>::iterator tmp_iter = flowTable.begin();
+    while (tmp_iter != flowTable.end()) {
+      FlowEntry &flowEntry = tmp_iter->second;
+      if (flowEntry.gather_count > 0) flowEntry.hist[flowEntry.gather_count]++;
+      flowEntry.gather_count = 0;
+      tmp_iter++;
+    }
+    if (total_gather_count > 0) hist[total_gather_count]++;
 
     //Downstream buffer state, only for REQUEST
     for (int l = 0; l < inputBuffers.size() - 1; l++) {
@@ -354,6 +381,7 @@ namespace CasHMC
                     int parent_cube = neighborCubeID[link];
                     if (it == flowTable.end()) {
                       flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
+                      AddFlowToHist();
                       numFlows++;
                       flowTable[dest_addr].parent = parent_cube;
                       flowTable[dest_addr].req_count = 1;
@@ -429,6 +457,7 @@ namespace CasHMC
                       int parent_cube = neighborCubeID[parent_link];
                       if (it == flowTable.end()) {
                         flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
+                        AddFlowToHist();
                         numFlows++;
                         flowTable[dest_addr].parent = parent_cube;
                         flowTable[dest_addr].req_count = 1;
@@ -634,6 +663,7 @@ namespace CasHMC
                         map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                         if (it == flowTable.end()) {
                           flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
+                          AddFlowToHist();
                           numFlows++;
                           flowTable[dest_addr].parent = parent_cube;
                           flowTable[dest_addr].req_count = 1;
@@ -674,6 +704,7 @@ namespace CasHMC
                         map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                         if (it == flowTable.end()) {
                           flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
+                          AddFlowToHist();
                           numFlows++;
                           flowTable[dest_addr].parent = parent_cube;
                           flowTable[dest_addr].req_count = 1;
@@ -716,6 +747,7 @@ namespace CasHMC
                       int parent_cube = neighborCubeID[parent_link];
                       if (it == flowTable.end()) {
                         flowTable.insert(make_pair(dest_addr, FlowEntry(MAC)));
+                        AddFlowToHist();
                         numFlows++;
                         flowTable[dest_addr].parent = parent_cube;
                         flowTable[dest_addr].req_count = 1;
@@ -774,6 +806,7 @@ namespace CasHMC
                     int parent_cube = neighborCubeID[parent_link];
                     if (it == flowTable.end()) {
                       flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
+                      AddFlowToHist();
                       numFlows++;
                       flowTable[dest_addr].parent = parent_cube;
                       flowTable[dest_addr].req_count = 1;
@@ -897,6 +930,12 @@ namespace CasHMC
         if (upBufferDest[link]->currentState != LINK_RETRY) {
           if (upBufferDest[link]->ReceiveUp(gpkt)) {
             gather_sent = true;
+            cout << endl << "Histogram for Cube " << cubeID << " (flow " << hex << flowID << dec << "):" << endl;
+
+            for (map<int,int>::iterator it = flowEntry.hist.begin(); it != flowEntry.hist.end(); it++) {
+              if (it->second > 0)
+                cout << it->first << "\t" << it->second << endl;
+            }
 #ifdef COMPUTE
         int *dest = (int *) flowID;
         int org_res = *dest;
@@ -1144,6 +1183,14 @@ namespace CasHMC
       assert(vault);
       vault->PrintBuffers();
     }
+  }
+
+  // have to initialize all possibilities to 0
+  void CrossbarSwitch::AddFlowToHist() {
+    for (int i = num_bins+1; i <= num_bins + NUM_VAULTS; i++) {
+      hist[i] = 0;
+    }
+    num_bins += NUM_VAULTS;
   }
 
 } //namespace CasHMC

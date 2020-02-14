@@ -49,7 +49,10 @@ namespace CasHMC
     int      vault_count[NUM_VAULTS];		// how many requests were sent to each vault
     bool     vault_gflag[NUM_VAULTS];		// how many get requests were sent to each vault
 
-    FlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
+    map<int, int> hist;                 // Each flow should keep track of how many GATHERs it gets in a single cycle
+    int gather_count;
+
+    FlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false), gather_count(0) {
       for (int i = 0; i < NUM_LINKS; i++) {
         children_count[i] = 0;
         children_gflag[i] = false;
@@ -57,9 +60,11 @@ namespace CasHMC
       for (int i = 0; i < NUM_VAULTS; i++) {
         vault_count[i] = 0;
         vault_gflag[i] = false;
+        if (i == 0) hist[NUM_VAULTS] = 0;
+        else hist[i] = 0;
       }
     }
-    FlowEntry(Opcode op) : opcode(op), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
+    FlowEntry(Opcode op) : opcode(op), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false), gather_count(0) {
       for (int i = 0; i < NUM_LINKS; i++) {
         children_count[i] = 0;
         children_gflag[i] = false;
@@ -67,6 +72,8 @@ namespace CasHMC
       for (int i = 0; i < NUM_VAULTS; i++) {
         vault_count[i] = 0;
         vault_gflag[i] = false;
+        if (i == 0) hist[NUM_VAULTS] = 0;
+        else hist[i] = 0;
       }
     }
   };
@@ -100,7 +107,7 @@ namespace CasHMC
       void UpdateDispatch(Packet* p);
       void PrintState();
       void PrintBuffers();
-
+      void AddFlowToHist();
       //
       //Fields
       //
@@ -123,6 +130,9 @@ namespace CasHMC
       int numMults;
       int multVault;
       char dispatchPolicy;
+
+      map<int, int> hist;       // track stats for all the flows
+      int num_bins;
 
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
