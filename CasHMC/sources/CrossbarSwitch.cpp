@@ -62,6 +62,11 @@ namespace CasHMC
   CrossbarSwitch::~CrossbarSwitch()
   {
     cout << "CUBE " << cubeID << " had " << opbufStalls << " operand buffer stalls" << endl;
+
+    cout << "Histogram:" << endl;
+    for (map<int, long long>::iterator it = hist.begin(); it != hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
 	
     downBufferDest.clear();
     upBufferDest.clear();
@@ -784,11 +789,15 @@ namespace CasHMC
     }
     downLink = (downLink + 1) % (inputBuffers.size() - 1);
 
+    // HERE: Capture how many operands became available this cycle
+    int available_operands = 0;
+
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
+        available_operands++;
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
@@ -833,6 +842,13 @@ namespace CasHMC
         freeOperandBufIDs.push_back(i);
       }
     }
+
+    if (hist.find(available_operands) != hist.end()) {
+      hist[available_operands]++;
+    } else {
+      hist[available_operands] = 1;
+    }
+
     // 2) reply ready GET response to commit the flow
     map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {

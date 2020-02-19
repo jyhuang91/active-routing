@@ -106,6 +106,8 @@ namespace CasHMC
       deque<int> freeOperandBufIDs;
       int operandBufSize;
 
+      map<int, long long> hist;
+
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
       RoutingFunction *rf;
