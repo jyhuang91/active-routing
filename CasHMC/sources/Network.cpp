@@ -235,17 +235,12 @@ namespace CasHMC
     hmcs.clear();
     hmcLinks.clear();
     allLinks.clear();
-/*
-    cout << "NETWORK Histograms" << endl;
-    cout << "Ready Operands Histogram:" << endl;
-    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
-      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+
+    cout << "Network Histogram" << endl;
+    for (map<int, long long>::iterator iter = hist.begin(); iter != hist.end(); iter++) {
+      cout << "Bin: " << iter->first << " freq: " << iter->second << endl;
     }
-    cout << "Results Ready Histogram:" << endl;
-    for (map<int, long long>::iterator it = results_ready_hist.begin(); it != results_ready_hist.end(); it++) {
-      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
-    }
-*/
+
     outstandRequests.clear();   // Jiayi, 02/07
 
     if (rf) {

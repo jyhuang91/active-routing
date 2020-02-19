@@ -66,6 +66,11 @@ namespace CasHMC
   {
     cout << "CUBE " << cubeID << " had " << opbufStalls << " operand buffer stalls" << endl;
 
+    cout << "Histogram:" << endl;
+    for (map<int, long long>::iterator it = hist.begin(); it != hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+	
     downBufferDest.clear();
     upBufferDest.clear();
     pendingSegTag.clear();
@@ -910,8 +915,8 @@ namespace CasHMC
     }
     downLink = (downLink + 1) % (inputBuffers.size() - 1);
 
-    total_ready_operands   = 0;
-    total_results_ready    = 0;
+    // HERE: Capture how many operands became available this cycle
+    int available_operands = 0;
 
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
@@ -922,10 +927,7 @@ namespace CasHMC
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
-        if (operandEntry.counted == false) {
-          total_ready_operands++;
-          operandEntry.counted = true;
-        }
+        available_operands++;
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
@@ -1008,15 +1010,10 @@ namespace CasHMC
       }
     }
 
-    if (ready_operands_hist.find(total_ready_operands) != ready_operands_hist.end()) {
-      ready_operands_hist[total_ready_operands]++;
+    if (hist.find(available_operands) != hist.end()) {
+      hist[available_operands]++;
     } else {
-      ready_operands_hist[total_ready_operands] = 1;
-    }
-    if (results_ready_hist.find(total_results_ready) != results_ready_hist.end()) {
-      results_ready_hist[total_results_ready]++;
-    } else {
-      results_ready_hist[total_results_ready] = 1;
+      hist[available_operands] = 1;
     }
 
     // 2) reply ready GET response to commit the flow
