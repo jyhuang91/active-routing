@@ -113,6 +113,11 @@ namespace CasHMC
     writeDataToSend.clear();
     writeDataCountdown.clear();
 
+    cout << "VC " << vaultContID << " Histogram:" << endl;
+    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+
     // Debugging Vault-Level Parallelism:
     if (numAdds > 0)
       cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numAdds << " ADDs:" << endl 
@@ -448,6 +453,10 @@ namespace CasHMC
         pcuPacket.erase(pcuPacket.begin());
     }
 
+    int ready_operands   = 0;
+    int updates_received = 0;
+    int commands_issued  = 0;
+
     // Free available operand buffer entries and commit ready flows:
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
@@ -455,6 +464,11 @@ namespace CasHMC
     for (int i = 0; i < operandBuffers.size(); i++) {
       VaultOperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
+        // Counting the number of operands available for this cycle
+        if (operandEntry.counted == false) {
+          ready_operands++;
+          operandEntry.counted = true;
+        }
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         VaultFlowEntry &flowEntry = flowTable[flowID];
@@ -510,11 +524,18 @@ namespace CasHMC
         operandEntry.op2_ready = false;
         operandEntry.ready = false;
         operandEntry.multStageCounter = numMultStages;
+        operandEntry.counted = false;
         freeOperandBufIDs.push_back(i);
 #ifdef DEBUG_VAULT
         cout << "VC " << vaultContID << " CUBE " << cubeID << " freeing operand entry " << i << endl;
 #endif
       }
+    }
+
+    if (ready_operands_hist.find(ready_operands) != ready_operands_hist.end()) {
+      ready_operands_hist[ready_operands]++;
+    } else {
+      ready_operands_hist[ready_operands] = 1;
     }
 
     // 2) reply ready GET response to commit the flow
@@ -611,12 +632,18 @@ namespace CasHMC
 #ifdef DEBUG_VAULT
             cout << "VC " << vaultContID << " CUBE " << cubeID << " ADD UPDATE" << endl;
 #endif
+            // Count each incoming packet once
+            if (downBuffers[i]->counted == false) {
+              updates_received++;
+              downBuffers[i]->counted = true;
+            }
             bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
             if (operand_buf_avail) {
               int operand_buf_id = freeOperandBufIDs.front();
               freeOperandBufIDs.pop_front();
               downBuffers[i]->vaultOperandBufID = operand_buf_id;
               if(ConvPacketIntoCMDs(downBuffers[i])) {
+                commands_issued++;
                 numOperands++;
                 numADDUpdates++;
                 numAdds++;
@@ -695,6 +722,11 @@ namespace CasHMC
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
             --i;
           } else {
+            if (downBuffers[i]->CMD == ACT_MULT && 
+                downBuffers[i]->counted == false) {
+              updates_received++;
+              downBuffers[i]->counted = true;
+            }
             if(ConvPacketIntoCMDs(downBuffers[i])) {
               if (downBuffers[i]->CMD == ACT_MULT && 
                   (downBuffers[i]->SRCCUB != cubeID || downBuffers[i]->computeVault != vaultContID)) {
@@ -702,6 +734,9 @@ namespace CasHMC
                 cout << "VC " << vaultContID << " CUBE " << cubeID << " got a remote request" << endl;
 #endif
                 numRemoteReqRecv++;
+              }
+              if (downBuffers[i]->CMD == ACT_MULT) { 
+                commands_issued++;
               }
               int tempLNG = downBuffers[i]->LNG;
               // Jiayi, 02/06, print out if active packet
@@ -719,6 +754,24 @@ namespace CasHMC
           }
         }
       }
+    }
+
+    // Update Histograms...
+
+    if (ready_operands_hist.find(ready_operands) != ready_operands_hist.end()) {
+      ready_operands_hist[ready_operands]++;
+    } else {
+      ready_operands_hist[ready_operands] = 1;
+    }
+    if (updates_received_hist.find(updates_received) != updates_received_hist.end()) {
+      updates_received_hist[updates_received]++;
+    } else {
+      updates_received_hist[updates_received] = 1;
+    }
+    if (commands_issued_hist.find(commands_issued) != commands_issued_hist.end()) {
+      commands_issued_hist[commands_issued]++;
+    } else {
+      commands_issued_hist[commands_issued] = 1;
     }
 
     //Send response packet to crossbar switch

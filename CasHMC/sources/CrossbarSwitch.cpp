@@ -66,8 +66,16 @@ namespace CasHMC
   {
     cout << "CUBE " << cubeID << " had " << opbufStalls << " operand buffer stalls" << endl;
 
-    cout << "Histogram:" << endl;
-    for (map<int, long long>::iterator it = hist.begin(); it != hist.end(); it++) {
+    cout << "Ready Operands Histogram:" << endl;
+    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+    cout << "Updates Received Histogram:" << endl;
+    for (map<int, long long>::iterator it = updates_received_hist.begin(); it != updates_received_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+    cout << "Commands Issued (to DRAM) Histogram:" << endl;
+    for (map<int, long long>::iterator it = commands_issued_hist.begin(); it != commands_issued_hist.end(); it++) {
       cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
 	
@@ -207,7 +215,7 @@ namespace CasHMC
             }
           }
           else {
-            if (curUpBuffers[i]->CMD == ACT_ADD ||
+/*            if (curUpBuffers[i]->CMD == ACT_ADD ||
                 curUpBuffers[i]->CMD == ACT_DOT) {
               assert(curUpBuffers[i]->DESTCUB == cubeID);
               uint64_t dest_addr = curUpBuffers[i]->DESTADRS;
@@ -232,6 +240,8 @@ namespace CasHMC
               curUpBuffers.erase(curUpBuffers.begin() + i, curUpBuffers.begin() + i + pktLNG);
               --i;
             } else if (curUpBuffers[i]->CMD == ACT_MULT && curUpBuffers[i]->DESTCUB == cubeID) { // Jiayi, 03/24/17
+*/
+            if (curUpBuffers[i]->CMD == ACT_MULT && curUpBuffers[i]->DESTCUB == cubeID) { // Jiayi, 03/24/17
               int computeVault = curUpBuffers[i]->computeVault;
 #ifdef DEBUG_VAULT
               cout << "CUBE " << cubeID << " FW RESPONSE FLOW " << hex << curUpBuffers[i]->DESTADRS << " (ADRS " << curUpBuffers[i]->ADRS << " SRCADRS1 " << curUpBuffers[i]->SRCADRS1 << " SRCADRS2 " << curUpBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << computeVault << endl;
@@ -264,6 +274,30 @@ namespace CasHMC
 #ifdef DEBUG_VAULT
               cout << "CUBE " << cubeID << " received VC " << vault << " GATHER for FLOW " << hex << dest_addr << dec << endl;
 #endif
+
+              // Also, count up the frequencies from that histograms (signal that the vault is done counting)
+              for (map<int, long long>::iterator it = vaultControllers[vault]->ready_operands_hist.begin(); it != vaultControllers[vault]->ready_operands_hist.end(); it++) {
+                if (ready_operands_hist.find(it->first) != ready_operands_hist.end()) {
+                  ready_operands_hist[it->first] += it->second;
+                } else {
+                  ready_operands_hist[it->first] = it->second;
+                }
+              }
+              for (map<int, long long>::iterator it = vaultControllers[vault]->updates_received_hist.begin(); it != vaultControllers[vault]->updates_received_hist.end(); it++) {
+                if (updates_received_hist.find(it->first) != updates_received_hist.end()) {
+                  updates_received_hist[it->first] += it->second;
+                } else {
+                  updates_received_hist[it->first] = it->second;
+                }
+              }
+              for (map<int, long long>::iterator it = vaultControllers[vault]->commands_issued_hist.begin(); it != vaultControllers[vault]->commands_issued_hist.end(); it++) {
+                if (commands_issued_hist.find(it->first) != commands_issued_hist.end()) {
+                  commands_issued_hist[it->first] += it->second;
+                } else {
+                  commands_issued_hist[it->first] = it->second;
+                }
+              }
+
               int vault_count = flowTable[dest_addr].vault_count[vault];
               assert(flowTable[dest_addr].vault_count[vault] > 0);
               flowTable[dest_addr].rep_count += vault_count;
@@ -915,9 +949,6 @@ namespace CasHMC
     }
     downLink = (downLink + 1) % (inputBuffers.size() - 1);
 
-    // HERE: Capture how many operands became available this cycle
-    int available_operands = 0;
-
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
 
@@ -927,7 +958,6 @@ namespace CasHMC
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
-        available_operands++;
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
@@ -1008,12 +1038,6 @@ namespace CasHMC
         cout << "CUBE " << cubeID << " FREE OPERAND " << i << endl;
 #endif
       }
-    }
-
-    if (hist.find(available_operands) != hist.end()) {
-      hist[available_operands]++;
-    } else {
-      hist[available_operands] = 1;
     }
 
     // 2) reply ready GET response to commit the flow

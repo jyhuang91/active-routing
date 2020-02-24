@@ -94,6 +94,9 @@ namespace CasHMC
       bool segment;
       unsigned reqDataSize;
 
+      // For tracking how often updates come into a cube
+      bool counted;
+
       //Packet Common Fields
       unsigned CUB, TAG, LNG;
       PacketCommandType CMD;

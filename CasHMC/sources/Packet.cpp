@@ -25,7 +25,8 @@ namespace CasHMC
     LNG(lng),
     trace(lat),
     SRCCUB(src),
-    DESTCUB(dest)
+    DESTCUB(dest),
+    counted(false)
   {
     bufPopDelay=1;
     CRCtable[256]=0;
@@ -96,7 +97,8 @@ namespace CasHMC
     LNG(lng),
     trace(lat),
     SRCCUB(src),
-    DESTCUB(dest)
+    DESTCUB(dest),
+    counted(false)
   {
     bufPopDelay = 1;
     CRCtable[256] = 0;
@@ -162,7 +164,8 @@ namespace CasHMC
     SRCCUB(src),
     DESTCUB(dest1),
     DESTCUB1(dest1),
-    DESTCUB2(dest2)
+    DESTCUB2(dest2),
+    counted(false)
   {
     bufPopDelay = 1;
     CRCtable[256] = 0;
@@ -220,7 +223,8 @@ namespace CasHMC
     LNG(lng),
     trace(lat),
     SRCCUB(src),
-    DESTCUB(dest)
+    DESTCUB(dest),
+    counted(false)
   {
     bufPopDelay=1;
     CRCtable[256]=0;

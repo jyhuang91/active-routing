@@ -218,12 +218,26 @@ namespace CasHMC
     }
     hmcCntLinks.clear();
     for (int i = 0; i < hmcs.size(); ++i) {
-      // Compound all the histograms into the network histogram:
-      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->hist.begin(); iter != hmcs[i]->crossbarSwitch->hist.end(); iter++) {
-        if (hist.find(iter->first) != hist.end()) {
-          hist[iter->first] += iter->second;
+      // Compound all the histograms into the network histograms:
+      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->ready_operands_hist.begin(); iter != hmcs[i]->crossbarSwitch->ready_operands_hist.end(); iter++) {
+        if (ready_operands_hist.find(iter->first) != ready_operands_hist.end()) {
+          ready_operands_hist[iter->first] += iter->second;
         } else {
-          hist[iter->first] = iter->second;
+          ready_operands_hist[iter->first] = iter->second;
+        }
+      }
+      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->updates_received_hist.begin(); iter != hmcs[i]->crossbarSwitch->updates_received_hist.end(); iter++) {
+        if (updates_received_hist.find(iter->first) != updates_received_hist.end()) {
+          updates_received_hist[iter->first] += iter->second;
+        } else {
+          updates_received_hist[iter->first] = iter->second;
+        }
+      }
+      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->commands_issued_hist.begin(); iter != hmcs[i]->crossbarSwitch->commands_issued_hist.end(); iter++) {
+        if (commands_issued_hist.find(iter->first) != commands_issued_hist.end()) {
+          commands_issued_hist[iter->first] += iter->second;
+        } else {
+          commands_issued_hist[iter->first] = iter->second;
         }
       }
       delete hmcs[i];
@@ -236,9 +250,18 @@ namespace CasHMC
     hmcLinks.clear();
     allLinks.clear();
 
-    cout << "Network Histogram" << endl;
-    for (map<int, long long>::iterator iter = hist.begin(); iter != hist.end(); iter++) {
-      cout << "Bin: " << iter->first << " freq: " << iter->second << endl;
+    cout << "NETWORK Histograms" << endl;
+    cout << "Ready Operands Histogram:" << endl;
+    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+    cout << "Updates Received Histogram:" << endl;
+    for (map<int, long long>::iterator it = updates_received_hist.begin(); it != updates_received_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+    cout << "Commands Issued (to DRAM) Histogram:" << endl;
+    for (map<int, long long>::iterator it = commands_issued_hist.begin(); it != commands_issued_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
 
     outstandRequests.clear();   // Jiayi, 02/07

@@ -58,9 +58,10 @@ namespace CasHMC
     bool     op2_ready;
     bool     ready;
     char     multStageCounter;
+    bool     counted;
 
-    VaultOperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false) {}
-    VaultOperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false) {}
+    VaultOperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false), counted(false) {}
+    VaultOperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false), counted(false) {}
   };
 
   class VaultController : public DualVectorObject<Packet, Packet>
@@ -107,6 +108,10 @@ namespace CasHMC
       uint64_t numLocalReqRecv;
       uint64_t numFlowRespSent;
       uint64_t numRemoteRespSent;
+
+      map<int, long long> ready_operands_hist;
+      map<int, long long> updates_received_hist;
+      map<int, long long> commands_issued_hist;
 
       //
       //Fields
