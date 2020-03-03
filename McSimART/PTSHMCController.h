@@ -39,14 +39,14 @@ namespace PinPthread
       void update_hmc(uint64_t cycles);
       bool pre_processing(uint64_t curr_time);
       int hmc_transaction_type(LocalQueueElement *);
-      int get_src_cubeID(int num); 
+      int get_src_cubeID(int num);
       void display();
 
       //elements
       Component * directory;  // uplink
       NoC * noc;
       vector<LocalQueueElement *> resp_queue;
-      std::multimap<uint64_t, LocalQueueElement *> active_update_event;  // Jiayi, <tran_id, lqe>, 03/28/17 
+      std::multimap<uint64_t, LocalQueueElement *> active_update_event;  // Jiayi, <tran_id, lqe>, 03/28/17
       std::multimap<uint64_t, LocalQueueElement *> active_gather_event;  // Jiayi, <dest_addr, lqe>, 03/28/17
       std::multimap<uint64_t, LocalQueueElement *> pending_active_updates;
       std::map<LocalQueueElement *, LocalQueueElement *> active_mult_twins;
@@ -63,6 +63,7 @@ namespace PinPthread
       bool display_os_page_usage;
       uint64_t num_reqs;
       uint64_t page_sz_base_bit;
+      bool kernel_offloading;
 
       uint32_t num_mcs_log2;
       uint32_t interleave_xor_base_bit; // Jiayi, for addressing, 04/16/17
