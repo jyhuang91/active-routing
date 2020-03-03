@@ -127,6 +127,13 @@ uint32_t Component::get_param_uint64(const string & param, const string & prefix
 
 
 
+bool Component::get_param_bool(const string & param, const string & prefix, bool def) const
+{
+  return mcsim->pts->get_param_bool(prefix + param, def);
+}
+
+
+
 string Component::get_param_str(const string & param) const
 {
   if (mcsim->pts->params.find(prefix_str()+param) != mcsim->pts->params.end())
@@ -295,7 +302,7 @@ uint32_t GlobalEventQueue::process_event()
 //        for (uint32_t j = 0; j < core->hthreads.size(); j++)
 //        {
 //          Hthread * hthread = core->hthreads[j];
-//          if (/*hthread->mem_acc.empty() == true && 
+//          if (/*hthread->mem_acc.empty() == true &&
 //                core->is_active[j] == true &&*/
 //              hthread->active == true)
 //          {

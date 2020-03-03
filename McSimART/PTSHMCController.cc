@@ -1,6 +1,6 @@
 #include"PTSHMCController.h"
-#include "PTSCache.h" 
-#include "PTSRBoL.h" 
+#include "PTSCache.h"
+#include "PTSRBoL.h"
 #include "PTSXbar.h"
 #include <assert.h>
 #include <iomanip>
@@ -28,6 +28,7 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   interleave_xor_base_bit = get_param_uint64("interleave_xor_base_bit", 20);
   cube_interleave_base_bit = get_param_uint64("cube_interleave_base_bit", 32);
   num_mcs_log2 = log2(mcsim->pts->get_param_uint64("pts.num_mcs", 2));
+  kernel_offloading = get_param_bool("kernel_offloading", "pts.", false);
 
   uint32_t num_mcs = get_param_uint64("num_mcs", "pts.", 4);
   uint32_t net_dim = get_param_uint64("net_dim", "pts.", 4);
@@ -126,7 +127,7 @@ PTSHMCController::~PTSHMCController()
 
 void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lqele, Component * from)
 {
-  
+
   if (event_time % process_interval != 0)
   {
     event_time += process_interval - event_time % process_interval;
@@ -347,7 +348,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       break;
 
   }
- 
+
   uint64_t req_id = -1;
   if (lqele->type != et_art_get)
   {
@@ -513,7 +514,14 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           assert(lqele->from.top());
           num_update_sent++;
           total_update_stall_time += curr_time - tran_buf.begin()->first;
-          noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+          if (kernel_offloading)
+          {
+            lqele->from.top()->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+          }
+          else
+          {
+            noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+          }
           pending_active_updates.insert(make_pair(flow_id, lqele));
           active_update_event.erase(req_id);
         }
@@ -568,7 +576,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
 
   vector<pair<uint64_t, PacketCommandType> > &served_trans = hmc_net->get_serv_trans(net_num);
   bool have_trans = !served_trans.empty();
-  
+
   if (have_trans)
   {
     bool is_active = false;
@@ -691,7 +699,14 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         case et_art_get:
         case et_pei_dot:
         case et_pei_atomic:
-          noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
+          if (kernel_offloading)
+          {
+            (*iter)->from.top()->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
+          }
+          else
+          {
+            noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
+          }
           resp_queue.erase(iter);
           break;
         default:
@@ -699,7 +714,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           assert(0);
       }
     }
-    break; //as of now process only one in one cycle 
+    break; //as of now process only one in one cycle
   }
 
   update_hmc(1);
@@ -795,7 +810,7 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
 
     case et_art_dot:
       return ART_DOT; // Jiayi, type 6 is ACTIVE_PEI
-    
+
     case et_pei_dot:
       return PEI_DOT;
 

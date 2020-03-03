@@ -164,6 +164,8 @@ namespace PinPthread
       bool           was_nack;
       bool           mimick_inorder;
 
+      bool kernel_offloading;
+
       std::queue< std::pair<ins_type, uint64_t> > mem_acc;
       O3Queue * o3queue;
       O3ROB   * o3rob;
