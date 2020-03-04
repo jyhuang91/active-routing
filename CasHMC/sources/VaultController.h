@@ -110,8 +110,11 @@ namespace CasHMC
       uint64_t numRemoteRespSent;
 
       map<int, long long> ready_operands_hist;
+      int total_ready_operands;
+      map<int, long long> results_ready_hist;
+      int total_results_ready;
       map<int, long long> updates_received_hist;
-      map<int, long long> commands_issued_hist;
+      int total_updates_received;
 
       //
       //Fields

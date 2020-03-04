@@ -67,8 +67,11 @@ namespace CasHMC
       vector<HMC *> hmcs;
 
       map<int, long long> ready_operands_hist;
+      int network_ready_operands;
+      map<int, long long> results_ready_hist;
+      int network_results_ready;
       map<int, long long> updates_received_hist;
-      map<int, long long> commands_issued_hist;
+      int network_updates_received;
 
       vector<Link *> allLinks;
 

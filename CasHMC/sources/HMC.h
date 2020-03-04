@@ -46,6 +46,14 @@ namespace CasHMC
       //Fields
       //
       uint64_t clockTuner;
+      int total_ready_operands;
+      int total_results_ready;
+      int total_updates_received;
+      // These map a clock cycle to the number of these events that occured in that
+      // cycle for this cube
+      map<long long, int> ready_operands_counts;
+      map<long long, int> results_ready_counts;
+      map<long long, int> updates_received_counts;
 
       vector<LinkSlave *> downLinkSlaves;
       vector<LinkMaster *> upLinkMasters;
