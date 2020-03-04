@@ -124,10 +124,6 @@ namespace CasHMC
       int multVault;
       char dispatchPolicy;
 
-      map<int, long long> ready_operands_hist;
-      map<int, long long> updates_received_hist;
-      map<int, long long> commands_issued_hist;
-
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
       RoutingFunction *rf;

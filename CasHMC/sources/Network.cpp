@@ -217,29 +217,44 @@ namespace CasHMC
       delete hmcCntLinks[l];
     }
     hmcCntLinks.clear();
+
+    // Sum up all the histograms for all the hmcs
+    // Go through each clock cycle. For each cycle, sum all the counts from the cubes
+    for (int c = 0; c <= currentClockCycle; c++) {
+      network_ready_operands   = 0;
+      network_results_ready    = 0;
+      network_updates_received = 0;
+      for (int i = 0; i < hmcs.size(); i++) {
+        if (hmcs[i]->ready_operands_counts.find(c) != hmcs[i]->ready_operands_counts.end()) {
+          network_ready_operands += hmcs[i]->ready_operands_counts[c];
+        }
+        if (hmcs[i]->results_ready_counts.find(c) != hmcs[i]->results_ready_counts.end()) {
+          network_results_ready += hmcs[i]->results_ready_counts[c];
+        }
+        if (hmcs[i]->updates_received_counts.find(c) != hmcs[i]->updates_received_counts.end()) {
+          network_updates_received += hmcs[i]->updates_received_counts[c];
+        }
+      }
+
+      // Then, use those counts to put into the histogram
+      if (ready_operands_hist.find(network_ready_operands) != ready_operands_hist.end()) {
+        ready_operands_hist[network_ready_operands]++;
+      } else {
+        ready_operands_hist[network_ready_operands] = 1;
+      }
+      if (results_ready_hist.find(network_results_ready) != results_ready_hist.end()) {
+        results_ready_hist[network_results_ready]++;
+      } else {
+        results_ready_hist[network_results_ready] = 1;
+      }
+      if (updates_received_hist.find(network_updates_received) != updates_received_hist.end()) {
+        updates_received_hist[network_updates_received]++;
+      } else {
+        updates_received_hist[network_updates_received] = 1;
+      }
+    }
+
     for (int i = 0; i < hmcs.size(); ++i) {
-      // Compound all the histograms into the network histograms:
-      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->ready_operands_hist.begin(); iter != hmcs[i]->crossbarSwitch->ready_operands_hist.end(); iter++) {
-        if (ready_operands_hist.find(iter->first) != ready_operands_hist.end()) {
-          ready_operands_hist[iter->first] += iter->second;
-        } else {
-          ready_operands_hist[iter->first] = iter->second;
-        }
-      }
-      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->updates_received_hist.begin(); iter != hmcs[i]->crossbarSwitch->updates_received_hist.end(); iter++) {
-        if (updates_received_hist.find(iter->first) != updates_received_hist.end()) {
-          updates_received_hist[iter->first] += iter->second;
-        } else {
-          updates_received_hist[iter->first] = iter->second;
-        }
-      }
-      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->commands_issued_hist.begin(); iter != hmcs[i]->crossbarSwitch->commands_issued_hist.end(); iter++) {
-        if (commands_issued_hist.find(iter->first) != commands_issued_hist.end()) {
-          commands_issued_hist[iter->first] += iter->second;
-        } else {
-          commands_issued_hist[iter->first] = iter->second;
-        }
-      }
       delete hmcs[i];
       for (int j = 0; j < hmcLinks[i].size(); ++j) {
         delete hmcLinks[i][j];
@@ -255,12 +270,12 @@ namespace CasHMC
     for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
       cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
-    cout << "Updates Received Histogram:" << endl;
-    for (map<int, long long>::iterator it = updates_received_hist.begin(); it != updates_received_hist.end(); it++) {
+    cout << "Results Ready Histogram:" << endl;
+    for (map<int, long long>::iterator it = results_ready_hist.begin(); it != results_ready_hist.end(); it++) {
       cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
-    cout << "Commands Issued (to DRAM) Histogram:" << endl;
-    for (map<int, long long>::iterator it = commands_issued_hist.begin(); it != commands_issued_hist.end(); it++) {
+    cout << "Updates Received Histogram:" << endl;
+    for (map<int, long long>::iterator it = updates_received_hist.begin(); it != updates_received_hist.end(); it++) {
       cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
 
@@ -855,6 +870,9 @@ namespace CasHMC
     DownLinkUpdate(true);
 
     //HMC update at CPU clock cycle, modifed by Jiayi, 02/28/17
+    network_ready_operands = 0;
+    network_results_ready = 0;
+    network_updates_received = 0;
     for(int i = 0; i < hmcs.size(); ++i){
       if(gCpuClkPeriod <= tCK) {
         if(gCpuClkPeriod*dramTuner[i] > tCK*hmcs[i]->clockTuner) {

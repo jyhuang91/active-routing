@@ -66,19 +66,6 @@ namespace CasHMC
   {
     cout << "CUBE " << cubeID << " had " << opbufStalls << " operand buffer stalls" << endl;
 
-    cout << "Ready Operands Histogram:" << endl;
-    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
-      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
-    }
-    cout << "Updates Received Histogram:" << endl;
-    for (map<int, long long>::iterator it = updates_received_hist.begin(); it != updates_received_hist.end(); it++) {
-      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
-    }
-    cout << "Commands Issued (to DRAM) Histogram:" << endl;
-    for (map<int, long long>::iterator it = commands_issued_hist.begin(); it != commands_issued_hist.end(); it++) {
-      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
-    }
-	
     downBufferDest.clear();
     upBufferDest.clear();
     pendingSegTag.clear();
@@ -274,29 +261,6 @@ namespace CasHMC
 #ifdef DEBUG_VAULT
               cout << "CUBE " << cubeID << " received VC " << vault << " GATHER for FLOW " << hex << dest_addr << dec << endl;
 #endif
-
-              // Also, count up the frequencies from that histograms (signal that the vault is done counting)
-              for (map<int, long long>::iterator it = vaultControllers[vault]->ready_operands_hist.begin(); it != vaultControllers[vault]->ready_operands_hist.end(); it++) {
-                if (ready_operands_hist.find(it->first) != ready_operands_hist.end()) {
-                  ready_operands_hist[it->first] += it->second;
-                } else {
-                  ready_operands_hist[it->first] = it->second;
-                }
-              }
-              for (map<int, long long>::iterator it = vaultControllers[vault]->updates_received_hist.begin(); it != vaultControllers[vault]->updates_received_hist.end(); it++) {
-                if (updates_received_hist.find(it->first) != updates_received_hist.end()) {
-                  updates_received_hist[it->first] += it->second;
-                } else {
-                  updates_received_hist[it->first] = it->second;
-                }
-              }
-              for (map<int, long long>::iterator it = vaultControllers[vault]->commands_issued_hist.begin(); it != vaultControllers[vault]->commands_issued_hist.end(); it++) {
-                if (commands_issued_hist.find(it->first) != commands_issued_hist.end()) {
-                  commands_issued_hist[it->first] += it->second;
-                } else {
-                  commands_issued_hist[it->first] = it->second;
-                }
-              }
 
               int vault_count = flowTable[dest_addr].vault_count[vault];
               assert(flowTable[dest_addr].vault_count[vault] > 0);
