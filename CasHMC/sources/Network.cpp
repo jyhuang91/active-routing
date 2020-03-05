@@ -183,6 +183,32 @@ namespace CasHMC
     plotScriptOut.flush();	plotScriptOut.close();
     resultOut.flush();		resultOut.close();
 
+    // Sum up all the histograms for all the hmcs
+    // Go through each clock cycle. For each cycle, sum all the counts from the cubes
+    for (int c = 0; c <= currentClockCycle; c++) {
+      network_ready_operands   = 0;
+      network_results_ready    = 0;
+      for (int i = 0; i < hmcs.size(); i++) {
+        if (hmcs[i]->ready_operands_counts.find(c) != hmcs[i]->ready_operands_counts.end()) {
+          network_ready_operands += hmcs[i]->ready_operands_counts[c];
+        }
+        if (hmcs[i]->results_ready_counts.find(c) != hmcs[i]->results_ready_counts.end()) {
+          network_results_ready += hmcs[i]->results_ready_counts[c];
+        }
+      }
+
+      // Then, use those counts to put into the histogram
+      if (ready_operands_hist.find(network_ready_operands) != ready_operands_hist.end()) {
+        ready_operands_hist[network_ready_operands]++;
+      } else {
+        ready_operands_hist[network_ready_operands] = 1;
+      }
+      if (results_ready_hist.find(network_results_ready) != results_ready_hist.end()) {
+        results_ready_hist[network_results_ready]++;
+      } else {
+        results_ready_hist[network_results_ready] = 1;
+      }
+    }
     //Jiayi, 02/28/17
     for (int i = 0; i < hmcConts.size(); ++i) {
       delete hmcConts[i];
@@ -202,6 +228,16 @@ namespace CasHMC
     hmcs.clear();
     hmcLinks.clear();
     allLinks.clear();
+
+    cout << "NETWORK Histograms" << endl;
+    cout << "Ready Operands Histogram:" << endl;
+    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+    cout << "Results Ready Histogram:" << endl;
+    for (map<int, long long>::iterator it = results_ready_hist.begin(); it != results_ready_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
 
     outstandRequests.clear();   // Jiayi, 02/07
 

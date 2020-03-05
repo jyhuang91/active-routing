@@ -785,12 +785,19 @@ namespace CasHMC
     }
     downLink = (downLink + 1) % (inputBuffers.size() - 1);
 
+    total_ready_operands   = 0;
+    total_results_ready    = 0;
+
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
     bool startedMult = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
+        if (operandEntry.counted == false) {
+          total_ready_operands++;
+          operandEntry.counted = true;
+        }
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
@@ -816,6 +823,7 @@ namespace CasHMC
         }
         //cout << CYCLE() << "cubeID " << cubeID << " ...Finised an operand" << endl;
         flowEntry.rep_count++;
+        total_results_ready++;
 #ifdef COMPUTE
         int org_res, new_res;
         if (flowEntry.opcode == ADD) {
@@ -853,10 +861,23 @@ namespace CasHMC
         operandEntry.op1_ready = false;
         operandEntry.op2_ready = false;
         operandEntry.ready = false;
+        operandEntry.counted = false;
         operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
       }
     }
+
+    if (ready_operands_hist.find(total_ready_operands) != ready_operands_hist.end()) {
+      ready_operands_hist[total_ready_operands]++;
+    } else {
+      ready_operands_hist[total_ready_operands] = 1;
+    }
+    if (results_ready_hist.find(total_results_ready) != results_ready_hist.end()) {
+      results_ready_hist[total_results_ready]++;
+    } else {
+      results_ready_hist[total_results_ready] = 1;
+    }
+
     // 2) reply ready GET response to commit the flow
     map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
