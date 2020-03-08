@@ -790,7 +790,10 @@ namespace CasHMC
 
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
+
+    // Only one mult or add can start per cycle
     bool startedMult = false;
+    bool finishedAdd = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
@@ -819,6 +822,16 @@ namespace CasHMC
               continue;
             else
               multPipeOccupancy--;
+          }
+        }
+        else if (flowEntry.opcode == ADD) {
+          if (finishedAdd == false) {
+            // Process the one ADD for this cycle
+            finishedAdd = true;
+          }
+          else {
+            // Process next cycle
+            continue;
           }
         }
         //cout << CYCLE() << "cubeID " << cubeID << " ...Finised an operand" << endl;
