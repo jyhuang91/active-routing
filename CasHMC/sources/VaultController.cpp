@@ -465,7 +465,10 @@ namespace CasHMC
     // Free available operand buffer entries and commit ready flows:
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
+
+    // Only one add and one mult can start on a cycle
     bool startedMult = false;
+    bool finishedAdd = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       VaultOperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
@@ -495,6 +498,15 @@ namespace CasHMC
               continue;
             else
               multPipeOccupancy--;
+          }
+        }
+        else if (flowEntry.opcode == ADD) {
+          // Only one add per cycle
+          if (finishedAdd == false) {
+            finishedAdd = true;
+          }
+          else {
+            continue;
           }
         }
         //cout << CYCLE() << "VC " << vaultContID << " CUBE " << cubeID << " Finished MULT from operand  " << i << endl;
