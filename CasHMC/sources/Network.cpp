@@ -186,28 +186,27 @@ namespace CasHMC
     // Sum up all the histograms for all the hmcs
     // Go through each clock cycle. For each cycle, sum all the counts from the cubes
     for (int c = 0; c <= currentClockCycle; c++) {
-      network_ready_operands   = 0;
-      network_results_ready    = 0;
       for (int i = 0; i < hmcs.size(); i++) {
-        if (hmcs[i]->ready_operands_counts.find(c) != hmcs[i]->ready_operands_counts.end()) {
-          network_ready_operands += hmcs[i]->ready_operands_counts[c];
-        }
-        if (hmcs[i]->results_ready_counts.find(c) != hmcs[i]->results_ready_counts.end()) {
-          network_results_ready += hmcs[i]->results_ready_counts[c];
-        }
-      }
+        int hmc_ready_operands = hmcs[i]->ready_operands_counts[c];
+        int hmc_results_ready = hmcs[i]->results_ready_counts[c];
+        int hmc_updates_received = hmcs[i]->updates_received_counts[c];
 
-      // Then, use those counts to put into the histogram
-      if (ready_operands_hist.find(network_ready_operands) != ready_operands_hist.end()) {
-        ready_operands_hist[network_ready_operands]++;
-      } else {
-        ready_operands_hist[network_ready_operands] = 1;
-      }
-      if (results_ready_hist.find(network_results_ready) != results_ready_hist.end()) {
-        results_ready_hist[network_results_ready]++;
-      } else {
-        results_ready_hist[network_results_ready] = 1;
-      }
+        if (ready_operands_hist.find(hmc_ready_operands) != ready_operands_hist.end()) {
+          ready_operands_hist[hmc_ready_operands]++;
+        } else {
+          ready_operands_hist[hmc_ready_operands] = 1;
+        }
+        if (results_ready_hist.find(hmc_results_ready) != results_ready_hist.end()) {
+          results_ready_hist[hmc_results_ready]++;
+        } else {
+          results_ready_hist[hmc_results_ready] = 1;
+        }
+/*        if (updates_received_hist.find(hmc_updates_received) != updates_received_hist.end()) {
+          updates_received_hist[hmc_updates_received]++;
+        } else {
+          updates_received_hist[hmc_updates_received] = 1;
+        }
+*/      }
     }
     //Jiayi, 02/28/17
     for (int i = 0; i < hmcConts.size(); ++i) {
