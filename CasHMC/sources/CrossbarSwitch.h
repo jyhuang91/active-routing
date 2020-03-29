@@ -97,7 +97,8 @@ namespace CasHMC
       void CallbackReceiveDown(Packet *downEle, bool chkReceive);
       void CallbackReceiveUp(Packet *upEle, bool chkReceive);
       void Update();
-      void UpdateDispatch(Packet* p);
+      void Dispatch(Packet* p, bool is_local);
+      void UpdateDispatch(Packet* p, bool was_success);
       void PrintState();
       void PrintBuffers();
 
@@ -123,6 +124,7 @@ namespace CasHMC
       int numMults;
       int multVault;
       char dispatchPolicy;
+      bool vault_available[NUM_VAULTS];
 
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;

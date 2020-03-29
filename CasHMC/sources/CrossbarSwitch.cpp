@@ -21,7 +21,7 @@ namespace CasHMC
     operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0),
     numMultStages(5), multPipeOccupancy(0), numAdds(0), numMults(0), multVault(0), numFlows(0)
   {
-    dispatchPolicy = ROUND_ROBIN;
+    dispatchPolicy = CONTENT_AWARE;
     classID << cubeID;
     header = "        (CS";
     header += classID.str() + ")";
@@ -47,19 +47,27 @@ namespace CasHMC
       inputBuffers.push_back(new InputBuffer(debugOut_, stateOut_, l, classID.str()));
       inputBuffers[l]->xbar = this;
     }
+
+    for (int i = 0; i < NUM_VAULTS; i++) {
+      vault_available[i] = true;
+    }
   }
 
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF),
     opbufStalls(0), numUpdates(0), numOperands(0), numAdds(0), numMults(0), multVault(0), numFlows(0)
   {
-    dispatchPolicy = ROUND_ROBIN;
+    dispatchPolicy = CONTENT_AWARE;
     header = "        (CS)";
 
     inServiceLink = 0; // Jiayi, FIXME: why Ram set it to 0? originally -1
 
     downBufferDest = vector<DualVectorObject<Packet, Packet> *>(NUM_VAULTS, NULL);
     upBufferDest = vector<LinkMaster *>(NUM_LINKS, NULL);
+
+    for (int i = 0; i < NUM_VAULTS; i++) {
+      vault_available[i] = true;
+    }
   }
 
   CrossbarSwitch::~CrossbarSwitch()
@@ -402,6 +410,9 @@ namespace CasHMC
                     continue;
                   }
 
+                  // Update multVault before querying
+                  Dispatch(curDownBuffers[i], true);
+
                   assert(vaultControllers[multVault]);
                   int operandBufID = vaultControllers[multVault]->OperandBufferStatus(curDownBuffers[i]);
                   if (operandBufID >= 0) {
@@ -444,7 +455,7 @@ namespace CasHMC
                         assert(it->second.parent == parent_cube);
                         it->second.req_count++;
                       }
-                      UpdateDispatch(curDownBuffers[i]);
+                      UpdateDispatch(curDownBuffers[i], true);
                       numUpdates++;
                       numMults++;
 #ifdef DEBUG_ROUTING
@@ -489,7 +500,7 @@ namespace CasHMC
                     // any operand buffers available?
                     cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << vaultMap << " has no buffers available... multVault = " << multVault << endl;
 #endif
-                    UpdateDispatch(curDownBuffers[i]);
+                    UpdateDispatch(curDownBuffers[i], false);
                   }
                 }
                 else if (curDownBuffers[i]->CMD == ACT_GET) {
@@ -611,8 +622,9 @@ namespace CasHMC
                     //map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                     int parent_link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
                     int parent_cube = neighborCubeID[parent_link];
+                    Dispatch(curDownBuffers[i], false);
 #ifdef DEBUG_VAULT
-                    cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") to COMPUTE VAULT " << multVault << " received..." << endl;
+                    cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " DESTCUB1 " << curDownBuffers[i]->DESTCUB1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << " DESTCUB2 " << curDownBuffers[i]->DESTCUB2 << ") to COMPUTE VAULT " << multVault << " received..." << endl;
                     cout << "\tSRCCUB " << curDownBuffers[i]->SRCCUB << " DESTCUB " << curDownBuffers[i]->DESTCUB << " ADRS " << hex << curDownBuffers[i]->ADRS << dec << endl;
 #endif
                     assert(vaultControllers[multVault]);
@@ -658,7 +670,6 @@ namespace CasHMC
                         curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB2;
                         pkt->SRCCUB = cubeID;
                         i--;
-                        UpdateDispatch(curDownBuffers[i]);
                       } else if (upBufferDest[link2]->currentState != LINK_RETRY && upBufferDest[link2]->ReceiveDown(pkt)) {
                         numUpdates++;
                         numMults++;
@@ -698,7 +709,6 @@ namespace CasHMC
                         curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB1;
                         pkt->SRCCUB = cubeID;
                         i--;
-                        UpdateDispatch(curDownBuffers[i]);
                       } else {
 /*#ifdef DEBUG_UPDATE
                         cout << "CUBE " << cubeID << " downBufferDest Receive fails for packet " << *pkt
@@ -708,12 +718,14 @@ namespace CasHMC
                         vaultControllers[multVault]->FreeOperandBuffer(operandBufID);
                         delete pkt; // try next time
                       }
+                      UpdateDispatch(curDownBuffers[i], true);
                     }
-#ifdef DEBUG_VAULT
                     else {
+#ifdef DEBUG_VAULT
                       cout << "SPLIT CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << dec << " COMPUTE VAULT " << multVault << " has no buffers available...multVault = " << multVault << endl;
-                    }
 #endif
+                      UpdateDispatch(curDownBuffers[i], false);
+                    }
                   } else { // no need for spliting
                     if (upBufferDest[link]->currentState != LINK_RETRY && upBufferDest[link]->ReceiveDown(curDownBuffers[i])) {
                       map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
@@ -950,13 +962,103 @@ namespace CasHMC
   //
   //Update multVault to choose which vault to dispatch the job
   //
-  void CrossbarSwitch::UpdateDispatch(Packet* p)
+  void CrossbarSwitch::Dispatch(Packet* p, bool is_local)
+  {
+    unsigned int vaultMap = (p->SRCADRS1 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
+    switch (dispatchPolicy) {
+    case ROUND_ROBIN:
+      // Nothing to do
+      break;
+    case CONTENT_AWARE:
+      if (!is_local) {
+        if (p->DESTCUB1 == cubeID) {
+          if (vault_available[vaultMap]) {
+            multVault = vaultMap;
+            return;
+          }
+        }
+        else if (p->DESTCUB2 == cubeID) {
+          vaultMap = (p->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
+          if (vault_available[vaultMap]) {
+            multVault = vaultMap;
+            return;
+          }
+        }
+        multVault = -1;
+        for (int i = 0; i < NUM_VAULTS; i++) {
+          if (vault_available[i]) {
+            multVault = i; break;
+          }
+        }
+        // If no vaults are available, just try vault 0
+        if (multVault == -1) {
+          multVault = 0;
+        }
+        return;
+      }
+
+      if (p->SRCADRS1 == 0) {
+        vaultMap = (p->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
+
+        if (vault_available[vaultMap]) {
+          multVault = vaultMap;
+          return;
+        }
+      }
+      else if (p->SRCADRS2 == 0) {
+        if (vault_available[vaultMap]) {
+          multVault = vaultMap;
+          return;
+        }
+      }
+      else {
+        if (vault_available[vaultMap]) {
+          multVault = vaultMap;
+          return;
+        }
+        else {
+          // see if vault where second operand lives is available
+          vaultMap = (p->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
+          if (vault_available[vaultMap]) {
+            multVault = vaultMap;
+            return;
+          }
+        }
+      }
+
+      // If none of the above work, try the next available vault
+      multVault = -1;
+      for (int i = 0; i < NUM_VAULTS; i++) {
+        if (vault_available[i]) {
+          multVault = i; break;
+        }
+      }
+      // If no vaults are available, just try the next vault
+      if (multVault == -1) {
+        multVault = (multVault + 1) % NUM_VAULTS;
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
+  //
+  //Update multVault to choose which vault to dispatch the job
+  //
+  void CrossbarSwitch::UpdateDispatch(Packet* p, bool was_success)
   {
     switch (dispatchPolicy) {
     case ROUND_ROBIN:
-      multVault = (multVault + 1) % 32;
+      multVault = (multVault + 1) % NUM_VAULTS;
       break;
     case CONTENT_AWARE:
+      if (was_success) {
+        vault_available[multVault] = true;
+      }
+      else {
+        vault_available[multVault] = false;
+      }
       break;
     default:
       break;
