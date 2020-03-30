@@ -125,13 +125,13 @@ namespace CasHMC
     total_updates_received = 0;
     for(int v=0; v<NUM_VAULTS; v++) {
       vaultControllers[v]->Update();
-      total_ready_operands += vaultControllers[v]->total_ready_operands;
-      total_results_ready += vaultControllers[v]->total_results_ready;
-      total_updates_received += vaultControllers[v]->total_updates_received;
+//      total_ready_operands += vaultControllers[v]->total_ready_operands;
+//      total_results_ready += vaultControllers[v]->total_results_ready;
+//      total_updates_received += vaultControllers[v]->total_updates_received;
     }
 
     // Mark this cycle in the tables
-    if (ready_operands_counts.find(currentClockCycle) != ready_operands_counts.end()) {
+/*    if (ready_operands_counts.find(currentClockCycle) != ready_operands_counts.end()) {
       ready_operands_counts[currentClockCycle] += total_ready_operands;
     } else {
       ready_operands_counts[currentClockCycle] = total_ready_operands;
@@ -146,7 +146,7 @@ namespace CasHMC
     } else {
       updates_received_counts[currentClockCycle] = total_updates_received;
     }
-
+*/
     for(int v=0; v<NUM_VAULTS; v++) {
       drams[v]->Update();
     }

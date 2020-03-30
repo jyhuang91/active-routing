@@ -220,7 +220,7 @@ namespace CasHMC
 
     // Sum up all the histograms for all the hmcs
     // Go through each clock cycle. For each cycle, sum all the counts from the cubes
-    for (int c = 0; c <= currentClockCycle; c++) {
+/*    for (int c = 0; c <= currentClockCycle; c++) {
       for (int i = 0; i < hmcs.size(); i++) {
         int hmc_ready_operands = hmcs[i]->ready_operands_counts[c];
         int hmc_results_ready = hmcs[i]->results_ready_counts[c];
@@ -243,7 +243,7 @@ namespace CasHMC
         }
       }
     }
-
+*/
     for (int i = 0; i < hmcs.size(); ++i) {
       delete hmcs[i];
       for (int j = 0; j < hmcLinks[i].size(); ++j) {
@@ -254,7 +254,7 @@ namespace CasHMC
     hmcs.clear();
     hmcLinks.clear();
     allLinks.clear();
-
+/*
     cout << "NETWORK Histograms" << endl;
     cout << "Ready Operands Histogram:" << endl;
     for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
@@ -268,7 +268,7 @@ namespace CasHMC
     for (map<int, long long>::iterator it = updates_received_hist.begin(); it != updates_received_hist.end(); it++) {
       cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
-
+*/
     outstandRequests.clear();   // Jiayi, 02/07
 
     if (rf) {

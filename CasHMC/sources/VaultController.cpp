@@ -765,7 +765,7 @@ namespace CasHMC
     }
 
     // Update Histograms...
-
+/*
     if (ready_operands_hist.find(total_ready_operands) != ready_operands_hist.end()) {
       ready_operands_hist[total_ready_operands]++;
     } else {
@@ -781,7 +781,7 @@ namespace CasHMC
     } else {
       updates_received_hist[total_updates_received] = 1;
     }
-
+*/
     //Send response packet to crossbar switch
     if(upBuffers.size() > 0) {
       //Make sure that buffer[0] is not virtual tail packet.
