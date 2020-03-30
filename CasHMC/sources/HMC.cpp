@@ -115,7 +115,7 @@ namespace CasHMC
       downLinkSlaves[l]->Update();
     }
     crossbarSwitch->Update();
-    total_ready_operands = crossbarSwitch->total_ready_operands;
+/*    total_ready_operands = crossbarSwitch->total_ready_operands;
     total_results_ready = crossbarSwitch->total_results_ready;
     // Mark this cycle in the tables
     if (ready_operands_counts.find(currentClockCycle) != ready_operands_counts.end()) {
@@ -128,7 +128,7 @@ namespace CasHMC
     } else {
       results_ready_counts[currentClockCycle] = total_results_ready;
     }
-    for(int v=0; v<NUM_VAULTS; v++) {
+*/    for(int v=0; v<NUM_VAULTS; v++) {
       vaultControllers[v]->Update();
     }
     for(int v=0; v<NUM_VAULTS; v++) {
