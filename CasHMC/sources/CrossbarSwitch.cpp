@@ -880,7 +880,7 @@ namespace CasHMC
       }
     }
 
-/*    if (ready_operands_hist.find(total_ready_operands) != ready_operands_hist.end()) {
+    if (ready_operands_hist.find(total_ready_operands) != ready_operands_hist.end()) {
       ready_operands_hist[total_ready_operands]++;
     } else {
       ready_operands_hist[total_ready_operands] = 1;
@@ -890,7 +890,7 @@ namespace CasHMC
     } else {
       results_ready_hist[total_results_ready] = 1;
     }
-*/
+
     // 2) reply ready GET response to commit the flow
     map<FlowID, FlowEntry>::iterator iter = flowTable.begin();
     while (iter != flowTable.end()) {
