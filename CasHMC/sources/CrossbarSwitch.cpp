@@ -80,11 +80,11 @@ namespace CasHMC
 
     // Debugging Vault-Level Parallelism:
     if (numAdds > 0)
-      cout << "CUBE " << cubeID << ", " << numAdds << " ADDs: " 
+      cout << "CUBE " << cubeID << ", " << numAdds << " ADDs: "
         << numUpdates << " Updates and " << numFlows << " Flows" << endl;
 
     if (numMults > 0)
-      cout << "CUBE " << cubeID << ", " << numMults << " MULTs: " 
+      cout << "CUBE " << cubeID << ", " << numMults << " MULTs: "
         << numUpdates << " Updates and " << numFlows << " Flows" << endl;
 
     for (int i = 0; i < operandBuffers.size(); i++)
@@ -355,6 +355,7 @@ namespace CasHMC
 #ifdef DEBUG_ROUTING
                     cout << "CUBE " << cubeID << ": Route packet " << *curDownBuffers[i] << " to my VaultCtrl " << vaultMap << endl;
 #endif
+                    numOperands++;
                     numUpdates++;
                     if (curDownBuffers[i]->CMD == ACT_ADD) {
                       numAdds++;
@@ -399,6 +400,7 @@ namespace CasHMC
                     cout << "CUBE " << cubeID << " REQUEST FLOW " << hex << dest_addr << " (SRCADRS1 " << curDownBuffers[i]->SRCADRS1 << " SRCADRS2 " << curDownBuffers[i]->SRCADRS2 << dec << ") COMPUTE VAULT " << curDownBuffers[i]->computeVault << " src2-> VC " << vaultMap << endl;
 #endif
                     if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
+                      numOperands++;
 #ifdef DEBUG_ROUTING
                       cout << "CUBE " << cubeID << ": Route MULT (second) packet " << *curDownBuffers[i] << " to my VaultCtrl" << endl;
 #endif
@@ -487,6 +489,7 @@ namespace CasHMC
                         it->second.req_count++;
                       }
                       UpdateDispatch(curDownBuffers[i]);
+                      numOperands++;
                       numUpdates++;
                       numMults++;
 #ifdef DEBUG_ROUTING

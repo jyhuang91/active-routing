@@ -108,6 +108,7 @@ namespace CasHMC
       uint64_t numLocalReqRecv;
       uint64_t numFlowRespSent;
       uint64_t numRemoteRespSent;
+      uint64_t totalOperandRequests;
 
       map<int, long long> ready_operands_hist;
       int total_ready_operands;
@@ -142,8 +143,8 @@ namespace CasHMC
       DRAMCommand *dataBus;
       unsigned dataCyclesLeft;
       vector<DRAMCommand *> writeDataToSend;
-      vector<unsigned> writeDataCountdown;	
-      
+      vector<unsigned> writeDataCountdown;
+
       TranStatistic *transtat;
   };
 
