@@ -377,21 +377,18 @@ namespace CasHMC
                     curDownBuffers[i]->DESTCUB = cubeID;
                     DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) SENDING packet to vault controller "<<vaultMap<<" (VC_"<<vaultMap<<")");
                   }
-                  if (!operand_buf_avail)
-                    opbufStalls++;
-                  else { // successfully used src1- time to inspect src2
+                  if (operand_buf_avail) {
                     if (curDownBuffers[i]->SRCADRS2 == 0) {
-                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
-                      i--;
+                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+pktLNG);
+                      --i;
                     }
                     else {
                       unsigned vaultMap2 = (curDownBuffers[i]->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
                       if (vaultMap != vaultMap2) {
                         curDownBuffers[i]->ADRS = curDownBuffers[i]->SRCADRS2;
                         curDownBuffers[i]->SRCADRS2 = 0;
-                        i--;  // Immediately handle this packet again
+                        i--;
                       }
-                      // otherwise, wait until next time
                     }
                   }
                 }
