@@ -89,7 +89,7 @@ namespace CasHMC
 
   bool Transaction::coalesce(uint64_t src_addr2)
   {
-    if (this->src_address2 != 0) {
+    if (this->src_address2 == 0) {
       this->src_address2 = src_addr2;
       return true;
     }
