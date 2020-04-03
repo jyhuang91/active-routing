@@ -62,6 +62,7 @@ namespace CasHMC
       virtual ~Transaction();
       void ReductGlobalID();
       unsigned long long return_transac_id();
+      void coalesce(uint64_t src_addr2);
 
       //
       //Fields

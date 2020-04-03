@@ -102,5 +102,6 @@ namespace PinPthread
 
       double get_update_req_lat() { return (total_update_req_time/ num_update_sent / process_interval); }
       double get_update_stall_lat() { return (total_update_stall_time / num_update / process_interval); }
+      uint64_t num_coalesced;
   };
 }
