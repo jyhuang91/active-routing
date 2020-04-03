@@ -9,8 +9,8 @@
 using namespace std;
 using namespace PinPthread;
 
-typedef std::multimap<uint64_t, Transaction*> MMapIterator;
-typedef std::multimap<uint64_t, LocalQueueElement*> MMapUpdateIterator;
+typedef std::multimap<uint64_t, Transaction*>::iterator MMapIterator;
+typedef std::multimap<uint64_t, LocalQueueElement*>::iterator MMapUpdateIterator;
 
 extern ostream& operator<<(ostream & output, component_type ct);
 
@@ -337,12 +337,12 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       }
       active_forests[lqele->dest_addr][num] = true;
       dest_cube = get_active_cube_num(lqele->src_addr1);
-      if (src_cube == dest_cube) {
-        // Search other transactions that could be coalesced...
-        for (multimap<uint64_t, Transaction*>::iterator it = tran_buf.begin(), end = tran_buf.end(); it != end; it = tran_buf.upper_bound(it->first)) {
-          Transaction* trans = it->second;
-          if (trans->src_cube == src_cube && trans->dest_cube1 == dest_cube) {
-            trans->coalesce(lqele->src_addr1);
+      // Search other transactions that could be coalesced...
+      for (multimap<uint64_t, Transaction*>::iterator it = tran_buf.begin(), end = tran_buf.end(); it != end; it = tran_buf.upper_bound(it->first)) {
+        Transaction* trans = it->second;
+        if (trans->dest_cube1 == dest_cube) {
+          assert(src_cube == trans->src_cube);
+          if (trans->coalesce(lqele->src_addr1)) {
             newTran = trans;
             was_coalesced = true;
             num_coalesced++;
@@ -373,7 +373,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   }
 
   uint64_t req_id = -1;
-  if (lqele->type != et_art_get && !was_coalesced)
+  if (lqele->type != et_art_get)
   {
     req_id = hmc_net->get_tran_tag(newTran);
     if (!was_coalesced)

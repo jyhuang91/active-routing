@@ -87,9 +87,13 @@ namespace CasHMC
       return transactionID;
   }
 
-  void Transaction::coalesce(uint64_t src_addr2)
+  bool Transaction::coalesce(uint64_t src_addr2)
   {
-    this->src_address2 = src_addr2;
+    if (this->src_address2 != 0) {
+      this->src_address2 = src_addr2;
+      return true;
+    }
+    else return false;
   }
 
   //
