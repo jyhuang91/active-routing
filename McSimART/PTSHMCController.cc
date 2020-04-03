@@ -10,6 +10,7 @@ using namespace std;
 using namespace PinPthread;
 
 typedef std::multimap<uint64_t, Transaction*> MMapIterator;
+typedef std::multimap<uint64_t, LocalQueueElement*> MMapUpdateIterator;
 
 extern ostream& operator<<(ostream & output, component_type ct);
 
@@ -342,6 +343,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
           Transaction* trans = it->second;
           if (trans->src_cube == src_cube && trans->dest_cube1 == dest_cube) {
             trans->coalesce(lqele->src_addr1);
+            newTran = trans;
             was_coalesced = true;
             num_coalesced++;
             break;
@@ -353,7 +355,6 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
         newTran->address = lqele->dest_addr;
         assert(lqele->nthreads == -1);
       }
-      else return;
       break;
     case ACTIVE_MULT:
       if (active_forests.find(lqele->dest_addr) == active_forests.end())
@@ -372,10 +373,13 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   }
 
   uint64_t req_id = -1;
-  if (lqele->type != et_art_get)
+  if (lqele->type != et_art_get && !was_coalesced)
   {
     req_id = hmc_net->get_tran_tag(newTran);
-    tran_buf.insert(make_pair(event_time, newTran));
+    if (!was_coalesced)
+    {
+      tran_buf.insert(make_pair(event_time, newTran));
+    }
   }
 
   if (lqele->type == et_art_add ||
@@ -529,22 +533,24 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
       {
         if (active_update_event.find(req_id) != active_update_event.end())
         {
-          multimap<uint64_t, LocalQueueElement *>::iterator it = active_update_event.find(req_id);
-          //assert(it == active_update_event.begin());
-          LocalQueueElement *lqele = (it->second);
-          assert(lqele);
-          assert(lqele->from.top());
-          num_update_sent++;
-          total_update_stall_time += curr_time - tran_buf.begin()->first;
-          if (kernel_offloading)
+          pair<MMapUpdateIterator, MMapUpdateIterator> result = active_update_event.equal_range(req_id);
+          for (MMapUpdateIterator it = result.first; it != result.second; it++)
           {
-            lqele->from.top()->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+            LocalQueueElement *lqele = (it->second);
+            assert(lqele);
+            assert(lqele->from.top());
+            num_update_sent++;
+            total_update_stall_time += curr_time - tran_buf.begin()->first;
+            if (kernel_offloading)
+            {
+              lqele->from.top()->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+            }
+            else
+            {
+              noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+            }
+            pending_active_updates.insert(make_pair(flow_id, lqele));
           }
-          else
-          {
-            noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
-          }
-          pending_active_updates.insert(make_pair(flow_id, lqele));
           active_update_event.erase(req_id);
         }
         else
