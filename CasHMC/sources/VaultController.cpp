@@ -14,9 +14,9 @@
 #include "VaultController.h"
 #include "CrossbarSwitch.h"
 
-unsigned CasHMC::VaultController::DRAM_rd_data = 0; 
-unsigned CasHMC::VaultController::DRAM_wr_data = 0; 
-unsigned CasHMC::VaultController::DRAM_act_data = 0; 
+unsigned CasHMC::VaultController::DRAM_rd_data = 0;
+unsigned CasHMC::VaultController::DRAM_wr_data = 0;
+unsigned CasHMC::VaultController::DRAM_act_data = 0;
 
 namespace CasHMC
 {
@@ -42,6 +42,8 @@ namespace CasHMC
 
     //Make class objects
     commandQueue = new CommandQueue(debugOut, stateOut, this, vaultContID);
+
+    totalOperandRequests = 0;
   }
 
   VaultController::VaultController(ofstream &debugOut_, ofstream &stateOut_, unsigned id, string headerPrefix):
@@ -69,9 +71,9 @@ namespace CasHMC
 
   VaultController::~VaultController()
   {
-    pendingReadData.clear(); 
-    writeDataToSend.clear(); 
-    writeDataCountdown.clear(); 
+    pendingReadData.clear();
+    writeDataToSend.clear();
+    writeDataCountdown.clear();
 
     delete commandQueue;
   }
@@ -111,7 +113,7 @@ namespace CasHMC
       ERROR(header<<"             Vault buffer max size : "<<upBufferMax<<", current size : "<<upBuffers.size()<<", "<<*upEle<<" size : "<<upEle->LNG);
       exit(0);
     }
-  }	
+  }
 
   //
   //Return read commands from DRAM
@@ -189,7 +191,7 @@ namespace CasHMC
         pendingDataSize -= (retCMD->dataSize/16)+1;
         //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   pendingDataSize "<<(retCMD->dataSize/16)+1<<" decreased   (current pendingDataSize : "<<pendingDataSize<<")");
         newPacket->ADRS = retCMD->addr; // Jiayi, 03/27/17
-       
+
         if (retCMD->packetCMD == ACT_ADD ||
             retCMD->packetCMD == ACT_DOT) {
           newPacket->CMD = (retCMD->packetCMD == ACT_ADD ? ACT_ADD : ACT_DOT);
@@ -230,7 +232,7 @@ namespace CasHMC
               << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
               << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
           }
-#endif 
+#endif
         }
       }
       else {
@@ -245,7 +247,7 @@ namespace CasHMC
     if (newPacket->CMD != PEI_DOT) {
       ReceiveUp(newPacket);
     } else {
-      if (pcuPacket.empty()) { 
+      if (pcuPacket.empty()) {
         newPacket->bufPopDelay = PCU_DELAY;
       } else {
         newPacket->bufPopDelay = max(PCU_DELAY,(pcuPacket.back())->bufPopDelay + 1);
@@ -261,7 +263,7 @@ namespace CasHMC
   {
     if(!pcuPacket.empty() && (pcuPacket.front())->bufPopDelay == 0){
       ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
-    } 
+    }
     //Update DRAM state and various countdown
     UpdateCountdown();
 
@@ -300,7 +302,7 @@ namespace CasHMC
           upBuffers.erase(upBuffers.begin(), upBuffers.begin()+upBuffers[0]->LNG);
         }
         else {
-          //DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<"Up)   Crossbar switch buffer FULL");	
+          //DEBUG(ALI(18)<<header<<ALI(15)<<*upBuffers[0]<<"Up)   Crossbar switch buffer FULL");
         }
       }
     }
@@ -432,7 +434,7 @@ namespace CasHMC
         if(dataBus->lastCMD) {
           if(!dataBus->atomic && !dataBus->posted) {
             MakeRespondPacket(dataBus);
-            assert(dataBus->packetCMD != PEI_DOT); 
+            assert(dataBus->packetCMD != PEI_DOT);
           }
           else if(dataBus->trace != NULL && dataBus->posted) {
             dataBus->trace->tranFullLat = ceil(currentClockCycle * (double)tCK/gCpuClkPeriod) - dataBus->trace->tranTransmitTime;
@@ -546,8 +548,8 @@ namespace CasHMC
       case EQ8:		atomic = true;	tempCMD = READ;	break;
                   //Bitwise atomic
       case BWR:		atomic = true;	tempCMD = READ;	break;
-      case P_BWR:		atomic = true;	tempCMD = READ;	tempPosted = true;	break; 
-      case BWR8R:		atomic = true;	tempCMD = READ;	break; 
+      case P_BWR:		atomic = true;	tempCMD = READ;	tempPosted = true;	break;
+      case BWR8R:		atomic = true;	tempCMD = READ;	break;
       case SWAP16:	atomic = true;	tempCMD = READ;	break;
       // Active ops
       case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; break;
@@ -596,11 +598,13 @@ namespace CasHMC
           pendingReadData.push_back(packet->TAG);
           if (packet->CMD == ACT_ADD ||
               packet->CMD == ACT_DOT) {
+            totalOperandRequests++;
             assert(packet->SRCADRS1 && !packet->SRCADRS2);
             rwCMD->srcAddr1 = packet->SRCADRS1;
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
           } else if (packet->CMD == ACT_MULT) {
+            totalOperandRequests++;
             assert((!packet->SRCADRS1 && packet->SRCADRS2) || (packet->SRCADRS1 && !packet->SRCADRS2));
             if (packet->SRCADRS1 != 0) {
               rwCMD->srcAddr1 = packet->SRCADRS1;
