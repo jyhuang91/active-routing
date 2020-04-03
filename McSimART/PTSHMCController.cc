@@ -9,6 +9,8 @@
 using namespace std;
 using namespace PinPthread;
 
+typedef std::multimap<uint64_t, Transaction*> MMapIterator;
+
 extern ostream& operator<<(ostream & output, component_type ct);
 
 uint64_t  PTSHMCController::last_process_time = 0;
@@ -81,6 +83,8 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   active_gather_event.clear();
   pending_active_updates.clear();
   active_mult_twins.clear();
+
+  num_coalesced = 0;
 }
 
 PTSHMCController::~PTSHMCController()
@@ -123,6 +127,8 @@ PTSHMCController::~PTSHMCController()
   tran_buf.clear();
   active_update_event.clear();
   active_gather_event.clear();
+
+  std::cout << "HMCController coalesced " << num_coalesced << " transactions" << std::endl;
 }
 
 void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lqele, Component * from)
@@ -202,6 +208,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
   int nthreads = 0;
   map<uint64_t, pair<pair<int, int>, vector<int> > >::iterator it = gather_barrier.find(lqele->dest_addr);
 
+  bool was_coalesced = false;
   switch (tranType)
   {
     case DATA_READ:
@@ -329,9 +336,24 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       }
       active_forests[lqele->dest_addr][num] = true;
       dest_cube = get_active_cube_num(lqele->src_addr1);
-      newTran = new Transaction(ACTIVE_ADD, flow_id, lqele->src_addr1, data_size, hmc_net, src_cube, dest_cube);
-      newTran->address = lqele->dest_addr;
-      assert(lqele->nthreads == -1);
+      if (src_cube == dest_cube) {
+        // Search other transactions that could be coalesced...
+        for (multimap<uint64_t, Transaction*>::iterator it = tran_buf.begin(), end = tran_buf.end(); it != end; it = tran_buf.upper_bound(it->first)) {
+          Transaction* trans = it->second;
+          if (trans->src_cube == src_cube && trans->dest_cube1 == dest_cube) {
+            trans->coalesce(lqele->src_addr1);
+            was_coalesced = true;
+            num_coalesced++;
+            break;
+          }
+        }
+      }
+      if (!was_coalesced) {
+        newTran = new Transaction(ACTIVE_ADD, flow_id, lqele->src_addr1, data_size, hmc_net, src_cube, dest_cube);
+        newTran->address = lqele->dest_addr;
+        assert(lqele->nthreads == -1);
+      }
+      else return;
       break;
     case ACTIVE_MULT:
       if (active_forests.find(lqele->dest_addr) == active_forests.end())

@@ -87,6 +87,11 @@ namespace CasHMC
       return transactionID;
   }
 
+  void Transaction::coalesce(uint64_t src_addr2)
+  {
+    this->src_address2 = src_addr2;
+  }
+
   //
   //Defines "<<" operation for printing
   //

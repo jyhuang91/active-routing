@@ -432,7 +432,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
     if (tran->transactionType == ACTIVE_GET ||
         tran->transactionType == ACTIVE_ADD ||
         tran->transactionType == ACTIVE_DOT) {
-      newPacket = new Packet(REQUEST, cmdtype, tran->dest_address, tran->src_address1, 0, packetLength, tran->trace,
+      newPacket = new Packet(REQUEST, cmdtype, tran->dest_address, tran->src_address1, tran->src_address2, packetLength, tran->trace,
           tran->src_cube, tran->dest_cube1);
       newPacket->active = true;
       if (tran->transactionType == ACTIVE_ADD ||
