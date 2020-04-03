@@ -62,6 +62,7 @@ namespace CasHMC
     numRemoteReqRecv = 0;
     numFlowRespSent = 0;
     numRemoteRespSent = 0;
+    totalOperandRequests = 0;
   }
 
   VaultController::VaultController(ofstream &debugOut_, ofstream &stateOut_, unsigned id, string headerPrefix):
@@ -122,23 +123,25 @@ namespace CasHMC
     for (map<int, long long>::iterator it = results_ready_hist.begin(); it != results_ready_hist.end(); it++) {
       cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
-    
+
     // Debugging Vault-Level Parallelism:
     if (numAdds > 0)
-      cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numAdds << " ADDs:" << endl 
+      cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numAdds << " ADDs:" << endl
         << "\t" << numADDUpdates << " Updates" << endl
         << "\t" << numFlowRespSent << " Flow Responses " << endl
-        << "\t" << numFlows << " Flows" << endl;
-        
+        << "\t" << numFlows << " Flows" << endl
+        << "\t" << totalOperandRequests << " Total Number of Operand Requests" << endl;
+
 
     if (numMults > 0)
-      cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numMults << " MULTs:" << endl 
-        << "\t" << numLocalReqRecv << " Local Requests Received" << endl 
-        << "\t" << numLocalRespRecv << " Local Responses Received" << endl 
+      cout << "VC " << vaultContID << " CUBE " << cubeID << ", " << numMults << " MULTs:" << endl
+        << "\t" << numLocalReqRecv << " Local Requests Received" << endl
+        << "\t" << numLocalRespRecv << " Local Responses Received" << endl
         << "\t" << numRemoteReqRecv << " Remote Requests Received" << endl
         << "\t" << numRemoteRespSent << " Remote Responses Sent" << endl
-        << "\t" << numFlowRespSent << " Flow Responses Sent" << endl 
-        << "\t" << numFlows << " Flows" << endl;
+        << "\t" << numFlowRespSent << " Flow Responses Sent" << endl
+        << "\t" << numFlows << " Flows" << endl
+        << "\t" << totalOperandRequests << " Total Number of Operand Requests" << endl;
 
     for (int i = 0; i < operandBuffers.size(); i++)
       if (operandBuffers[i].flowID != 0)
@@ -733,13 +736,13 @@ namespace CasHMC
             downBuffers.erase(downBuffers.begin()+i, downBuffers.begin()+i+tempLNG);
             --i;
           } else {
-            if (downBuffers[i]->CMD == ACT_MULT && 
+            if (downBuffers[i]->CMD == ACT_MULT &&
                 downBuffers[i]->counted == false) {
               total_updates_received++;
               downBuffers[i]->counted = true;
             }
             if(ConvPacketIntoCMDs(downBuffers[i])) {
-              if (downBuffers[i]->CMD == ACT_MULT && 
+              if (downBuffers[i]->CMD == ACT_MULT &&
                   (downBuffers[i]->SRCCUB != cubeID || downBuffers[i]->computeVault != vaultContID)) {
 #ifdef DEBUG_VAULT
                 cout << "VC " << vaultContID << " CUBE " << cubeID << " got a remote request" << endl;
@@ -1094,12 +1097,14 @@ namespace CasHMC
           pendingReadData.push_back(packet->TAG);
           if (packet->CMD == ACT_ADD ||
               packet->CMD == ACT_DOT) {
+            totalOperandRequests++;
             assert(packet->SRCADRS1 && !packet->SRCADRS2);
             rwCMD->srcAddr1 = packet->SRCADRS1;
             rwCMD->destAddr = packet->DESTADRS;
             rwCMD->operandBufID = packet->operandBufID;
             rwCMD->vaultOperandBufID = packet->vaultOperandBufID;
           } else if (packet->CMD == ACT_MULT) {
+            totalOperandRequests++;
             assert((!packet->SRCADRS1 && packet->SRCADRS2) || (packet->SRCADRS1 && !packet->SRCADRS2));
             if (packet->SRCADRS1 != 0) {
               rwCMD->srcAddr1 = packet->SRCADRS1;

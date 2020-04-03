@@ -61,7 +61,7 @@ namespace CasHMC
     cout<<"*            Date : "<<t.tm_year + 1900<<"/"<<setw(2)<<setfill('0')<<t.tm_mon+1<<"/"<<setw(2)<<setfill('0')<<t.tm_mday
       <<"      Time : "<<setw(2)<<setfill('0')<<t.tm_hour<<":"<<setw(2)<<setfill('0')<<t.tm_min<<":"<<setw(2)<<setfill('0')<<t.tm_sec
       <<"            *"<<endl;
-#ifndef DEBUG_LOG		
+#ifndef DEBUG_LOG
     cout<<"*                                                              *"<<endl;
     cout<<"*  Module abbreviation info.                                   *"<<endl;
     cout<<"*  [HC]   : HMC Controller                                     *"<<endl;
@@ -72,9 +72,9 @@ namespace CasHMC
     cout<<"*  [VC_j] : jth Vault Controller                               *"<<endl;
     cout<<"*  [CQ_k] : k-bank Command Queue                               *"<<endl;
     cout<<"*  [DR_j] : jth DRAM                                           *"<<endl;
-#endif		
+#endif
     cout<<"****************************************************************"<<endl<<endl;
-    cout.setf(ios::left); 
+    cout.setf(ios::left);
     cout<<" = Log folder generating information"<<endl;
     if(status == 0) {
       cout<<"   Making result folder success (./result/)"<<endl;
@@ -97,7 +97,7 @@ namespace CasHMC
 
     unsigned int ver_num = 0;
     stringstream temp_vn;
-    while(1) { 
+    while(1) {
       logName += "_no";
       temp_vn << ver_num;
       logName += temp_vn.str();
@@ -450,7 +450,7 @@ namespace CasHMC
 
     Alloc();
 
-    for (int i = 0; i < ncpus; ++i) { 
+    for (int i = 0; i < ncpus; ++i) {
       hmcConts[i]->downLinkMasters[0]->linkP = hmcCntLinks[i];
       hmcConts[i]->downLinkMasters[0]->localLinkSlave = hmcConts[i]->upLinkSlaves[0];
       hmcCntLinks[i]->linkMasterP = hmcConts[i]->downLinkMasters[0];
@@ -514,14 +514,14 @@ namespace CasHMC
     vector<vector<LinkMaster *> > LM_next;
     vector<vector<LinkSlave *> > LS_next;
     int n = nodes;
-    LM.resize(n); 
+    LM.resize(n);
     LS.resize(n);
     for(int i=0; i<n; i++){
       LS[i].resize(NUM_LINKS);
       LM[i].resize(NUM_LINKS);
       for(int l=0; l<NUM_LINKS; l++){
-        LM[i][l] = hmcs[i]->upLinkMasters[l]; 
-        LS[i][l] = hmcs[i]->downLinkSlaves[l]; 
+        LM[i][l] = hmcs[i]->upLinkMasters[l];
+        LS[i][l] = hmcs[i]->downLinkSlaves[l];
       }
     }
 
@@ -556,7 +556,7 @@ namespace CasHMC
       }
     }
 
-    for(int i=0; i<ncpus; ++i){ 
+    for(int i=0; i<ncpus; ++i){
       hmcConts[i]->downLinkMasters[0]->linkP->linkSlaveP = LS[0][i];
       LM[0][i]->linkP->linkSlaveP = hmcConts[i]->upLinkSlaves[0];
     }
@@ -651,7 +651,7 @@ namespace CasHMC
 
         // connect bottom LinkMaster to top LinkSlave
         if (y < dimension - 1) {
-          hmcs[pos]->upLinkMasters[BOT_LINK]->linkP->linkSlaveP = 
+          hmcs[pos]->upLinkMasters[BOT_LINK]->linkP->linkSlaveP =
             hmcs[pos + dimension]->downLinkSlaves[TOP_LINK];
         } else {
           hmcs[pos]->upLinkMasters[BOT_LINK]->linkP->linkSlaveP =
@@ -743,7 +743,7 @@ namespace CasHMC
     }
   }
 
-  //this function is called from McSim HMCController 
+  //this function is called from McSim HMCController
   uint64_t Network::get_tran_addr(Transaction *tran)
   {//pritam added
     switch (tran->transactionType) {
@@ -1035,7 +1035,7 @@ namespace CasHMC
     stringstream temp_vn;
     if(DEBUG_SIM) {
       string debName = logName + "_debug";
-      while(1) { 
+      while(1) {
         debName += "[";
         temp_vn << logNum;
         debName += temp_vn.str();
@@ -1058,7 +1058,7 @@ namespace CasHMC
       string staName = logName + "_state";
       if(!DEBUG_SIM) {
         stringstream temp_vn_st;
-        while(1) { 
+        while(1) {
           staName += "[";
           temp_vn_st << logNum;
           staName += temp_vn_st.str();
@@ -1328,7 +1328,7 @@ namespace CasHMC
     double vaultFullMean = (tranCount==0 ? 0 : (double)vaultFullSum/tranCount);
     double errorRetryMean = (errorCount==0 ? 0 : (double)errorRetrySum/errorCount);
 
-    for(int i=0; i<tranCount; i++) {		
+    for(int i=0; i<tranCount; i++) {
       tranFullMax = max(tranFullLat[i], tranFullMax);
       tranFullMin = min(tranFullLat[i], tranFullMin);
       tranStdSum += pow(tranFullLat[i]-tranFullMean, 2);
@@ -1435,7 +1435,7 @@ namespace CasHMC
       STATE("  └───── Total effec Bandwidth : "<<ALI(7)<<linkEffecBandwidth[i]<<" GB/s"<<endl);
     }
 
-    vector<uint64_t> epoch_stalls(nodes, 0); 
+    vector<uint64_t> epoch_stalls(nodes, 0);
     uint64_t tot_epoch_stalls = 0;
     STATEN("  Operand buffer stalls : ");
     for (int i = 0; i < nodes; i++) {
@@ -1691,28 +1691,38 @@ namespace CasHMC
       resultOut<<"  └───── Total effec Bandwidth : "<<ALI(7)<<linkEffecBandwidth[i]<<" GB/s"<<endl<<endl;
     }
 
-    resultOut << "  Operand buffer stalls : ";
+    resultOut << "  Operand buffer stalls :";
     totOpbufStalls = 0;
     for (int i = 0; i < nodes; i++) {
       opbufStalls[i] = hmcs[i]->crossbarSwitch->opbufStalls;
       totOpbufStalls += hmcs[i]->crossbarSwitch->opbufStalls;
-      resultOut << "[" << i << "] " << opbufStalls[i] << "  ";
+      resultOut << "  [" << i << "] " << opbufStalls[i];
     }
     resultOut << endl << "  Total operand buffer stalls " << totOpbufStalls << endl << endl;
 
-    resultOut << "  Number of updates : ";
+    resultOut << "  Number of updates :";
     for (int i = 0; i < nodes; i++) {
       numUpdates[i] = hmcs[i]->crossbarSwitch->numUpdates;
-      resultOut << "[" << i << "] " << numUpdates[i] << "  ";
+      resultOut << "  [" << i << "] " << numUpdates[i];
     }
     resultOut << endl << endl;
 
-    resultOut << "  Number of operands : ";
+    resultOut << "  Number of operands in cube :";
     for (int i = 0; i < nodes; i++) {
       numOperands[i] = hmcs[i]->crossbarSwitch->numOperands;
-      resultOut << "[" << i << "] " << numOperands[i] << "  ";
+      resultOut << "  [" << i << "] " << numOperands[i];
     }
     resultOut << endl << endl;
+
+    resultOut << "  Number of operand requests in vault :" << endl;
+    for (int i = 0; i < nodes; i++) {
+      resultOut << "  - Cube " << i << " :";
+      for (int v = 0; v < NUM_VAULTS; v++) {
+        resultOut << "  [" << v << "] " << hmcs[i]->vaultControllers[v]->totalOperandRequests;
+      }
+      resultOut << endl;
+    }
+    resultOut << endl;
   }
 
   //

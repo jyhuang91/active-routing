@@ -25,7 +25,7 @@
 #include "DRAMConfig.h"
 #include "DRAMCommand.h"
 #include "CommandQueue.h"
-#include "DRAM.h" 
+#include "DRAM.h"
 using namespace std;
 
 namespace CasHMC
@@ -108,6 +108,7 @@ namespace CasHMC
       uint64_t numLocalReqRecv;
       uint64_t numFlowRespSent;
       uint64_t numRemoteRespSent;
+      uint64_t totalOperandRequests;
 
       map<int, long long> ready_operands_hist;
       int total_ready_operands;
@@ -123,9 +124,9 @@ namespace CasHMC
       unsigned refreshCountdown;
       bool powerDown;
 
-      static unsigned DRAM_rd_data; 
-      static unsigned DRAM_wr_data; 
-      static unsigned DRAM_act_data; 
+      static unsigned DRAM_rd_data;
+      static unsigned DRAM_wr_data;
+      static unsigned DRAM_act_data;
       DRAM *dramP;
       CommandQueue *commandQueue;
       DRAMCommand *poppedCMD;
@@ -142,8 +143,8 @@ namespace CasHMC
       DRAMCommand *dataBus;
       unsigned dataCyclesLeft;
       vector<DRAMCommand *> writeDataToSend;
-      vector<unsigned> writeDataCountdown;	
-      
+      vector<unsigned> writeDataCountdown;
+
       TranStatistic *transtat;
   };
 
