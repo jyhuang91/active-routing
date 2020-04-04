@@ -78,6 +78,7 @@ namespace CasHMC
       uint64_t dest_address;
       uint64_t src_address1;
       uint64_t src_address2;
+      std::vector<uint64_t> src_addresses;
       // Ram & Jiayi, src and dest cubeID
       int src_cube;
       int dest_cube1, dest_cube2;

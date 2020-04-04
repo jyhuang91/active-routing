@@ -112,6 +112,7 @@ namespace CasHMC
 
       // Active Request Packet Fields, Jiayi, 01/31
       uint64_t DESTADRS, SRCADRS1, SRCADRS2;
+      std::vector<uint64_t> ADDRESSES;
       // Jiayi, debug 02/06
       bool active;
       // Ram & Jiayi, 03/13/17

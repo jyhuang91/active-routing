@@ -284,6 +284,9 @@ namespace CasHMC
 
     ADRS = f.ADRS;	Pb = f.Pb;
 
+    for (int i = 0; i < f.ADDRESSES.size(); i++)
+      ADDRESSES.push_back(f.ADDRESSES[i]);
+
     // Jiayi, 02/06
     DESTADRS = f.DESTADRS;
     SRCADRS1 = f.SRCADRS1;  SRCADRS2 = f.SRCADRS2;

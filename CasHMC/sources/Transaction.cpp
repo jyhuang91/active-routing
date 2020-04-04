@@ -49,6 +49,8 @@ namespace CasHMC
     transactionID = tranGlobalID++;
     trace = new TranTrace(statis);
 
+    src_addresses.push_back(src_addr);
+
     src_address2 = 0;
     nthreads = -1;
     dest_cube2 = -1;
@@ -69,7 +71,10 @@ namespace CasHMC
     transactionID = tranGlobalID++;
     trace = new TranTrace(statis);
     nthreads = -1;
-}
+
+    src_addresses.push_back(src_addr1);
+    src_addresses.push_back(src_addr2);
+  }
 
   Transaction::~Transaction()
   {
@@ -89,11 +94,16 @@ namespace CasHMC
 
   bool Transaction::coalesce(uint64_t src_addr2)
   {
+/*
     if (this->src_address2 == 0) {
       this->src_address2 = src_addr2;
       return true;
     }
     else return false;
+*/
+
+    this->src_addresses.push_back(src_addr2);
+    return true;
   }
 
   //
