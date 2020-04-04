@@ -1,5 +1,5 @@
 
-TRGS = reduce naive_art_reduce ar_reduce pei_reduce
+TRGS = reduce naive_art_reduce ar_reduce page_art_reduce pei_reduce
 
 LIB_DEPEND = hooks
 
@@ -26,6 +26,8 @@ reduce: main.cc
 naive_art_reduce: main_naive_art.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_reduce: main_ar.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+page_art_reduce: main_page_art.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 pei_reduce: main_pei.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)

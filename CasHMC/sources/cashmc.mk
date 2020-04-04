@@ -34,7 +34,7 @@ REBUILDABLES=$(OBJ) $(EXE_NAME)
 all: CXXFLAGS+=-O3
 all: ${OBJ}
 
-dbg: CXXFLAGS+=-O0 -DDEBUG_VAULT
+dbg: CXXFLAGS+=-O0 -g
 dbg: ${OBJ}
 
 #   $@ target name, $^ target deps, $< matched pattern

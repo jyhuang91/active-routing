@@ -303,6 +303,7 @@ namespace CasHMC
     }
     upLink = (upLink + 1) % inputBuffers.size();
 
+    vector<bool> vault_mask(NUM_VAULTS, false);
     //Downstream buffer state, only for REQUEST
     for (int l = 0; l < inputBuffers.size() - 1; l++) {
       int ll = (downLink + l) % (inputBuffers.size() - 1);
@@ -345,7 +346,7 @@ namespace CasHMC
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                   map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                   curDownBuffers[i]->computeVault = vaultMap;
-                  if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
+                  if (vault_mask[vaultMap] == false && downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
 #ifdef DEBUG_ROUTING
                     cout << "CUBE " << cubeID << ": Route packet " << *curDownBuffers[i] << " to my VaultCtrl " << vaultMap << endl;
 #endif
@@ -374,10 +375,23 @@ namespace CasHMC
                     cout << "CUBE " << cubeID << " sending REQUEST to VC " << vaultMap << " for flow " << hex << dest_addr << dec << endl;
 #endif
                     flowTable[dest_addr].vault_count[vaultMap]++;
-                    curDownBuffers[i]->SRCCUB = cubeID;
-                    curDownBuffers[i]->DESTCUB = cubeID;
+
+                    Packet *pkt = curDownBuffers[i];
+                    if (pkt->LINES > 1) {
+                      curDownBuffers[i] = new Packet(*pkt);
+                      curDownBuffers[i]->trace = new TranTrace(*(pkt->trace));
+                    }
+                    pkt->SRCCUB = cubeID;
+                    pkt->DESTCUB = cubeID;
                     DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) SENDING packet to vault controller "<<vaultMap<<" (VC_"<<vaultMap<<")");
-                    curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                    if (curDownBuffers[i]->LINES == 1) {
+                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                    } else {
+                      curDownBuffers[i]->SRCADRS1 += 64;
+                      curDownBuffers[i]->ADRS += 64;
+                      curDownBuffers[i]->LINES--;
+                      assert(curDownBuffers[i]->ADRS == ((curDownBuffers[i]->SRCADRS1 << 30) >> 30));
+                    }
                     i--;
                   }
                 }

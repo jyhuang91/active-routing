@@ -29,7 +29,7 @@ namespace CasHMC
     counted(false)
   {
     bufPopDelay=1;
-    CRCtable[256]=0;	
+    CRCtable[256]=0;
     Pb=0;
     CRC=0; RTC=0; SLID=0;
     SEQ=0; FRP=0; RRP=0;
@@ -83,7 +83,7 @@ namespace CasHMC
     }
   }
   // Request packet for active router, Jiayi, 01/31
-  Packet::Packet(PacketType packet, PacketCommandType cmd, uint64_t dest_addr, uint64_t src_addr, unsigned cub, 
+  Packet::Packet(PacketType packet, PacketCommandType cmd, uint64_t dest_addr, uint64_t src_addr, unsigned cub,
       unsigned lng, TranTrace *lat, int src = -1, int dest = -1):
     packetType(packet),
     CMD(cmd),
@@ -215,7 +215,7 @@ namespace CasHMC
     counted(false)
   {
     bufPopDelay=1;
-    CRCtable[256]=0;	
+    CRCtable[256]=0;
     CUB=0; Pb=0;
     CRC=0; RTC=0; SLID=0;
     SEQ=0; FRP=0; RRP=0;
@@ -288,6 +288,7 @@ namespace CasHMC
     DESTADRS = f.DESTADRS;
     SRCADRS1 = f.SRCADRS1;  SRCADRS2 = f.SRCADRS2;
     operandBufID = f.operandBufID;
+    LINES = f.LINES;
     // Ram & Jiayi, 03/13/17
     SRCCUB = f.SRCCUB;  DESTCUB = f.DESTCUB;
     DESTCUB1 = f.DESTCUB1; DESTCUB2 = f.DESTCUB2;
@@ -390,7 +391,7 @@ namespace CasHMC
   //
   //Makes remainder table diveded by polynomial (CRC-32K)
   //
-  void Packet::MakeCRCtable(uint32_t *table, uint32_t id) 
+  void Packet::MakeCRCtable(uint32_t *table, uint32_t id)
   {
     uint32_t k;
     for(int i=0; i<256; ++i){
@@ -421,7 +422,7 @@ namespace CasHMC
   void Packet::ReductGlobalTAG()
   {
     packetGlobalTAG--;
-  }	
+  }
 
   //
   //Defines "<<" operation for printing
@@ -449,7 +450,7 @@ namespace CasHMC
       case P_WR48:	header = "[P" + id.str() + "-P_WR48]";	break;		case P_WR64:	header = "[P" + id.str() + "-P_WR64]";	break;
       case P_WR80:	header = "[P" + id.str() + "-P_WR80]";	break;		case P_WR96:	header = "[P" + id.str() + "-P_WR96]";	break;
       case P_WR112:	header = "[P" + id.str() + "-P_WR112]";	break;		case P_WR128:	header = "[P" + id.str() + "-P_WR128]";	break;
-      case P_WR256:	header = "[P" + id.str() + "-P_WR256]";	break;		
+      case P_WR256:	header = "[P" + id.str() + "-P_WR256]";	break;
       case RD16:	header = "[P" + id.str() + "-RD16]";	break;		case RD32:	header = "[P" + id.str() + "-RD32]";	break;
       case RD48:	header = "[P" + id.str() + "-RD48]";	break;		case RD64:	header = "[P" + id.str() + "-RD64]";	break;
       case RD80:	header = "[P" + id.str() + "-RD80]";	break;		case RD96:	header = "[P" + id.str() + "-RD96]";	break;
@@ -471,9 +472,9 @@ namespace CasHMC
       case SWAP16:	header = "[P" + id.str() + "-SWAP16]";	break;
                     //Flow Commands
       case NULL_:		header = "[P" + id.str() + "-NULL]";		break;		case PRET:		header = "[P" + id.str() + "-PRET]";		break;
-      case TRET:		header = "[P" + id.str() + "-TRET]";		break;		
+      case TRET:		header = "[P" + id.str() + "-TRET]";		break;
       case IRTRY:		if(f.FRP==1)		header = "[P" + id.str() + "-IRTRY1]";
-                      else if(f.FRP==2)	header = "[P" + id.str() + "-IRTRY2]";						
+                      else if(f.FRP==2)	header = "[P" + id.str() + "-IRTRY2]";
                       else				header = "[P" + id.str() + "-IRTRY]";	break;
                       //Respond commands
       case RD_RS:		header = "[P" + id.str() + "-RD_RS]";		break;		case WR_RS:		header = "[P" + id.str() + "-WR_RS]";		break;
