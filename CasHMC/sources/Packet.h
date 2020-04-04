@@ -109,6 +109,7 @@ namespace CasHMC
 
       // Active Request Packet Fields, Jiayi, 01/31
       uint64_t DESTADRS, SRCADRS1, SRCADRS2;
+      uint32_t LINES;
       // Jiayi, debug 02/06
       bool active;
       // Ram & Jiayi, 03/13/17

@@ -34,6 +34,14 @@ namespace CasHMC
         vaultIssueTime = 0;
         vaultFullLat = 0;
       }
+      TranTrace(const TranTrace &trace):statis(trace.statis) {
+        tranTransmitTime = trace.tranTransmitTime;
+        tranFullLat = trace.tranFullLat;
+        linkTransmitTime = trace.linkTransmitTime;
+        linkFullLat = trace.linkFullLat;
+        vaultIssueTime = trace.vaultIssueTime;
+        vaultFullLat = trace.vaultFullLat;
+      }
       ~TranTrace() {
         if(tranFullLat==0 || linkFullLat==0 || vaultFullLat==0) {
           //ERROR(" (Trace) == Error - Full latency is '0'  (tranFullLat : "<<tranFullLat

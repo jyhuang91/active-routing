@@ -63,7 +63,7 @@ namespace CasHMC
   CrossbarSwitch::~CrossbarSwitch()
   {
     cout << "CUBE " << cubeID << " had " << opbufStalls << " operand buffer stalls" << endl;
-	
+
     downBufferDest.clear();
     upBufferDest.clear();
     pendingSegTag.clear();
@@ -274,6 +274,7 @@ namespace CasHMC
     }
     upLink = (upLink + 1) % inputBuffers.size();
 
+    vector<bool> vault_mask(NUM_VAULTS, false);
     //Downstream buffer state, only for REQUEST
     for (int l = 0; l < inputBuffers.size() - 1; l++) {
       int ll = (downLink + l) % (inputBuffers.size() - 1);
@@ -314,7 +315,8 @@ namespace CasHMC
                 if (curDownBuffers[i]->CMD == ACT_ADD ||
                     curDownBuffers[i]->CMD == ACT_DOT) {
                   bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
-                  if (operand_buf_avail && downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
+                  if (operand_buf_avail && vault_mask[vaultMap] == false && downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
+                    vault_mask[vaultMap] = true;
 #ifdef DEBUG_ROUTING
                     cout << "CUBE " << cubeID << ": Route packet " << *curDownBuffers[i] << " to my VaultCtrl " << vaultMap << endl;
 #endif
@@ -346,11 +348,32 @@ namespace CasHMC
                     cout << "Packet " << *curDownBuffers[i] << " reserves operand buffer " << operand_buf_id
                       << " at cube " << cubeID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
 #endif
-                    curDownBuffers[i]->operandBufID = operand_buf_id;
-                    curDownBuffers[i]->SRCCUB = cubeID;
-                    curDownBuffers[i]->DESTCUB = cubeID;
-                    DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) SENDING packet to vault controller "<<vaultMap<<" (VC_"<<vaultMap<<")");
-                    curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                    Packet *pkt = curDownBuffers[i];
+                    if (curDownBuffers[i]->LINES == 1) {
+#ifdef DEBUG_PAGE_OFFLOADING
+                      cout << CYCLE() << "Cube " << cubeID << " Paeg-Offloading: Last packet "
+                        << *pkt << " (" << pkt << ") and send to vault " << vaultMap << endl;
+#endif
+                    } else {
+                      curDownBuffers[i] = new Packet(*pkt);
+                      curDownBuffers[i]->trace = new TranTrace(*(pkt->trace));
+#ifdef DEBUG_PAGE_OFFLOADING
+                      cout << CYCLE() << "Cube " << cubeID << " Paeg-Offloading: Replicate packet "
+                        << *pkt  << " (" << pkt << ") and send to vault " << vaultMap << endl;
+#endif
+                    }
+                    pkt->operandBufID = operand_buf_id;
+                    pkt->SRCCUB = cubeID;
+                    pkt->DESTCUB = cubeID;
+                    DEBUG(ALI(18)<<header<<ALI(15)<<*pkt<<"Down) SENDING packet to vault controller "<<vaultMap<<" (VC_"<<vaultMap<<")");
+                    if (curDownBuffers[i]->LINES == 1) {
+                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                    } else {
+                      curDownBuffers[i]->SRCADRS1 += 64;
+                      curDownBuffers[i]->ADRS += 64;
+                      curDownBuffers[i]->LINES--;
+                      assert(curDownBuffers[i]->ADRS == ((curDownBuffers[i]->SRCADRS1 << 30) >> 30));
+                    }
                     i--;
                   }
                   if (!operand_buf_avail)

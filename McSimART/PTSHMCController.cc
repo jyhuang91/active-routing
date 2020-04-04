@@ -330,6 +330,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       active_forests[lqele->dest_addr][num] = true;
       dest_cube = get_active_cube_num(lqele->src_addr1);
       newTran = new Transaction(ACTIVE_ADD, flow_id, lqele->src_addr1, data_size, hmc_net, src_cube, dest_cube);
+      newTran->src_address2 = lqele->src_addr2;
       newTran->address = lqele->dest_addr;
       assert(lqele->nthreads == -1);
       break;
