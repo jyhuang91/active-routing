@@ -376,17 +376,15 @@ namespace CasHMC
                     curDownBuffers[i]->SRCCUB = cubeID;
                     curDownBuffers[i]->DESTCUB = cubeID;
                     DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) SENDING packet to vault controller "<<vaultMap<<" (VC_"<<vaultMap<<")");
-                    if (curDownBuffers[i]->SRCADRS2 == 0) {
+                    if (curDownBuffers[i]->ADDRESSES.empty()) {
                       curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
                       --i;
                     }
                     else {
                       unsigned vaultMap2 = (curDownBuffers[i]->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
-                      if (vaultMap != vaultMap2) {
-                        curDownBuffers[i]->ADRS = curDownBuffers[i]->SRCADRS2;
-                        curDownBuffers[i]->SRCADRS2 = 0;
-                        i--;
-                      }
+                      curDownBuffers[i]->ADRS = curDownBuffers[i]->ADDRESSES.back();
+                      curDownBuffers[i]->ADDRESSES.pop_back();
+                      i--;
                     }
                   }
                 }
