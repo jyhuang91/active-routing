@@ -5,7 +5,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 from scipy import stats
-from easypyplot import barchart, color
+from easypyplot import barchart, color, pdf
 from easypyplot import format as fmt
 
 
@@ -142,7 +142,8 @@ def main(folder_path):
     # benchmarks over PEI
     data = [list(i) for i in zip(*speedup)]
     data = np.array(data, dtype=np.float64)
-    fig = plt.figure(figsize=(8, 5.5))
+    figname = folder_path + '/results/benchSpeedup_pei.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -161,20 +162,22 @@ def main(folder_path):
         hdls,
         schemes,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.23),
         ncol=3,
         frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.5)
-    #fmt.resize_ax_box(ax, hratio=0.8)
-    fig.savefig(
-        folder_path + '/results/benchSpeedup_pei.pdf', bbox_inches='tight')
+        handletextpad=0.5,
+        columnspacing=1)
+    fmt.resize_ax_box(ax, hratio=0.8)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(
+    #    folder_path + '/results/benchSpeedup_pei.pdf', bbox_inches='tight')
 
     # microbenchmarks over PEI
     data = [list(i) for i in zip(*micro_speedup)]
     data = np.array(data, dtype=np.float64)
     #fig = plt.figure(figsize=(6.4, 4))
-    fig = plt.figure(figsize=(8, 5.5))
+    figname = folder_path + '/results/microSpeedup_pei.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -193,19 +196,22 @@ def main(folder_path):
         hdls,
         schemes,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.23),
         ncol=3,
         frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.5)
-    #fmt.resize_ax_box(ax, hratio=0.8)
-    fig.savefig(
-        folder_path + '/results/microSpeedup_pei.pdf', bbox_inches='tight')
+        handletextpad=0.5,
+        columnspacing=1)
+    fmt.resize_ax_box(ax, hratio=0.8)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(
+    #    folder_path + '/results/microSpeedup_pei.pdf', bbox_inches='tight')
 
+    '''
     # benchmarks over HMC
     data = [list(i) for i in zip(*speedup2hmc)]
     data = np.array(data, dtype=np.float64)
-    fig = plt.figure(figsize=(8, 5.5))
+    figname = folder_path + '/results/benchSpeedup2hmc_pei.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=18)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -226,18 +232,20 @@ def main(folder_path):
         loc='upper center',
         bbox_to_anchor=(0.5, 1.18),
         ncol=2,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.5)
+        frameon=False)#,
+        #handletextpad=0.5,
+        #columnspacing=1)
     fmt.resize_ax_box(ax, hratio=0.8)
-    fig.savefig(
-        folder_path + '/results/benchSpeedup2hmc_pei.pdf', bbox_inches='tight')
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(
+    #    folder_path + '/results/benchSpeedup2hmc_pei.pdf', bbox_inches='tight')
 
     # microbenchmarks over HMC
     data = [list(i) for i in zip(*micro_speedup2hmc)]
     data = np.array(data, dtype=np.float64)
     #fig = plt.figure(figsize=(6.4, 4))
-    fig = plt.figure(figsize=(8, 5.5))
+    figname = folder_path + '/results/microSpeedup2hmc_pei.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=18)
     #fig = plt.figure()
     ax = fig.gca()
     hdls = barchart.draw(
@@ -259,12 +267,14 @@ def main(folder_path):
         loc='upper center',
         bbox_to_anchor=(0.5, 1.18),
         ncol=2,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.5)
+        frameon=False)#,
+        #handletextpad=0.5,
+        #columnspacing=1)
     fmt.resize_ax_box(ax, hratio=0.8)
-    fig.savefig(
-        folder_path + '/results/microSpeedup2hmc_pei.pdf', bbox_inches='tight')
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(
+    #    folder_path + '/results/microSpeedup2hmc_pei.pdf', bbox_inches='tight')
+    '''
 
     plt.show()
 
