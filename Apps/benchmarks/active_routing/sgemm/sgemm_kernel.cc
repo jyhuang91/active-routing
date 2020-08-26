@@ -67,7 +67,7 @@ void* work_func(void *thread_arg)
 
   pthread_barrier_wait(arg->barrier);
 
-  for (int l = start; l < niteration * niteration2 && l < stop; l++) {
+  for (int l = start; l < start + niteration * niteration2 && l < stop; l++) {
     int mm = l / n;
     int nn = l % n;
     uint64_t flowID = mm+nn*ldc;

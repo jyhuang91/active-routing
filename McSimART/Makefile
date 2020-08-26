@@ -13,7 +13,7 @@ rb: $(TARGET).mk obj_rb
 all: dbg opt
 
 dbg: $(TARGET).mk obj_dbg
-	@$(MAKE) -C ../CasHMC/sources
+	@$(MAKE) -C ../CasHMC/sources dbg
 	@$(MAKE) TAG=dbg -C . -f $(TARGET).mk
 
 obj_dbg:

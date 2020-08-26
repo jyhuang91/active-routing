@@ -87,8 +87,8 @@ namespace CasHMC
 #endif
         } else if (inFlightPacket->CMD == ACT_ADD) {    // Jiayi, debug, 03/12/17
 #ifdef DEBUG_FLOW_CONTROL
-          cout << CYCLE() << "ACT_ADD in link transmission (src_addr:" << (void *) inFlightPacket->SRCADRS
-            << ", " << *((int *) inFlightPacket->SRCADRS) << ")" << endl;
+          cout << CYCLE() << "ACT_ADD in link transmission (src_addr:" << (void *) inFlightPacket->SRCADRS1
+            << ", " << *((int *) inFlightPacket->SRCADRS1) << ")" << endl;
           LinkSlave *lsp = dynamic_cast<LinkSlave *> (linkSlaveP);
           if (lsp) {
             CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (lsp->downBufferDest);
