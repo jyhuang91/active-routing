@@ -73,11 +73,15 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W = (double *) malloc(N * sizeof(double *));
-  double *X = (double *) malloc(N * sizeof(double *));
-  double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
-  if (ret != 0) {
-    fprintf(stderr, "Could not allocate memory\n");
+  double *W, *X;
+
+  if (posix_memalign((void **) &W, CACHELINE_SIZE, N * sizeof(double))) {
+    fprintf(stderr, "Could not allocate memory for W\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (posix_memalign((void **) &X, CACHELINE_SIZE, N * sizeof(double))) {
+    fprintf(stderr, "Could not allocate memory for X\n");
     exit(EXIT_FAILURE);
   }
 

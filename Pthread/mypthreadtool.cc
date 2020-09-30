@@ -1,5 +1,7 @@
 #include "mypthreadtool.h"
 #include "stdio.h"
+#include <hooks.h>
+#include <ins_category_enum.h>
 
 using namespace PinPthread;
 
@@ -206,27 +208,42 @@ int testFunc(int tid)
 }
 #endif
 
-// Jiayi, 01/29/2018
-VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int function)
+// TODO: two operands may have different type, int/fp/double, may not aligned in cacheline
+VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
 {
   uint32_t category = -1;
-  switch (function)
+  uint32_t rlen = 4 * PEI_GRANULARITY;
+  uint32_t wlen = 4; // Bytes
+  switch (opcode)
   {
-    case 1:
+    case IADD:
+    case FADD:
+    case DADD:
+      rlen = CACHELINE_SIZE;
+      wlen = 0;
       //* ((float *)c) += * ((float *)a);
-      category = 128;
+      category = ART_CATEGORY_ADD;
       break;
-    case 2:
+    case IMULT:
+    case FMULT:
+    case DMULT:
+      rlen = CACHELINE_SIZE;
+      wlen = 0;
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
-      category = 130;
+      category = ART_CATEGORY_MULT;
       break;
-    case 3:
-      category = 131;
-      for(int i = 0; i < 4; i++) {
+    case DPEI_DOT:
+      rlen = 8 * PEI_GRANULARITY;
+      wlen = 8;
+    case IPEI_DOT:
+    case FPEI_DOT:
+      category = PEI_CATEGORY_DOT;
+      // load first half source operands on-chip
+      for(int i = 0; i < PEI_GRANULARITY; i++) {
         pthreadsim->process_ins(
             context,
             ip,
-            (ADDRINT) (a + 8*i), 0, 0,
+            (ADDRINT) ((ADDRINT) a + 8*i), 0, rlen / PEI_GRANULARITY,
             0, 0,
             false, false,
             0,
@@ -234,13 +251,70 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
             0, 0, 0, 0);
       }
       break;
-    case 4:
-      category = 131;
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
+  }
+
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, (ADDRINT) b, rlen,
+      (ADDRINT) c, wlen,
+      false, false,
+      category,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //fprintf(stderr, " [UpdateRR API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
+}
+
+VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
+{
+  uint32_t category = -1;
+  uint32_t rlen = 4 * PEI_GRANULARITY;
+  uint32_t wlen = 4;
+  uint32_t art_granularity = CACHELINE_SIZE / 4;
+  switch (opcode)
+  {
+    case IADD:
+    case FADD:
+    case DADD:
+      rlen = CACHELINE_SIZE;
+      wlen = 0;
+      //* ((float *)c) += * ((float *)a);
+      category = ART_CATEGORY_ADD;
+      break;
+    case DMULT:
+      art_granularity = CACHELINE_SIZE / 8;
+    case IMULT:
+    case FMULT:
+      rlen = CACHELINE_SIZE;
+      wlen = 0;
+      //* ((float *)c) += (*((float *)a)) * (*((float *)b));
+      category = ART_CATEGORY_DOT;
+      for (int i = 0; i < art_granularity; i++)
+      {
+        pthreadsim->process_ins(
+            context,
+            ip,
+            (ADDRINT) ((void **)a)[i], 0, rlen / art_granularity,
+            0, 0,
+            false, false,
+            0,
+            0, 0, 0, 0,
+            0, 0, 0, 0);
+      }
+      break;
+    case DPEI_DOT:
+      rlen = 8 * PEI_GRANULARITY;
+      wlen = 8;
+    case IPEI_DOT:
+    case FPEI_DOT:
+      category = PEI_CATEGORY_DOT;
+      // load first half source operands on-chip
       for(int i = 0; i < 4; i++) {
         pthreadsim->process_ins(
             context,
             ip,
-            (ADDRINT) ((void **)a)[i], 0, 0,
+            (ADDRINT) ((void **)a)[i], 0, rlen / PEI_GRANULARITY,
             0, 0,
             false, false,
             0,
@@ -248,31 +322,95 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int func
             0, 0, 0, 0);
       }      
       break;
-    case 5:
-      category = 132;
-      pthreadsim->process_ins(
-         context,
-         ip,
-         (ADDRINT) (a), 0, 0,
-         0, 0,
-         false, false,
-         0,
-         0, 0, 0, 0,
-         0, 0, 0, 0);
-      break;
-    default: fprintf(stderr, "Unknown active operation: %d\n", function); exit(1);
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
   }
-    
+
   pthreadsim->process_ins(
       context,
       ip,
-      (ADDRINT) a, (ADDRINT) b, 0,
+      (ADDRINT) a, (ADDRINT) b, rlen,
+      (ADDRINT) c, wlen,
+      false, false,
+      category,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
+}
+
+VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
+{
+  uint32_t category = -1;
+  uint32_t rlen = 4;
+  switch (opcode)
+  {
+    case DADD:
+      rlen = 8;
+    case IADD:
+    case FADD:
+      //* ((float *)c) += * ((float *)a);
+      category = ART_CATEGORY_ADD;
+      break;
+    case DMULT:
+    case DIDIV: // TODO: treat it differently
+      rlen = 8;
+    case IMULT:
+    case FMULT:
+      //* ((float *)c) += (*((float *)a)) * (*((float *)b));
+      category = ART_CATEGORY_MULT;
+      break;
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
+  }
+
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, (ADDRINT) b, rlen,
       (ADDRINT) c, 0,
       false, false,
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
   //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
+}
+
+// Jiayi, 01/29/2018
+VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
+{
+  uint32_t category = -1;
+  uint32_t rlen = 4;
+  uint32_t wlen = 4;
+  switch (opcode)
+  {
+    case DPEI_ATOMIC:
+      rlen = 8;
+      wlen = 8;
+    case IPEI_ATOMIC:
+    case FPEI_ATOMIC:
+      category = PEI_CATEGORY_ATOMIC;
+      // load source operand on-chip
+      pthreadsim->process_ins(
+         context,
+         ip,
+         (ADDRINT) (a), rlen, 0,
+         0, 0,
+         false, false,
+         0,
+         0, 0, 0, 0,
+         0, 0, 0, 0);
+      break;
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
+  }
+
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, (ADDRINT) b, rlen,
+      (ADDRINT) c, wlen,
+      false, false,
+      category,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
 }
 
 VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthreads)
@@ -283,7 +421,7 @@ VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthr
       (ADDRINT) a, (ADDRINT) b, 0,
       (ADDRINT) c, nthreads,
       false, false,
-      129,
+      ART_CATEGORY_GET,
       0, 0, 0, 0,
       0, 0, 0, 0);
   ngather++;
@@ -410,7 +548,43 @@ VOID FlagImg(IMG img, VOID* v)
     RTN_Close(rtn);
   }
   // Jiayi, 01/29/2018
-  rtn = RTN_FindByName(img, "UPDATE");
+  rtn = RTN_FindByName(img, "UpdateRR");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)UpdateRRAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_END);
+  }
+  rtn = RTN_FindByName(img, "UpdateRI");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)UpdateRIAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_END);
+  }
+  rtn = RTN_FindByName(img, "UpdateII");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)UpdateIIAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_END);
+  }
+  rtn = RTN_FindByName(img, "Update");
   if (rtn != RTN_Invalid())
   {
     RTN_ReplaceSignature(rtn, (AFUNPTR)UpdateAPI,
@@ -422,7 +596,7 @@ VOID FlagImg(IMG img, VOID* v)
         IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
         IARG_END);
   }
-  rtn = RTN_FindByName(img, "GATHER");
+  rtn = RTN_FindByName(img, "Gather");
   if (rtn != RTN_Invalid())
   {
     RTN_ReplaceSignature(rtn, (AFUNPTR)GatherAPI,
@@ -1084,7 +1258,12 @@ VOID FlagTrace(TRACE trace, VOID* v)
 
           if (INS_IsCall(ins) || (src_rtn != dest_rtn))
           {
-            if (INS_IsCall(ins) && RTN_Valid(dest_rtn) && (RTN_Name(dest_rtn) == "UPDATE" || RTN_Name(dest_rtn) == "GATHER")) {
+            if (INS_IsCall(ins) && RTN_Valid(dest_rtn) &&
+                (RTN_Name(dest_rtn) == "Update" ||
+                 RTN_Name(dest_rtn) == "Gather" ||
+                 RTN_Name(dest_rtn) == "UpdateRR" ||
+                 RTN_Name(dest_rtn) == "UpdateRI" ||
+                 RTN_Name(dest_rtn) == "UpdateII")) {
               unnecessary_art_call = true;
             } else {
               BOOL tailcall = !INS_IsCall(ins);

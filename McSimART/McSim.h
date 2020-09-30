@@ -83,12 +83,12 @@ namespace PinPthread
     ins_x87,
     ins_notify,   // for thread migration
     ins_waitfor,  // for thread migration
-    ins_update_add,
-    ins_update_mult,
-    ins_gather,
-    ins_pei,
-    ins_pei_rand,
-    ins_dummy,
+    ins_art_get,
+    ins_art_add,
+    ins_art_mult,
+    ins_art_dot,
+    ins_pei_dot,
+    ins_pei_atomic,
     ins_invalid
   };
 
@@ -105,6 +105,12 @@ namespace PinPthread
     cs_m_to_s    // modified -> shared
   };
 
+  enum art_scheme_type
+  {
+    art_naive,
+    art_tid,
+    art_addr
+  };
 
 
   class McSim
@@ -150,6 +156,7 @@ namespace PinPthread
       bool     is_nuca;
       TOPOLOGY hmc_topology;
       uint64_t core_frequency;
+      art_scheme_type art_scheme;
 
       vector<Core *>             cores;
       vector<Hthread *>          hthreads;

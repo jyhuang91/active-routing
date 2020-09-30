@@ -102,6 +102,7 @@ namespace PinPthread
       uint64_t updtsrc1;
       uint64_t updtsrc2;
       uint64_t updtdest;
+      uint32_t rlen;
       int32_t  nthreads;  // Jiayi, for gather barrier, 03/31/17
   };
 

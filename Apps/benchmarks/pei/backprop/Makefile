@@ -14,14 +14,13 @@ LIB_DEP=hooks
 LIBS += -lrt
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
   
-all: $(OBJS)
+all: $(OBJS) $(LIB_DEP)
 	$(CC) $(CC_FLAGS) $(OBJS) $(LIBS) $(INCS) -o $(TARGET) -lm
 
-$(LIB_DEP): (cd $(MCSIM_PARENT_DIR)/Apps/hooks; $(MAKE); cd $(CUR_DIR))
-
-$(TARGET): $(LIB_DEP)
+$(LIB_DEP):
+	(cd $(MCSIM_PARENT_DIR)/Apps/hooks; $(MAKE); cd $(CUR_DIR))
 
 %.o: %.[ch]
 	$(CC) $(CC_FLAGS) -c $< -o $@ $(LIBS) $(INCS)

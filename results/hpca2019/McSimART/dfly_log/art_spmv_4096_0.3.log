@@ -1,0 +1,402 @@
+Created a DragonFly topology with dimension 4
+
+****************************************************************
+*                      CasHMC version 1.1                      *
+*            Date : 2018/07/24      Time : 12:41:32            *
+****************************************************************
+
+ = Log folder generating information
+   Result folder already exists (./result/)
+
+   === Simulation start === 
+  [ graph/CasHMC_plot_no0.dat ] is generated
+  [ graph/CasHMC_plot_no0.gnuplot ] is generated
+
+in case when the program exits with an error, please run the following command
+kill -9 31761 
+  -- {45506} cmd: /home/sungkeun/git/active-routing-fullsim-operand-granularity/pin/intel64/bin/pinbin -t /home/sungkeun/git/active-routing-fullsim-operand-granularity/Pthread/mypthreadtool -port 45506 -skip_first 0 -run_roi true -- ./spmv 4096 16 0.3 
+initiating context at the begining ...
+  -- [           0]: {45506} thread 0 is created
+finish context initialization ...
+NYI: __pthread_initialize_minimal at: 0x4025d0
+NYI: __linkin_atfork at: 0x427090
+I am in ::::::::::::::::::::::::::::::::::: ROI-Begin
+  -- [           0]: {45506} thread 1 is created
+  -- [           0]: {45506} thread 2 is created
+  -- [           0]: {45506} thread 3 is created
+  -- [           0]: {45506} thread 4 is created
+  -- [           0]: {45506} thread 5 is created
+  -- [           0]: {45506} thread 6 is created
+  -- [           0]: {45506} thread 7 is created
+  -- [           0]: {45506} thread 8 is created
+  -- [           0]: {45506} thread 9 is created
+  -- [           0]: {45506} thread 10 is created
+  -- [           0]: {45506} thread 11 is created
+  -- [           0]: {45506} thread 12 is created
+  -- [           0]: {45506} thread 13 is created
+  -- [           0]: {45506} thread 14 is created
+  -- [           0]: {45506} thread 15 is created
+  -- [     1650450]:    1000106 instrs so far, IPC=   6.059, L1 (acc, miss)=(  381193,   7693), L2 (acc, miss)=(   4877,   4649),   4520 mem accs, (  100,  100) touched pages (this time, 1stly),  70931 update accs,     46 gather accs,  avg_dd= 79.927,      0 back-inv, 211.223 update-noc-lat, 95.2106 update-stall-lat, 323.618 update-roundtrip-lat,  232.5 gather-roundtrip-lat, 11.2026 load-amat, 149.551 store-amat, 149.395 req_noc_lat, 
+  -- [     3073790]:    2000050 instrs so far, IPC=   7.025, L1 (acc, miss)=(  381178,   6474), L2 (acc, miss)=(   4631,   4466),   4466 mem accs, (   98,   75) touched pages (this time, 1stly),  71277 update accs,     60 gather accs,  avg_dd= 80.386,      0 back-inv, 261.015 update-noc-lat, 0.0521494 update-stall-lat, 278.253 update-roundtrip-lat,  193.5 gather-roundtrip-lat, 8.66743 load-amat, 27.6722 store-amat, 156.459 req_noc_lat, 
+  -- [     4502170]:    3000064 instrs so far, IPC=   7.001, L1 (acc, miss)=(  381278,   7060), L2 (acc, miss)=(   4629,   4463),   4463 mem accs, (   93,   71) touched pages (this time, 1stly),  71313 update accs,     60 gather accs,  avg_dd= 78.628,      0 back-inv, 258.156 update-noc-lat, 0.056735 update-stall-lat, 275.395 update-roundtrip-lat, 176.914 gather-roundtrip-lat, 14.2248 load-amat, 28.0167 store-amat, 255.307 req_noc_lat, 
+
+   === Simulation [1] epoch starts  ( CPU clk:1000000 ) ===   
+  -- [     5929870]:    4000006 instrs so far, IPC=   7.003, L1 (acc, miss)=(  381265,   6469), L2 (acc, miss)=(   4622,   4463),   4464 mem accs, (   97,   74) touched pages (this time, 1stly),  71299 update accs,     58 gather accs,  avg_dd= 80.444,      0 back-inv, 261.502 update-noc-lat, 0.0559062 update-stall-lat, 278.791 update-roundtrip-lat,  206.4 gather-roundtrip-lat, 8.94641 load-amat, 27.4943 store-amat, 236.485 req_noc_lat, 
+  -- [     7355310]:    5000020 instrs so far, IPC=   7.015, L1 (acc, miss)=(  381275,   6320), L2 (acc, miss)=(   4632,   4471),   4470 mem accs, (   99,   70) touched pages (this time, 1stly),  71306 update accs,     58 gather accs,  avg_dd= 80.707,      0 back-inv, 262.046 update-noc-lat, 0.0445959 update-stall-lat, 279.32 update-roundtrip-lat, 216.966 gather-roundtrip-lat, 8.41545 load-amat, 27.9138 store-amat, 221.344 req_noc_lat, 
+  -- [     8781070]:    6000122 instrs so far, IPC=   7.014, L1 (acc, miss)=(  381378,   6886), L2 (acc, miss)=(   4629,   4465),   4462 mem accs, (   99,   70) touched pages (this time, 1stly),  71324 update accs,     59 gather accs,  avg_dd= 79.027,      0 back-inv, 259.446 update-noc-lat, 0.0558009 update-stall-lat, 276.747 update-roundtrip-lat, 238.119 gather-roundtrip-lat, 13.245 load-amat, 28.4181 store-amat, 253.072 req_noc_lat, 
+  -- [    10205950]:    7000086 instrs so far, IPC=   7.017, L1 (acc, miss)=(  381201,   6682), L2 (acc, miss)=(   4615,   4462),   4464 mem accs, (   95,   67) touched pages (this time, 1stly),  71295 update accs,     55 gather accs,  avg_dd= 79.967,      0 back-inv, 259.476 update-noc-lat, 0.0539176 update-stall-lat, 276.762 update-roundtrip-lat, 163.491 gather-roundtrip-lat, 10.0391 load-amat, 27.8424 store-amat, 247.309 req_noc_lat, 
+
+   === Simulation [2] epoch starts  ( CPU clk:2000000 ) ===   
+  -- [    11637220]:    8000096 instrs so far, IPC=   6.986, L1 (acc, miss)=(  381207,   6297), L2 (acc, miss)=(   4633,   4468),   4468 mem accs, (  102,   73) touched pages (this time, 1stly),  71295 update accs,     59 gather accs,  avg_dd= 80.614,      0 back-inv, 263.093 update-noc-lat, 0.0487839 update-stall-lat, 280.437 update-roundtrip-lat, 180.068 gather-roundtrip-lat, 8.59658 load-amat, 27.3107 store-amat, 234.557 req_noc_lat, 
+  -- [    13064960]:    9000062 instrs so far, IPC=   7.003, L1 (acc, miss)=(  381235,   6397), L2 (acc, miss)=(   4631,   4465),   4464 mem accs, (  100,   73) touched pages (this time, 1stly),  71291 update accs,     59 gather accs,  avg_dd= 80.235,      0 back-inv, 261.716 update-noc-lat, 0.0497812 update-stall-lat, 279.002 update-roundtrip-lat, 207.102 gather-roundtrip-lat, 9.90148 load-amat, 28.3898 store-amat, 235.073 req_noc_lat, 
+  -- [    14501260]:   10000012 instrs so far, IPC=   6.961, L1 (acc, miss)=(  381241,   6970), L2 (acc, miss)=(   4627,   4464),   4466 mem accs, (   98,   71) touched pages (this time, 1stly),  71298 update accs,     59 gather accs,  avg_dd= 78.830,      0 back-inv, 260.499 update-noc-lat, 0.0589935 update-stall-lat, 277.817 update-roundtrip-lat, 160.881 gather-roundtrip-lat, 14.1232 load-amat, 27.9379 store-amat, 256.669 req_noc_lat, 
+  -- [    15926200]:   11000008 instrs so far, IPC=   7.017, L1 (acc, miss)=(  381317,   6315), L2 (acc, miss)=(   4625,   4465),   4465 mem accs, (   97,   69) touched pages (this time, 1stly),  71316 update accs,     56 gather accs,  avg_dd= 80.959,      0 back-inv, 261.479 update-noc-lat, 0.0573348 update-stall-lat, 278.781 update-roundtrip-lat, 170.125 gather-roundtrip-lat, 7.83438 load-amat, 27.2515 store-amat, 243.379 req_noc_lat, 
+
+   === Simulation [3] epoch starts  ( CPU clk:3000000 ) ===   
+  -- [    17355550]:   12000048 instrs so far, IPC=   6.996, L1 (acc, miss)=(  381281,   6235), L2 (acc, miss)=(   4630,   4466),   4466 mem accs, (   99,   72) touched pages (this time, 1stly),  71299 update accs,     60 gather accs,  avg_dd= 80.949,      0 back-inv, 262.95 update-noc-lat, 0.0509692 update-stall-lat, 280.279 update-roundtrip-lat, 159.083 gather-roundtrip-lat, 8.38194 load-amat, 27.4859 store-amat, 236.142 req_noc_lat, 
+  -- [    18784580]:   13000073 instrs so far, IPC=   6.997, L1 (acc, miss)=(  381332,   6886), L2 (acc, miss)=(   4627,   4470),   4481 mem accs, (  102,   73) touched pages (this time, 1stly),  71327 update accs,     58 gather accs,  avg_dd= 79.025,      0 back-inv, 260.277 update-noc-lat, 0.0491672 update-stall-lat, 277.494 update-roundtrip-lat, 184.638 gather-roundtrip-lat, 13.5055 load-amat, 28.9655 store-amat, 251.938 req_noc_lat, 
+  -- [    20200520]:   14000077 instrs so far, IPC=   7.062, L1 (acc, miss)=(  381213,   6519), L2 (acc, miss)=(   4615,   4463),   4542 mem accs, (   97,   68) touched pages (this time, 1stly),  71295 update accs,     55 gather accs,  avg_dd= 80.231,      0 back-inv, 257.715 update-noc-lat, 0.0583343 update-stall-lat, 274.96 update-roundtrip-lat, 169.873 gather-roundtrip-lat, 9.98004 load-amat, 27.7818 store-amat, 250.926 req_noc_lat, 
+  -- [    21626650]:   15000123 instrs so far, IPC=   7.012, L1 (acc, miss)=(  381252,   6324), L2 (acc, miss)=(   4636,   4467),   7422 mem accs, (  101,   72) touched pages (this time, 1stly),  71297 update accs,     60 gather accs,  avg_dd= 80.644,      0 back-inv, 261.619 update-noc-lat, 0.0708305 update-stall-lat, 278.892 update-roundtrip-lat, 136.15 gather-roundtrip-lat, 8.80991 load-amat, 27.4176 store-amat, 241.053 req_noc_lat, 
+
+   === Simulation [4] epoch starts  ( CPU clk:4000000 ) ===   
+  -- [    23058680]:   16000022 instrs so far, IPC=   6.982, L1 (acc, miss)=(  381292,   6323), L2 (acc, miss)=(   4627,   4464),   7871 mem accs, (   99,   69) touched pages (this time, 1stly),  71329 update accs,     59 gather accs,  avg_dd= 80.366,      0 back-inv, 262.23 update-noc-lat, 0.0670975 update-stall-lat, 279.581 update-roundtrip-lat, 111.203 gather-roundtrip-lat, 10.3634 load-amat, 27.6057 store-amat, 238.944 req_noc_lat, 
+  -- [    24483220]:   17000066 instrs so far, IPC=   7.020, L1 (acc, miss)=(  381107,   7149), L2 (acc, miss)=(   4627,   4465),   8444 mem accs, (  103,   77) touched pages (this time, 1stly),  71254 update accs,     58 gather accs,  avg_dd= 78.401,      0 back-inv, 256.145 update-noc-lat, 0.0741151 update-stall-lat, 273.353 update-roundtrip-lat, 145.431 gather-roundtrip-lat, 15.8221 load-amat, 30.6897 store-amat, 251.484 req_noc_lat, 
+  -- [    25908460]:   18000046 instrs so far, IPC=   7.016, L1 (acc, miss)=(  381470,   6478), L2 (acc, miss)=(   4629,   4466),   8932 mem accs, (   99,   70) touched pages (this time, 1stly),  71344 update accs,     58 gather accs,  avg_dd= 80.273,      0 back-inv, 260.473 update-noc-lat, 0.0849289 update-stall-lat, 277.768 update-roundtrip-lat, 148.052 gather-roundtrip-lat, 10.1465 load-amat, 27.8103 store-amat, 245.781 req_noc_lat, 
+
+   === Simulation [5] epoch starts  ( CPU clk:5000000 ) ===   
+  -- [    27338060]:   19000107 instrs so far, IPC=   6.995, L1 (acc, miss)=(  381173,   6375), L2 (acc, miss)=(   4618,   4463),   8924 mem accs, (   99,   72) touched pages (this time, 1stly),  71289 update accs,     56 gather accs,  avg_dd= 80.189,      0 back-inv, 261.726 update-noc-lat, 0.0742741 update-stall-lat, 279.016 update-roundtrip-lat, 128.411 gather-roundtrip-lat, 10.3516 load-amat, 29.0536 store-amat, 242.802 req_noc_lat, 
+  -- [    28770870]:   20000086 instrs so far, IPC=   6.979, L1 (acc, miss)=(  381185,   6970), L2 (acc, miss)=(   4630,   4466),   8922 mem accs, (   99,   70) touched pages (this time, 1stly),  71301 update accs,     59 gather accs,  avg_dd= 78.617,      0 back-inv, 259.343 update-noc-lat, 0.0650903 update-stall-lat, 276.659 update-roundtrip-lat, 128.305 gather-roundtrip-lat, 15.2224 load-amat, 28.8136 store-amat, 252.178 req_noc_lat, 
+  -- [    30198250]:   21000067 instrs so far, IPC=   7.005, L1 (acc, miss)=(  381333,   6396), L2 (acc, miss)=(   4632,   4464),   8940 mem accs, (  101,   74) touched pages (this time, 1stly),  71299 update accs,     59 gather accs,  avg_dd= 80.146,      0 back-inv, 259.766 update-noc-lat, 0.0694109 update-stall-lat, 277.099 update-roundtrip-lat, 129.136 gather-roundtrip-lat, 11.1618 load-amat, 28.6333 store-amat, 249.509 req_noc_lat, 
+  -- [    31624010]:   22000088 instrs so far, IPC=   7.013, L1 (acc, miss)=(  381296,   6376), L2 (acc, miss)=(   4623,   4466),   8930 mem accs, (   96,   68) touched pages (this time, 1stly),  71319 update accs,     57 gather accs,  avg_dd= 80.409,      0 back-inv, 261.117 update-noc-lat, 0.0722689 update-stall-lat, 278.472 update-roundtrip-lat, 109.351 gather-roundtrip-lat, 9.57923 load-amat, 29.5595 store-amat, 243.61 req_noc_lat, 
+
+   === Simulation [6] epoch starts  ( CPU clk:6000000 ) ===   
+  -- [    33042440]:   23000082 instrs so far, IPC=   7.050, L1 (acc, miss)=(  381268,   6556), L2 (acc, miss)=(   4623,   4466),   8930 mem accs, (   99,   71) touched pages (this time, 1stly),  71302 update accs,     57 gather accs,  avg_dd= 79.793,      0 back-inv, 259.001 update-noc-lat, 0.0793397 update-stall-lat, 276.276 update-roundtrip-lat, 131.596 gather-roundtrip-lat, 11.6319 load-amat, 28.9532 store-amat, 243.904 req_noc_lat, 
+  -- [    34476540]:   24000004 instrs so far, IPC=   6.972, L1 (acc, miss)=(  381288,   7253), L2 (acc, miss)=(   4638,   4467),   8934 mem accs, (  102,   71) touched pages (this time, 1stly),  71292 update accs,     61 gather accs,  avg_dd= 78.270,      0 back-inv, 257.464 update-noc-lat, 0.0833719 update-stall-lat, 274.763 update-roundtrip-lat, 133.852 gather-roundtrip-lat, 15.8249 load-amat, 29.5246 store-amat, 252.3 req_noc_lat, 
+  -- [    35895430]:   25000010 instrs so far, IPC=   7.047, L1 (acc, miss)=(  381235,   6180), L2 (acc, miss)=(   4620,   4466),   8930 mem accs, (  102,   70) touched pages (this time, 1stly),  71312 update accs,     56 gather accs,  avg_dd= 80.716,      0 back-inv, 260.204 update-noc-lat, 0.0642696 update-stall-lat, 277.539 update-roundtrip-lat, 119.036 gather-roundtrip-lat, 9.31196 load-amat, 28.7143 store-amat, 246.612 req_noc_lat, 
+
+   === Simulation [7] epoch starts  ( CPU clk:7000000 ) ===   
+  -- [    37315630]:   26000091 instrs so far, IPC=   7.041, L1 (acc, miss)=(  381335,   6187), L2 (acc, miss)=(   4638,   4471),   8944 mem accs, (  100,   69) touched pages (this time, 1stly),  71303 update accs,     60 gather accs,  avg_dd= 80.613,      0 back-inv, 260.412 update-noc-lat, 0.0791821 update-stall-lat, 277.714 update-roundtrip-lat, 128.633 gather-roundtrip-lat, 9.64383 load-amat,  29.85 store-amat, 241.933 req_noc_lat, 
+  -- [    38739080]:   27000024 instrs so far, IPC=   7.024, L1 (acc, miss)=(  381166,   6970), L2 (acc, miss)=(   4622,   4461),   8918 mem accs, (  101,   69) touched pages (this time, 1stly),  71304 update accs,     57 gather accs,  avg_dd= 78.626,      0 back-inv, 256.758 update-noc-lat, 0.0765325 update-stall-lat, 274.062 update-roundtrip-lat, 126.088 gather-roundtrip-lat, 15.3213 load-amat, 30.2807 store-amat, 249.21 req_noc_lat, 
+  -- [    40168620]:   28000014 instrs so far, IPC=   6.995, L1 (acc, miss)=(  381368,   6517), L2 (acc, miss)=(   4625,   4467),   8938 mem accs, (  103,   75) touched pages (this time, 1stly),  71319 update accs,     57 gather accs,  avg_dd= 80.016,      0 back-inv, 260.29 update-noc-lat, 0.0715638 update-stall-lat, 277.598 update-roundtrip-lat, 120.035 gather-roundtrip-lat, 11.6909 load-amat, 29.1637 store-amat, 249.236 req_noc_lat, 
+
+   === Simulation [8] epoch starts  ( CPU clk:8000000 ) ===   
+  -- [    41598550]:   29000093 instrs so far, IPC=   6.993, L1 (acc, miss)=(  381205,   6322), L2 (acc, miss)=(   4626,   4463),   8928 mem accs, (   99,   69) touched pages (this time, 1stly),  71282 update accs,     58 gather accs,  avg_dd= 80.401,      0 back-inv, 261.803 update-noc-lat, 0.0748296 update-stall-lat, 279.091 update-roundtrip-lat, 138.862 gather-roundtrip-lat, 9.97461 load-amat, 29.546 store-amat, 245.993 req_noc_lat, 
+  -- [    43017140]:   30000025 instrs so far, IPC=   7.048, L1 (acc, miss)=(  381252,   6504), L2 (acc, miss)=(   4631,   4467),   8926 mem accs, (  103,   72) touched pages (this time, 1stly),  71300 update accs,     59 gather accs,  avg_dd= 79.884,      0 back-inv, 258.947 update-noc-lat, 0.0779232 update-stall-lat, 276.217 update-roundtrip-lat, 123.102 gather-roundtrip-lat, 11.2482 load-amat, 30.1469 store-amat, 245.124 req_noc_lat, 
+  -- [    44453850]:   31000008 instrs so far, IPC=   6.960, L1 (acc, miss)=(  381247,   6796), L2 (acc, miss)=(   4635,   4468),   8940 mem accs, (  103,   71) touched pages (this time, 1stly),  71306 update accs,     59 gather accs,  avg_dd= 79.038,      0 back-inv, 259.466 update-noc-lat, 0.068804 update-stall-lat, 276.745 update-roundtrip-lat, 127.569 gather-roundtrip-lat, 14.4969 load-amat, 32.3556 store-amat, 249.558 req_noc_lat, 
+
+   === Simulation [9] epoch starts  ( CPU clk:9000000 ) ===   
+  -- [    45883810]:   32000002 instrs so far, IPC=   6.993, L1 (acc, miss)=(  381231,   6288), L2 (acc, miss)=(   4616,   4466),   8934 mem accs, (   97,   68) touched pages (this time, 1stly),  71304 update accs,     55 gather accs,  avg_dd= 80.405,      0 back-inv, 261.81 update-noc-lat, 0.0762078 update-stall-lat, 279.126 update-roundtrip-lat, 144.429 gather-roundtrip-lat, 9.98124 load-amat,  33.25 store-amat, 245.943 req_noc_lat, 
+  -- [    47308630]:   33000036 instrs so far, IPC=   7.018, L1 (acc, miss)=(  381358,   6523), L2 (acc, miss)=(   4628,   4465),   8928 mem accs, (  100,   70) touched pages (this time, 1stly),  71321 update accs,     59 gather accs,  avg_dd= 79.951,      0 back-inv, 260.136 update-noc-lat, 0.0762317 update-stall-lat, 277.435 update-roundtrip-lat, 129.203 gather-roundtrip-lat, 10.9058 load-amat, 30.2057 store-amat, 244.904 req_noc_lat, 
+  -- [    48733980]:   34000017 instrs so far, IPC=   7.015, L1 (acc, miss)=(  381189,   7111), L2 (acc, miss)=(   4626,   4465),   8926 mem accs, (  107,   78) touched pages (this time, 1stly),  71290 update accs,     58 gather accs,  avg_dd= 78.532,      0 back-inv, 257.569 update-noc-lat, 0.0697312 update-stall-lat, 274.835 update-roundtrip-lat, 148.155 gather-roundtrip-lat, 15.1054 load-amat, 28.2989 store-amat, 249.982 req_noc_lat, 
+  -- [    50155370]:   35000116 instrs so far, IPC=   7.036, L1 (acc, miss)=(  381319,   6433), L2 (acc, miss)=(   4629,   4461),   8928 mem accs, (  105,   70) touched pages (this time, 1stly),  71315 update accs,     59 gather accs,  avg_dd= 80.180,      0 back-inv, 258.665 update-noc-lat, 0.0683437 update-stall-lat, 275.905 update-roundtrip-lat, 120.593 gather-roundtrip-lat, 11.1188 load-amat, 29.1299 store-amat, 248.645 req_noc_lat, 
+
+   === Simulation [10] epoch starts  ( CPU clk:10000000 ) ===   
+  -- [    51588130]:   36000044 instrs so far, IPC=   6.979, L1 (acc, miss)=(  381402,   6464), L2 (acc, miss)=(   4630,   4467),   8932 mem accs, (  108,   71) touched pages (this time, 1stly),  71319 update accs,     59 gather accs,  avg_dd= 80.292,      0 back-inv, 261.965 update-noc-lat, 0.0725633 update-stall-lat, 279.32 update-roundtrip-lat, 125.203 gather-roundtrip-lat, 9.90654 load-amat, 29.6384 store-amat, 244.867 req_noc_lat, 
+  -- [    53014960]:   37000067 instrs so far, IPC=   7.008, L1 (acc, miss)=(  381242,   6420), L2 (acc, miss)=(   4623,   4466),   8930 mem accs, (  106,   72) touched pages (this time, 1stly),  71306 update accs,     57 gather accs,  avg_dd= 79.879,      0 back-inv, 261.003 update-noc-lat, 0.0691928 update-stall-lat, 278.32 update-roundtrip-lat, 115.105 gather-roundtrip-lat, 11.8744 load-amat, 31.3392 store-amat, 245.25 req_noc_lat, 
+  -- [    54441190]:   38000116 instrs so far, IPC=   7.011, L1 (acc, miss)=(  381177,   6968), L2 (acc, miss)=(   4634,   4467),   8936 mem accs, (  106,   70) touched pages (this time, 1stly),  71279 update accs,     60 gather accs,  avg_dd= 78.560,      0 back-inv, 256.861 update-noc-lat, 0.0835473 update-stall-lat, 274.091 update-roundtrip-lat, 122.517 gather-roundtrip-lat, 15.4748 load-amat, 30.8167 store-amat, 250.13 req_noc_lat, 
+
+   === Simulation [11] epoch starts  ( CPU clk:11000000 ) ===   
+  -- [    55871830]:   39000022 instrs so far, IPC=   6.989, L1 (acc, miss)=(  381231,   6426), L2 (acc, miss)=(   4625,   4459),   8920 mem accs, (  105,   70) touched pages (this time, 1stly),  71295 update accs,     58 gather accs,  avg_dd= 80.278,      0 back-inv, 261.739 update-noc-lat, 0.0742387 update-stall-lat, 279.081 update-roundtrip-lat, 109.603 gather-roundtrip-lat, 10.2897 load-amat, 28.8621 store-amat, 248.087 req_noc_lat, 
+  -- [    57290950]:   40000042 instrs so far, IPC=   7.046, L1 (acc, miss)=(  381200,   6493), L2 (acc, miss)=(   4622,   4471),   8942 mem accs, (  101,   68) touched pages (this time, 1stly),  71300 update accs,     55 gather accs,  avg_dd= 80.165,      0 back-inv, 259.439 update-noc-lat, 0.0772101 update-stall-lat, 276.741 update-roundtrip-lat, 106.309 gather-roundtrip-lat, 10.1062 load-amat, 29.5273 store-amat, 245.78 req_noc_lat, 
+  -- [    58719490]:   41000038 instrs so far, IPC=   7.000, L1 (acc, miss)=(  381330,   6752), L2 (acc, miss)=(   4628,   4464),   8926 mem accs, (  105,   71) touched pages (this time, 1stly),  71329 update accs,     58 gather accs,  avg_dd= 79.258,      0 back-inv, 259.148 update-noc-lat, 0.0812152 update-stall-lat, 276.425 update-roundtrip-lat, 120.19 gather-roundtrip-lat, 13.5231 load-amat, 31.6437 store-amat, 248.033 req_noc_lat, 
+
+   === Simulation [12] epoch starts  ( CPU clk:12000000 ) ===   
+  -- [    60148940]:   42000110 instrs so far, IPC=   6.996, L1 (acc, miss)=(  381357,   6590), L2 (acc, miss)=(   4633,   4466),   8932 mem accs, (  105,   70) touched pages (this time, 1stly),  71304 update accs,     60 gather accs,  avg_dd= 79.747,      0 back-inv, 259.506 update-noc-lat, 0.0754926 update-stall-lat, 276.77 update-roundtrip-lat, 127.267 gather-roundtrip-lat, 11.8994 load-amat, 29.8222 store-amat, 247.849 req_noc_lat, 
+  -- [    61577520]:   43000091 instrs so far, IPC=   6.999, L1 (acc, miss)=(  381198,   6417), L2 (acc, miss)=(   4622,   4463),   8922 mem accs, (  103,   71) touched pages (this time, 1stly),  71312 update accs,     58 gather accs,  avg_dd= 80.033,      0 back-inv, 261.102 update-noc-lat, 0.0702276 update-stall-lat, 278.402 update-roundtrip-lat, 141.052 gather-roundtrip-lat, 10.8346 load-amat, 29.8621 store-amat, 246.779 req_noc_lat, 
+  -- [    62999060]:   44000102 instrs so far, IPC=   7.034, L1 (acc, miss)=(  381418,   6687), L2 (acc, miss)=(   4634,   4470),   8940 mem accs, (  101,   70) touched pages (this time, 1stly),  71318 update accs,     60 gather accs,  avg_dd= 79.652,      0 back-inv, 258.021 update-noc-lat, 0.0800079 update-stall-lat, 275.354 update-roundtrip-lat, 114.45 gather-roundtrip-lat, 11.8602 load-amat, 29.0667 store-amat, 246.976 req_noc_lat, 
+  -- [    64422590]:   45000038 instrs so far, IPC=   7.024, L1 (acc, miss)=(  381111,   6866), L2 (acc, miss)=(   4614,   4463),   8930 mem accs, (  107,   71) touched pages (this time, 1stly),  71281 update accs,     55 gather accs,  avg_dd= 79.178,      0 back-inv, 257.623 update-noc-lat, 0.0816756 update-stall-lat, 274.871 update-roundtrip-lat, 145.291 gather-roundtrip-lat, 13.5163 load-amat, 30.5152 store-amat, 248.837 req_noc_lat, 
+
+   === Simulation [13] epoch starts  ( CPU clk:13000000 ) ===   
+  -- [    65853420]:   46000100 instrs so far, IPC=   6.989, L1 (acc, miss)=(  381294,   6381), L2 (acc, miss)=(   4631,   4465),   8930 mem accs, (  106,   71) touched pages (this time, 1stly),  71296 update accs,     59 gather accs,  avg_dd= 80.301,      0 back-inv, 262.138 update-noc-lat, 0.0687846 update-stall-lat, 279.461 update-roundtrip-lat, 141.847 gather-roundtrip-lat, 10.0403 load-amat, 28.3672 store-amat, 246.655 req_noc_lat, 
+  -- [    67280960]:   47000106 instrs so far, IPC=   7.005, L1 (acc, miss)=(  381219,   6397), L2 (acc, miss)=(   4625,   4469),   8938 mem accs, (  106,   71) touched pages (this time, 1stly),  71304 update accs,     57 gather accs,  avg_dd= 80.210,      0 back-inv,  261.3 update-noc-lat, 0.0717341 update-stall-lat, 278.598 update-roundtrip-lat, 159.456 gather-roundtrip-lat, 10.1625 load-amat, 30.1871 store-amat, 244.914 req_noc_lat, 
+  -- [    68708640]:   48000004 instrs so far, IPC=   7.003, L1 (acc, miss)=(  381331,   7085), L2 (acc, miss)=(   4640,   4467),   8930 mem accs, (  107,   72) touched pages (this time, 1stly),  71312 update accs,     61 gather accs,  avg_dd= 78.548,      0 back-inv, 257.414 update-noc-lat, 0.0738455 update-stall-lat, 274.724 update-roundtrip-lat, 153.787 gather-roundtrip-lat, 15.562 load-amat, 28.9016 store-amat, 249.083 req_noc_lat, 
+
+   === Simulation [14] epoch starts  ( CPU clk:14000000 ) ===   
+  -- [    70142340]:   49000058 instrs so far, IPC=   6.975, L1 (acc, miss)=(  381194,   6487), L2 (acc, miss)=(   4625,   4466),   8934 mem accs, (  107,   72) touched pages (this time, 1stly),  71286 update accs,     58 gather accs,  avg_dd= 79.852,      0 back-inv, 261.191 update-noc-lat, 0.0733654 update-stall-lat, 278.435 update-roundtrip-lat, 126.328 gather-roundtrip-lat, 11.8902 load-amat, 29.4943 store-amat, 249.079 req_noc_lat, 
+  -- [    71566670]:   50000108 instrs so far, IPC=   7.021, L1 (acc, miss)=(  381366,   6357), L2 (acc, miss)=(   4624,   4465),   8930 mem accs, (  111,   73) touched pages (this time, 1stly),  71328 update accs,     57 gather accs,  avg_dd= 80.368,      0 back-inv, 260.773 update-noc-lat, 0.0712073 update-stall-lat, 278.038 update-roundtrip-lat, 134.561 gather-roundtrip-lat, 9.92757 load-amat, 30.0234 store-amat, 247.011 req_noc_lat, 
+  -- [    72999420]:   51000029 instrs so far, IPC=   6.979, L1 (acc, miss)=(  381215,   6688), L2 (acc, miss)=(   4629,   4471),   8938 mem accs, (  111,   76) touched pages (this time, 1stly),  71306 update accs,     58 gather accs,  avg_dd= 79.668,      0 back-inv, 260.281 update-noc-lat, 0.0747612 update-stall-lat, 277.564 update-roundtrip-lat, 127.672 gather-roundtrip-lat, 11.9792 load-amat, 31.4655 store-amat, 246.858 req_noc_lat, 
+
+   === Simulation [15] epoch starts  ( CPU clk:15000000 ) ===   
+  -- [    74427310]:   52000030 instrs so far, IPC=   7.003, L1 (acc, miss)=(  381262,   7028), L2 (acc, miss)=(   4620,   4460),   8922 mem accs, (  106,   67) touched pages (this time, 1stly),  71295 update accs,     57 gather accs,  avg_dd= 78.836,      0 back-inv, 258.285 update-noc-lat, 0.0742689 update-stall-lat, 275.501 update-roundtrip-lat, 109.228 gather-roundtrip-lat, 13.9444 load-amat, 34.4503 store-amat, 248.723 req_noc_lat, 
+  -- [    75848260]:   53000082 instrs so far, IPC=   7.037, L1 (acc, miss)=(  381446,   6476), L2 (acc, miss)=(   4623,   4471),   8915 mem accs, (  111,   73) touched pages (this time, 1stly),  71346 update accs,     56 gather accs,  avg_dd= 80.223,      0 back-inv, 259.276 update-noc-lat, 0.0844909 update-stall-lat, 276.622 update-roundtrip-lat, 130.75 gather-roundtrip-lat, 10.7046 load-amat, 30.131 store-amat, 247.607 req_noc_lat, 
+  -- [    77278590]:   54000053 instrs so far, IPC=   6.991, L1 (acc, miss)=(  381145,   6506), L2 (acc, miss)=(   4636,   4468),   8810 mem accs, (  111,   70) touched pages (this time, 1stly),  71270 update accs,     59 gather accs,  avg_dd= 79.999,      0 back-inv, 261.071 update-noc-lat, 0.0732556 update-stall-lat, 278.405 update-roundtrip-lat, 130.78 gather-roundtrip-lat, 11.0989 load-amat, 38.9661 store-amat, 247.097 req_noc_lat, 
+
+   === Simulation [16] epoch starts  ( CPU clk:16000000 ) ===   
+  -- [    78705760]:   55000084 instrs so far, IPC=   7.007, L1 (acc, miss)=(  381265,   6657), L2 (acc, miss)=(   4629,   4466),   8915 mem accs, (  116,   73) touched pages (this time, 1stly),  71298 update accs,     59 gather accs,  avg_dd= 79.376,      0 back-inv, 259.429 update-noc-lat, 0.0698617 update-stall-lat, 276.71 update-roundtrip-lat, 117.542 gather-roundtrip-lat, 13.1678 load-amat, 33.2825 store-amat, 248.367 req_noc_lat, 
+  -- [    80138790]:   56000123 instrs so far, IPC=   6.978, L1 (acc, miss)=(  381234,   6420), L2 (acc, miss)=(   4632,   4466),   8738 mem accs, (  110,   71) touched pages (this time, 1stly),  71296 update accs,     59 gather accs,  avg_dd= 80.098,      0 back-inv, 261.569 update-noc-lat, 0.0725847 update-stall-lat, 278.931 update-roundtrip-lat, 120.492 gather-roundtrip-lat, 10.9627 load-amat, 29.8249 store-amat, 247.458 req_noc_lat, 
+  -- [    81564370]:   57000066 instrs so far, IPC=   7.014, L1 (acc, miss)=(  381299,   6460), L2 (acc, miss)=(   4638,   4469),   7893 mem accs, (  113,   73) touched pages (this time, 1stly),  71306 update accs,     59 gather accs,  avg_dd= 80.185,      0 back-inv, 260.651 update-noc-lat, 0.071665 update-stall-lat, 277.948 update-roundtrip-lat, 120.407 gather-roundtrip-lat, 10.1009 load-amat, 34.1808 store-amat, 246.147 req_noc_lat, 
+  -- [    82991210]:   58000077 instrs so far, IPC=   7.008, L1 (acc, miss)=(  381264,   6776), L2 (acc, miss)=(   4711,   4478),   7881 mem accs, (  116,   68) touched pages (this time, 1stly),  71303 update accs,     57 gather accs,  avg_dd= 79.543,      0 back-inv, 259.447 update-noc-lat, 0.0761938 update-stall-lat, 276.748 update-roundtrip-lat, 157.281 gather-roundtrip-lat, 12.7076 load-amat, 44.1345 store-amat, 247.636 req_noc_lat, 
+
+   === Simulation [17] epoch starts  ( CPU clk:17000000 ) ===   
+  -- [    84431370]:   59000114 instrs so far, IPC=   6.943, L1 (acc, miss)=(  381238,   7023), L2 (acc, miss)=(   4632,   4468),   7535 mem accs, (  111,   74) touched pages (this time, 1stly),  71292 update accs,     60 gather accs,  avg_dd= 79.053,      0 back-inv, 260.845 update-noc-lat, 0.0710188 update-stall-lat, 278.139 update-roundtrip-lat, 165.133 gather-roundtrip-lat, 13.2955 load-amat, 31.9778 store-amat, 248.968 req_noc_lat, 
+  -- [    85870590]:   60000074 instrs so far, IPC=   6.947, L1 (acc, miss)=(  381251,   6428), L2 (acc, miss)=(   4606,   4464),   6745 mem accs, (  110,   70) touched pages (this time, 1stly),  71314 update accs,     52 gather accs,  avg_dd= 80.381,      0 back-inv, 263.753 update-noc-lat, 0.0638716 update-stall-lat, 281.043 update-roundtrip-lat, 188.673 gather-roundtrip-lat, 9.22389 load-amat, 30.4167 store-amat, 247.14 req_noc_lat, 
+  -- [    87298610]:   61000105 instrs so far, IPC=   7.002, L1 (acc, miss)=(  381357,   6594), L2 (acc, miss)=(   4649,   4475),   5875 mem accs, (  109,   67) touched pages (this time, 1stly),  71334 update accs,     59 gather accs,  avg_dd= 80.190,      0 back-inv, 261.716 update-noc-lat, 0.0547573 update-stall-lat, 279.004 update-roundtrip-lat, 145.322 gather-roundtrip-lat, 9.83859 load-amat, 32.9831 store-amat, 246.515 req_noc_lat, 
+
+   === Simulation [18] epoch starts  ( CPU clk:18000000 ) ===   
+  -- [    88735670]:   62000093 instrs so far, IPC=   6.958, L1 (acc, miss)=(  381267,   7063), L2 (acc, miss)=(   4643,   4473),   5712 mem accs, (  115,   72) touched pages (this time, 1stly),  71290 update accs,     60 gather accs,  avg_dd= 79.136,      0 back-inv, 260.867 update-noc-lat, 0.0618591 update-stall-lat, 278.171 update-roundtrip-lat,  169.3 gather-roundtrip-lat, 12.7921 load-amat,  38.75 store-amat, 247.924 req_noc_lat, 
+  -- [    90169420]:   63000110 instrs so far, IPC=   6.974, L1 (acc, miss)=(  381276,   6514), L2 (acc, miss)=(   4629,   4461),   5554 mem accs, (  111,   74) touched pages (this time, 1stly),  71294 update accs,     60 gather accs,  avg_dd= 80.019,      0 back-inv, 262.248 update-noc-lat, 0.0504531 update-stall-lat, 279.468 update-roundtrip-lat, 161.55 gather-roundtrip-lat, 10.8513 load-amat, 29.9611 store-amat, 248.064 req_noc_lat, 
+  -- [    91612180]:   64000005 instrs so far, IPC=   6.930, L1 (acc, miss)=(  381361,   6428), L2 (acc, miss)=(   4628,   4469),   4975 mem accs, (  118,   72) touched pages (this time, 1stly),  71324 update accs,     56 gather accs,  avg_dd= 80.485,      0 back-inv, 265.023 update-noc-lat, 0.0490999 update-stall-lat, 282.283 update-roundtrip-lat, 164.732 gather-roundtrip-lat, 9.3144 load-amat, 30.2281 store-amat, 247.247 req_noc_lat, 
+  -- [    93049190]:   65000066 instrs so far, IPC=   6.959, L1 (acc, miss)=(  381148,   6750), L2 (acc, miss)=(   4625,   4466),   4549 mem accs, (  109,   69) touched pages (this time, 1stly),  71285 update accs,     58 gather accs,  avg_dd= 79.709,      0 back-inv, 261.956 update-noc-lat, 0.0613181 update-stall-lat, 279.281 update-roundtrip-lat, 177.483 gather-roundtrip-lat, 10.9643 load-amat, 32.0234 store-amat, 247.749 req_noc_lat, 
+  -- [    93752590]: {45506} thread 4 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+
+   === Simulation [19] epoch starts  ( CPU clk:19000000 ) ===   
+  -- [    94498910]:   66000082 instrs so far, IPC=   6.897, L1 (acc, miss)=(  381399,   6592), L2 (acc, miss)=(   4633,   4465),   4664 mem accs, (  120,   68) touched pages (this time, 1stly),  71345 update accs,     59 gather accs,  avg_dd= 79.818,      2 back-inv, 249.329 update-noc-lat, 0.0492249 update-stall-lat, 267.091 update-roundtrip-lat, 184.759 gather-roundtrip-lat, 10.8004 load-amat, 29.2816 store-amat, 247.983 req_noc_lat, 
+  -- [    94594590]: {45506} thread 5 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    94711630]: {45506} thread 8 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    94811010]: {45506} thread 9 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    94974140]: {45506} thread 6 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95377350]: {45506} thread 10 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95461950]: {45506} thread 12 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95464500]: {45506} thread 13 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95511000]: {45506} thread 7 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95666420]: {45506} thread 14 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95693380]: {45506} thread 11 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    95809120]: {45506} thread 15 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [    96212120]:   67000030 instrs so far, IPC=   5.836, L1 (acc, miss)=(  382077,   9498), L2 (acc, miss)=(   4704,   4495),   4867 mem accs, (  130,   52) touched pages (this time, 1stly),  71564 update accs,     64 gather accs,  avg_dd= 74.751,     25 back-inv, 136.076 update-noc-lat, 0.0515755 update-stall-lat, 154.495 update-roundtrip-lat, 326.369 gather-roundtrip-lat, 12.4784 load-amat, 27.4824 store-amat, 246.388 req_noc_lat, 
+  -- [    98950730]:   68000041 instrs so far, IPC=   3.651, L1 (acc, miss)=(  380993,  17828), L2 (acc, miss)=(   4633,   4435),   4638 mem accs, (  102,   49) touched pages (this time, 1stly),  71311 update accs,     60 gather accs,  avg_dd= 62.116,      0 back-inv, 34.1635 update-noc-lat, 0.0392237 update-stall-lat, 48.0565 update-roundtrip-lat, 526.867 gather-roundtrip-lat, 21.0991 load-amat,   35.6 store-amat, 244.384 req_noc_lat, 
+
+   === Simulation [20] epoch starts  ( CPU clk:20000000 ) ===   
+  -- [   101645390]:   69000029 instrs so far, IPC=   3.710, L1 (acc, miss)=(  380933,  17977), L2 (acc, miss)=(   4626,   4440),   4445 mem accs, (   95,   49) touched pages (this time, 1stly),  71299 update accs,     57 gather accs,  avg_dd= 62.033,      0 back-inv, 34.0568 update-noc-lat, 0.0460022 update-stall-lat, 47.9829 update-roundtrip-lat, 532.93 gather-roundtrip-lat, 20.8138 load-amat, 37.1287 store-amat, 242.399 req_noc_lat, 
+  -- [   104329430]:   70000088 instrs so far, IPC=   3.725, L1 (acc, miss)=(  380919,  17712), L2 (acc, miss)=(   4627,   4439),   5599 mem accs, (  123,   54) touched pages (this time, 1stly),  71289 update accs,     58 gather accs,  avg_dd= 62.179,      0 back-inv, 34.3346 update-noc-lat, 0.0369347 update-stall-lat, 48.2335 update-roundtrip-lat, 523.259 gather-roundtrip-lat, 20.6698 load-amat, 35.7759 store-amat, 240.457 req_noc_lat, 
+  -- [   105601970]: {45506} thread 1 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [   105915470]: {45506} thread 2 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- [   106103280]: {45506} thread 3 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+I am in ::::::::::::::::::::::::::::::::::: ROI-End
+CREATED matrix with 5031131 non zero elements
+[MCSIM-HOOKS] ROI begin
+[MCSIM-HOOKS] ROI end
+  -- [   106103280]: {45506} thread 0 is killed :   -- num_ins : (mem_rd, mem_wr, 2nd_mem_rd, spin, lock, trylock, all)=(          0,          0,        0,        0,        0,        0,          0)
+  -- {45506} total number of unsimulated (ins, rd, wr, rd_2nd): (0, 0, 0, 0)
+  -- {45506} (cond_broadcast, cond_signal, cond_wait, barrier) = (0, 0, 0, 0)
+Pthread Tool ngather: 4096
+ -- event became empty at cycle = 106113180 num_threads 
+  -- event became empty at cycle = 106113180
+  -- th[  0] fetched 4402548 instrs
+  -- th[  1] fetched 4403688 instrs
+  -- th[  2] fetched 4414286 instrs
+  -- th[  3] fetched 4417380 instrs
+  -- th[  4] fetched 4400986 instrs
+  -- th[  5] fetched 4407888 instrs
+  -- th[  6] fetched 4412200 instrs
+  -- th[  7] fetched 4405984 instrs
+  -- th[  8] fetched 4404598 instrs
+  -- th[  9] fetched 4415448 instrs
+  -- th[ 10] fetched 4413152 instrs
+  -- th[ 11] fetched 4410016 instrs
+  -- th[ 12] fetched 4420516 instrs
+  -- th[ 13] fetched 4407622 instrs
+  -- th[ 14] fetched 4409050 instrs
+  -- th[ 15] fetched 4414216 instrs
+  -- total number of fetched instructions : 70559578 (IPC =   6.649)
+  -- total number of ticks: 106113180 , cycles: 10611318
+  -- total number of mem accs : 517806
+  -- total number of updates : 5031130
+  -- total number of gathers : 4096
+  -- total number of back invalidations : 27
+  -- average update request latency : 246.277
+  -- average update stalls in hmc controllers : 1.40773
+  -- average update roundtrip latency : 264.764
+  -- average gather roundtrip latency : 169.161
+  -- OOO [  0] : fetched    4402548 instrs, branch (miss, access)=(       22,     315240)=   0.01%, nacks= 67, x87_ops= 0, call_ops= 32, latest_ip= 0x400bc0, num_read= 1572605, num_write= 841, tot_mem_wr_time= 422290, tot_mem_rd_time= 182515620, tot_dep_dist= 350148000
+  -- OOO [  1] : fetched    4403688 instrs, branch (miss, access)=(       12,     315280)=   0.00%, nacks= 59, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1573075, num_write= 779, tot_mem_wr_time= 238800, tot_mem_rd_time= 240871340, tot_dep_dist= 335599696
+  -- OOO [  2] : fetched    4414286 instrs, branch (miss, access)=(       12,     316037)=   0.00%, nacks= 100, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1576860, num_write= 779, tot_mem_wr_time= 301300, tot_mem_rd_time= 243520270, tot_dep_dist= 334553710
+  -- OOO [  3] : fetched    4417380 instrs, branch (miss, access)=(       12,     316258)=   0.00%, nacks= 61, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1577965, num_write= 779, tot_mem_wr_time= 283220, tot_mem_rd_time= 263725310, tot_dep_dist= 332661833
+  -- OOO [  4] : fetched    4400986 instrs, branch (miss, access)=(       12,     315087)=   0.00%, nacks= 67, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1572110, num_write= 779, tot_mem_wr_time= 490430, tot_mem_rd_time= 179731760, tot_dep_dist= 349154561
+  -- OOO [  5] : fetched    4407888 instrs, branch (miss, access)=(       12,     315580)=   0.00%, nacks= 44, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1574575, num_write= 779, tot_mem_wr_time= 255430, tot_mem_rd_time= 176502390, tot_dep_dist= 350035408
+  -- OOO [  6] : fetched    4412200 instrs, branch (miss, access)=(       12,     315888)=   0.00%, nacks= 70, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1576115, num_write= 779, tot_mem_wr_time= 248300, tot_mem_rd_time= 173933990, tot_dep_dist= 349615212
+  -- OOO [  7] : fetched    4405984 instrs, branch (miss, access)=(       12,     315444)=   0.00%, nacks= 62, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1573895, num_write= 779, tot_mem_wr_time= 233940, tot_mem_rd_time= 168835170, tot_dep_dist= 351385048
+  -- OOO [  8] : fetched    4404598 instrs, branch (miss, access)=(       12,     315345)=   0.00%, nacks= 68, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1573400, num_write= 779, tot_mem_wr_time= 268770, tot_mem_rd_time= 172371850, tot_dep_dist= 350399953
+  -- OOO [  9] : fetched    4415448 instrs, branch (miss, access)=(       12,     316120)=   0.00%, nacks= 55, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1577275, num_write= 779, tot_mem_wr_time= 246340, tot_mem_rd_time= 171535560, tot_dep_dist= 350692761
+  -- OOO [ 10] : fetched    4413152 instrs, branch (miss, access)=(       12,     315956)=   0.00%, nacks= 71, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1576455, num_write= 779, tot_mem_wr_time= 230600, tot_mem_rd_time= 168945820, tot_dep_dist= 351715150
+  -- OOO [ 11] : fetched    4410016 instrs, branch (miss, access)=(       12,     315732)=   0.00%, nacks= 57, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1575335, num_write= 779, tot_mem_wr_time= 214190, tot_mem_rd_time= 168660870, tot_dep_dist= 351867154
+  -- OOO [ 12] : fetched    4420516 instrs, branch (miss, access)=(       12,     316482)=   0.00%, nacks= 65, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1579085, num_write= 779, tot_mem_wr_time= 233140, tot_mem_rd_time= 183619170, tot_dep_dist= 350577997
+  -- OOO [ 13] : fetched    4407622 instrs, branch (miss, access)=(       12,     315561)=   0.00%, nacks= 42, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1574480, num_write= 779, tot_mem_wr_time= 216860, tot_mem_rd_time= 168284210, tot_dep_dist= 351550498
+  -- OOO [ 14] : fetched    4409050 instrs, branch (miss, access)=(       12,     315663)=   0.00%, nacks= 69, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1574990, num_write= 779, tot_mem_wr_time= 208570, tot_mem_rd_time= 167416410, tot_dep_dist= 352034078
+  -- OOO [ 15] : fetched    4414216 instrs, branch (miss, access)=(       12,     316032)=   0.00%, nacks= 60, x87_ops= 0, call_ops= 0, latest_ip= 0x7ffff6ad2980, num_read= 1576835, num_write= 779, tot_mem_wr_time= 185600, tot_mem_rd_time= 171630830, tot_dep_dist= 352276813
+  -- L2$ [  0] : RD (miss, access)=(      19572,      19932)=  98.19%
+  -- L2$ [  0] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3093,          0,          0,          0,          0)
+  -- L2$ [  0] : EV_from_L1 (miss, access)=(          0,      19695)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  1] : RD (miss, access)=(      19456,      19697)=  98.78%
+  -- L2$ [  1] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3072,          0,          0,          0,          0)
+  -- L2$ [  1] : EV_from_L1 (miss, access)=(          0,      19604)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  2] : RD (miss, access)=(      19460,      19697)=  98.80%
+  -- L2$ [  2] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3072,          0,          0,          0,          0)
+  -- L2$ [  2] : EV_from_L1 (miss, access)=(          0,      19206)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  3] : RD (miss, access)=(      19456,      19694)=  98.79%
+  -- L2$ [  3] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3072,          0,          0,          0,          0)
+  -- L2$ [  3] : EV_from_L1 (miss, access)=(          0,      18931)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  4] : RD (miss, access)=(      19456,      19688)=  98.82%
+  -- L2$ [  4] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3072,          0,          0,          0,          0)
+  -- L2$ [  4] : EV_from_L1 (miss, access)=(          0,      18729)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  5] : RD (miss, access)=(      19456,      19691)=  98.81%
+  -- L2$ [  5] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3072,          0,          0,          0,          0)
+  -- L2$ [  5] : EV_from_L1 (miss, access)=(          0,      18691)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  6] : RD (miss, access)=(      19457,      19707)=  98.73%
+  -- L2$ [  6] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3073,          0,          0,          0,          0)
+  -- L2$ [  6] : EV_from_L1 (miss, access)=(          0,      18672)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  7] : RD (miss, access)=(      20032,      20287)=  98.74%
+  -- L2$ [  7] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3648,          0,          0,          0,          0)
+  -- L2$ [  7] : EV_from_L1 (miss, access)=(          0,      19257)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  8] : RD (miss, access)=(      20480,      20728)=  98.80%
+  -- L2$ [  8] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       4096,          0,          0,          0,          0)
+  -- L2$ [  8] : EV_from_L1 (miss, access)=(          0,      19695)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [  9] : RD (miss, access)=(      20480,      20725)=  98.82%
+  -- L2$ [  9] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       4096,          0,          0,          0,          0)
+  -- L2$ [  9] : EV_from_L1 (miss, access)=(          0,      19690)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 10] : RD (miss, access)=(      19982,      20229)=  98.78%
+  -- L2$ [ 10] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3598,          0,          0,          0,          0)
+  -- L2$ [ 10] : EV_from_L1 (miss, access)=(          0,      19700)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 11] : RD (miss, access)=(      19479,      19715)=  98.80%
+  -- L2$ [ 11] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3082,          0,          0,          0,          0)
+  -- L2$ [ 11] : EV_from_L1 (miss, access)=(          0,      19715)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 12] : RD (miss, access)=(      19459,      19697)=  98.79%
+  -- L2$ [ 12] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3074,          0,          0,          0,          0)
+  -- L2$ [ 12] : EV_from_L1 (miss, access)=(          0,      19695)= 0.00%,  L2$ (i,e,s,m,tr) ratio=(   0, 1000,    0,    0,    0), num_dirty_lines (pid:#) = 
+  -- L2$ [ 13] : RD (miss, access)=(      19478,      19725)=  98.75%
+  -- L2$ [ 13] : WR (miss, access)=(         20,         30)=  66.67%
+  -- L2$ [ 13] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(          0,       3113,          0,         10,          0,          0)
+  -- L2$ [ 13] : EV_from_L1 (miss, access)=(         10,      19710)= 0.05%,  L2$ (i,e,s,m,tr) ratio=(   0,  999,    0,    0,    0), num_dirty_lines (pid:#) = 0 : 10 , 
+  -- L2$ [ 14] : RD (miss, access)=(      19795,      23860)=  82.96%
+  -- L2$ [ 14] : WR (miss, access)=(        147,       2167)=   6.78%
+  -- L2$ [ 14] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(       1876,       3494,       1876,          5,          0,          0)
+  -- L2$ [ 14] : EV_from_L1 (miss, access)=(          5,      23947)= 0.02%,  L2$ (i,e,s,m,tr) ratio=(   0,  993,    0,    5,    0), num_dirty_lines (pid:#) = 0 : 95 , 
+  -- L2$ [ 15] : RD (miss, access)=(      19459,      19689)=  98.83%
+  -- L2$ [ 15] : WR (miss, access)=(        127,       2008)=   6.32%
+  -- L2$ [ 15] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(       1746,       3202,       1746,          3,          0,          0)
+  -- L2$ [ 15] : EV_from_L1 (miss, access)=(          1,      19939)= 0.01%,  L2$ (i,e,s,m,tr) ratio=(   0,  992,    0,    7,    0), num_dirty_lines (pid:#) = 0 : 127 , 
+  -- Dir [  0] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (78743, 4, 0, 0, 8, 0, 78671, 0, 76)
+  -- Dir [  0] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 13207, 0, 78743, 2686688, 78927, 184, 50360, 0, 0), 78743, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- Dir [  1] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (78759, 7, 0, 0, 49, 0, 78685, 0, 81)
+  -- Dir [  1] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 13223, 0, 78759, 2686051, 78978, 219, 50396, 0, 0), 78759, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- Dir [  2] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (78848, 30, 0, 0, 9, 27, 78778, 0, 73)
+  -- Dir [  2] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 13299, 0, 78848, 2687311, 79089, 241, 50406, 27, 33), 78821, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- Dir [  3] : (i->tr, e->tr, s->tr, m->tr, m->i, tr->i, tr->e, tr->s, tr->m) = (78736, 4, 0, 0, 8, 0, 78664, 0, 76)
+  -- Dir [  3] : (nack, bypass, evict, invalidate, from_mc, dir_acc, dir_$_miss, dir_$_retry, dir_$_evict, back_invalidate, dir_active_retry) = (0, 0, 13200, 0, 78736, 2686379, 79064, 328, 50512, 0, 0), 78736, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  -- HMCCtrl [0] : (rd, wr, evict, update, gather) = (   78927,        0,    50368,  5031130,     4096), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    2.35,     -nan,     0.59,    77.78,     -nan,    43.89), (avg_update_req, avg_update_stall [cycles]) = (  246.28,     1.41)
+(ct_hmc, 0) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- HMCCtrl [1] : (rd, wr, evict, update, gather) = (   78978,        0,    50445,        0,        0), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.64,     -nan,     0.01,    55.74,     -nan,    29.10), (avg_update_req, avg_update_stall [cycles]) = (    -nan,     -nan)
+(ct_hmc, 1) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- HMCCtrl [2] : (rd, wr, evict, update, gather) = (   79089,        0,    50415,        0,        0), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.64,     -nan,     0.01,    55.86,     -nan,    29.15), (avg_update_req, avg_update_stall [cycles]) = (    -nan,     -nan)
+(ct_hmc, 2) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- HMCCtrl [3] : (rd, wr, evict, update, gather) = (   79064,        0,    50520,        0,        0), (avg_rd_stall, avg_wr_stall, avg_ev_stall, avg_rd_mem, avg_wr_mem, avg_ev_mem [cycles]) = (    0.64,     -nan,     0.01,    55.75,     -nan,    28.89), (avg_update_req, avg_update_stall [cycles]) = (    -nan,     -nan)
+(ct_hmc, 3) [req_event: 0] [outstanding_req: 0] [tran_buf: 0] [active_update_event: 0] [active_gather_event: 0] [pending_active_updates: 0] [resp_queue: 0]
+  -- MESH[0] : average hop = 3.71
+  -- NoC [  0] : (req, crq, rep) = (18214914, 27, 8354692), num_data_transfers = 295660
+  -- L1$I[  0] : RD (miss, access)=(         20,     105119)=   0.02%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  0] : (ev_coherency, coherency_access, bypass)=(         11,         11,          0)
+  -- L1$I[  1] : RD (miss, access)=(         15,     104808)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  1] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  2] : RD (miss, access)=(         15,     105046)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  2] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  3] : RD (miss, access)=(         15,     105100)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  3] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  4] : RD (miss, access)=(         15,     105068)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  4] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  5] : RD (miss, access)=(         15,     105223)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  5] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  6] : RD (miss, access)=(         15,     105327)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  6] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  7] : RD (miss, access)=(         15,     105192)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  7] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  8] : RD (miss, access)=(         15,     105155)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  8] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[  9] : RD (miss, access)=(         15,     105411)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[  9] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[ 10] : RD (miss, access)=(         17,     105352)=   0.02%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 10] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[ 11] : RD (miss, access)=(         15,     105278)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 11] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[ 12] : RD (miss, access)=(         15,     105522)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 12] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[ 13] : RD (miss, access)=(         15,     105228)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 13] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[ 14] : RD (miss, access)=(         15,     105261)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 14] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$I[ 15] : RD (miss, access)=(         15,     105376)=   0.01%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$I[ 15] : (ev_coherency, coherency_access, bypass)=(          8,          8,          0)
+  -- L1$D[  0] : RD (miss, access)=(      29321,    1572605)=   1.86%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  0] : WR (miss, access)=(        325,        908)=  35.79%
+  -- L1$D[  0] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        256,      19624,        257,          3,          0,          0), num_dirty_lines (pid:#) = 0 : 2 , 
+  -- L1$D[  1] : RD (miss, access)=(      38005,    1573075)=   2.42%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  1] : WR (miss, access)=(        317,        838)=  37.83%
+  -- L1$D[  1] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        255,      19616,        256,          1,          1,          1), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  2] : RD (miss, access)=(      40235,    1576860)=   2.55%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  2] : WR (miss, access)=(        358,        879)=  40.73%
+  -- L1$D[  2] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        207,      19716,        207,          1,          5,          5), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  3] : RD (miss, access)=(      40885,    1577965)=   2.59%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  3] : WR (miss, access)=(        319,        840)=  37.98%
+  -- L1$D[  3] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(         53,      19882,         54,          1,          5,          5), num_dirty_lines (pid:#) = 0 : 5 , 
+  -- L1$D[  4] : RD (miss, access)=(      30047,    1572110)=   1.91%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  4] : WR (miss, access)=(        325,        846)=  38.42%
+  -- L1$D[  4] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        257,      19603,        258,          1,          4,          4), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  5] : RD (miss, access)=(      29872,    1574575)=   1.90%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  5] : WR (miss, access)=(        302,        823)=  36.70%
+  -- L1$D[  5] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        257,      19624,        258,          1,          2,          2), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  6] : RD (miss, access)=(      30477,    1576115)=   1.93%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  6] : WR (miss, access)=(        328,        849)=  38.63%
+  -- L1$D[  6] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        255,      19665,        258,          1,          4,          4), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  7] : RD (miss, access)=(      29591,    1573895)=   1.88%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  7] : WR (miss, access)=(        320,        841)=  38.05%
+  -- L1$D[  7] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        257,      19634,        259,          1,          2,          2), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  8] : RD (miss, access)=(      29817,    1573400)=   1.90%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  8] : WR (miss, access)=(        326,        847)=  38.49%
+  -- L1$D[  8] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        258,      19631,        261,          1,          6,          6), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[  9] : RD (miss, access)=(      30142,    1577275)=   1.91%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[  9] : WR (miss, access)=(        313,        834)=  37.53%
+  -- L1$D[  9] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        259,      19669,        262,          1,          0,          0), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[ 10] : RD (miss, access)=(      29577,    1576455)=   1.88%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 10] : WR (miss, access)=(        329,        850)=  38.71%
+  -- L1$D[ 10] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        267,      19668,        268,          1,          2,          2), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[ 11] : RD (miss, access)=(      28773,    1575335)=   1.83%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 11] : WR (miss, access)=(        315,        836)=  37.68%
+  -- L1$D[ 11] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        263,      19655,        264,          1,          2,          2), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[ 12] : RD (miss, access)=(      30449,    1579085)=   1.93%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 12] : WR (miss, access)=(        323,        844)=  38.27%
+  -- L1$D[ 12] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        264,      19694,        264,          1,         12,         12), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[ 13] : RD (miss, access)=(      29467,    1574480)=   1.87%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 13] : WR (miss, access)=(        300,        821)=  36.54%
+  -- L1$D[ 13] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        266,      19638,        267,          1,          2,          2), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[ 14] : RD (miss, access)=(      28846,    1574990)=   1.83%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 14] : WR (miss, access)=(        327,        848)=  38.56%
+  -- L1$D[ 14] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(        260,      19649,        261,          1,          7,          7), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- L1$D[ 15] : RD (miss, access)=(      28784,    1576835)=   1.83%, PRE (hit, reqs)=( 0, 0 )
+  -- L1$D[ 15] : WR (miss, access)=(        318,        839)=  37.90%
+  -- L1$D[ 15] : (ev_coherency, ev_capacity, coherency_access, up_req, bypass, nack)=(         23,      19892,         23,          1,          5,          5), num_dirty_lines (pid:#) = 0 : 1 , 
+  -- TLBI[0] : (miss, access) = (3, 105119) = 0.00%
+  -- TLBI[1] : (miss, access) = (3, 104808) = 0.00%
+  -- TLBI[2] : (miss, access) = (3, 105046) = 0.00%
+  -- TLBI[3] : (miss, access) = (3, 105100) = 0.00%
+  -- TLBI[4] : (miss, access) = (3, 105068) = 0.00%
+  -- TLBI[5] : (miss, access) = (3, 105223) = 0.00%
+  -- TLBI[6] : (miss, access) = (3, 105327) = 0.00%
+  -- TLBI[7] : (miss, access) = (3, 105192) = 0.00%
+  -- TLBI[8] : (miss, access) = (3, 105155) = 0.00%
+  -- TLBI[9] : (miss, access) = (3, 105411) = 0.00%
+  -- TLBI[10] : (miss, access) = (3, 105352) = 0.00%
+  -- TLBI[11] : (miss, access) = (3, 105278) = 0.00%
+  -- TLBI[12] : (miss, access) = (3, 105522) = 0.00%
+  -- TLBI[13] : (miss, access) = (3, 105228) = 0.00%
+  -- TLBI[14] : (miss, access) = (3, 105261) = 0.00%
+  -- TLBI[15] : (miss, access) = (3, 105376) = 0.00%
+  -- TLBD[0] : (miss, access) = (9, 1573446) = 0.00%
+  -- TLBD[1] : (miss, access) = (10, 1573854) = 0.00%
+  -- TLBD[2] : (miss, access) = (10, 1577639) = 0.00%
+  -- TLBD[3] : (miss, access) = (10, 1578744) = 0.00%
+  -- TLBD[4] : (miss, access) = (10, 1572889) = 0.00%
+  -- TLBD[5] : (miss, access) = (10, 1575354) = 0.00%
+  -- TLBD[6] : (miss, access) = (10, 1576894) = 0.00%
+  -- TLBD[7] : (miss, access) = (10, 1574674) = 0.00%
+  -- TLBD[8] : (miss, access) = (10, 1574179) = 0.00%
+  -- TLBD[9] : (miss, access) = (10, 1578054) = 0.00%
+  -- TLBD[10] : (miss, access) = (10, 1577234) = 0.00%
+  -- TLBD[11] : (miss, access) = (10, 1576114) = 0.00%
+  -- TLBD[12] : (miss, access) = (10, 1579864) = 0.00%
+  -- TLBD[13] : (miss, access) = (10, 1575259) = 0.00%
+  -- TLBD[14] : (miss, access) = (10, 1575769) = 0.00%
+  -- TLBD[15] : (miss, access) = (10, 1577614) = 0.00%
+ ## VLTCtrller DRAM_rd_bw:16.23GBps DRAM_wr_bw:1.16GBps DRAM_act_bw:14.42GBps
+  [ result/CasHMC_dfly_art_spmv_4096_0.3_setting.log ] is generated
+
+   === Simulation finished  ( CPU clk:20794729 ) ===   
+  [ result/CasHMC_dfly_art_spmv_4096_0.3_result.log ] is generated
+

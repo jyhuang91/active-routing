@@ -90,14 +90,36 @@ void* matVecMul(void *args){
   spm_t* spm = arg->spm; 
   float* inVec = arg->inVec;
   float* outVec = arg->outVec;
+  int stride = CACHELINE_SIZE / sizeof(float);
+  int ri_start, ri_end;
+  uint64_t start_address, end_address;
+  void *addr_arr[stride];
   
   for(int i = tid; i < dim; i += num_threads){
-    outVec[i] = 0; 
-    for(int j = spm->row_ptr[i]; j<spm->row_ptr[i+1]; j++){
-      UPDATE(inVec + spm->col_ind[j], spm->vals +j, outVec + i, MULT); 
-      //outVec[i] += inVec[spm->col_ind[j]]*spm->vals[j];
+    outVec[i] = 0;
+    int j;
+
+    ri_start = spm->row_ptr[i];
+    ri_end = spm->row_ptr[i+1];
+    start_address = (uint64_t) (&spm->vals + ri_start);
+    end_address = (uint64_t) (&spm->vals + ri_end);
+    if (start_address % CACHELINE_SIZE != 0)
+      ri_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(float);
+    if (end_address % CACHELINE_SIZE != 0)
+      ri_end -= (end_address % CACHELINE_SIZE) / sizeof(float);
+
+    for (j = spm->row_ptr[i]; j < ri_start; j++)
+      UpdateII(inVec + spm->col_ind[j], spm->vals +j, outVec + i, FMULT); 
+    for (; j < ri_end; j += stride) {
+      for (int k = 0; k < stride; k++)
+        addr_arr[k] = (inVec + spm->col_ind[j+k]);
+      UpdateRI(addr_arr, spm->vals +j, outVec + i, FMULT); 
     }
-    if(spm->row_ptr[i] < spm->row_ptr[i+1]) GATHER(NULL, NULL, outVec + i, 1); 
+    // dealing with fragmentation, TODO: optimize it by applying masking
+    for (; j<spm->row_ptr[i+1]; j++)
+      UpdateII(inVec + spm->col_ind[j], spm->vals +j, outVec + i, FMULT); 
+      //outVec[i] += inVec[spm->col_ind[j]]*spm->vals[j];
+    if(spm->row_ptr[i] < spm->row_ptr[i+1]) Gather(NULL, NULL, outVec + i, 1); 
   }
   return NULL; 
 } 
@@ -135,7 +157,12 @@ spm_t *CompressMatrix(float **matrix, int matrix_dim){
 //  }
   int val_ind = 0; 
   int *col_ind = (int *)malloc((nnz)*sizeof(int)); 
-  float *vals = (float *)malloc((nnz)*sizeof(float));
+  float *vals;
+  //vals = (float *)malloc((nnz)*sizeof(float));
+  if (posix_memalign((void **) &vals, CACHELINE_SIZE, nnz * sizeof(float))) {
+    fprintf(stderr, "Fail to allocate vals\n");
+    exit(1);
+  }
   for(int i = 0; i < matrix_dim; i++){
     row_ptr[row_ind] = val_ind;
     row_ind++; 

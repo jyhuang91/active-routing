@@ -473,10 +473,12 @@ namespace CasHMC
       case RD_RS:		header = "[P" + id.str() + "-RD_RS]";		break;		case WR_RS:		header = "[P" + id.str() + "-WR_RS]";		break;
       case MD_RD_RS:	header = "[P" + id.str() + "-MD_RD_RS]";	break;		case MD_WR_RS:	header = "[P" + id.str() + "-MD_WR_RS]";	break;
       // active commands
+      case ACT_GET: header = "[P" + id.str() + "-ACT_GET]"; break;
       case ACT_ADD: header = "[P" + id.str() + "-ACT_ADD]"; break;
       case ACT_MULT: header = "[P" + id.str() + "-ACT_MULT]"; break;
-      case ACT_GET: header = "[P" + id.str() + "-ACT_GET]"; break;
+      case ACT_DOT: header = "[P" + id.str() + "-ACT_DOT]"; break;
       case PEI_DOT: header = "[P" + id.str() + "-PEI_DOT]"; break;
+      case PEI_ATOMIC:header = "[P" + id.str() + "-PEI_ATOMIC]"; break;
       case ERROR:		header = "[P" + id.str() + "-ERROR]";		break;
       default:
                     ERROR(" (FL) == Error - Trying to print unknown kind of Packet CMD type");
@@ -557,10 +559,12 @@ namespace CasHMC
       case MD_RD_RS:  out << "MD_RD_RS]"; break;
       case MD_WR_RS:  out << "MD_WR_RS";  break;
       // active commands
+      case ACT_GET:   out << "ACT_GET";   break;
       case ACT_ADD:   out << "ACT_ADD";   break;
       case ACT_MULT:  out << "ACT_MULT";  break;
-      case ACT_GET:   out << "ACT_GET";   break;
+      case ACT_DOT:   out << "ACT_DOT";   break;
       case PEI_DOT:   out << "PEI_DOT";   break;
+      case PEI_ATOMIC:out << "PEI_ATOMIC";break;
       case ERROR:		  out << "ERROR";		  break;
       default:
         ERROR(" (FL) == Error - Trying to print unknown kind of Packet CMD type");

@@ -45,6 +45,9 @@
 #include <string>
 #include <sstream>
 
+#include <hooks.h>
+#include <ins_category_enum.h>
+
 extern "C" {
 #include "xed-category-enum.h"
 }
@@ -121,11 +124,12 @@ ostream & operator << (ostream & output, event_type et)
     case et_rd_dir_info_req: output << "et_rdiq"; break;
     case et_rd_dir_info_rep: output << "et_rdip"; break;
     case et_nop:        output << "et_nop"; break;
-    case et_hmc_update_add:   output << "et_hmc_update_add"; break;
-    case et_hmc_update_mult:  output << "et_hmc_update_mult"; break;
-    case et_hmc_gather:       output << "et_hmc_gather"; break;
-    case et_hmc_gather_rep:   output << "et_hmc_gather_rep"; break;
-    case et_hmc_pei:    output << "et_hmc_pei"; break;
+    case et_art_get:    output << "et_art_get"; break;
+    case et_art_add:    output << "et_art_add"; break;
+    case et_art_mult:   output << "et_art_mult"; break;
+    case et_art_dot:    output << "et_art_dot"; break;
+    case et_pei_dot:    output << "et_pei_dot"; break;
+    case et_pei_atomic: output << "et_pei_atomic"; break;
     default: break;
   }
   return output;
@@ -170,11 +174,12 @@ ostream & operator << (ostream & output, ins_type it)
     case ins_notify:  output << "ins_notify"; break;
     case ins_waitfor: output << "ins_waitfor"; break;
     case ins_invalid: output << "ins_invalid"; break;
-    case ins_update_add: output << "ins_update_add"; break;
-    case ins_update_mult: output << "ins_update_mult"; break;
-    case ins_gather: output << "ins_gather"; break;
-    case ins_pei: output << "ins_pei"; break;
-    case ins_dummy: output << "ins_dummy"; break;
+    case ins_art_get: output << "ins_art_get"; break;
+    case ins_art_add: output << "ins_art_add"; break;
+    case ins_art_mult:output << "ins_art_mult"; break;
+    case ins_art_dot: output << "ins_art_dot"; break;
+    case ins_pei_dot: output << "ins_pei_dot"; break;
+    case ins_pei_atomic: output << "ins_pei_atomic"; break;
     default: break;
   }
   return output;
@@ -207,12 +212,18 @@ McSim::McSim(PthreadTimingSimulator * pts_)
   assert(use_o3core == false || num_threads_per_l1_cache == 1);
   uint32_t num_l1_caches_per_l2_cache = pts->get_param_uint64("pts.num_l1$_per_l2$", 2);
   uint32_t num_mcs                    = pts->get_param_uint64("pts.num_mcs", 2);
+  uint32_t net_dim                    = pts->get_param_uint64("pts.net_dim", 4);
   print_interval                      = pts->get_param_uint64("pts.print_interval", 1000000);
   string   noc_type(pts->get_param_str("pts.noc_type"));
   string   benchname(pts->get_param_str("pts.benchname"));
 
+  string art_type(pts->get_param_str("pts.art_scheme"));
+  art_scheme = (art_type == "naive") ? art_naive :
+    (art_type == "address")          ? art_addr :
+    (art_type == "threadid")         ? art_tid : art_addr;
+
   double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
-  hmc_net = Network::New(4, hmc_topology, benchname, cpu_clk);
+  hmc_net = Network::New(net_dim, hmc_topology, benchname, cpu_clk);
 
   // for stats
   if (use_o3core)
@@ -1241,12 +1252,12 @@ uint32_t McSim::add_instruction(
         o3core->is_active = true;
       }
     }
-    ins_type type = (category == 128) ? ins_update_add :
-      (category == 130)               ? ins_update_mult :
-      (category == 129)               ? ins_gather :
-      (category == 131)               ? ins_pei :
-      (category == 132)               ? ins_pei_rand :
-      (category == 0)               ? ins_dummy :
+    ins_type type = (category == ART_CATEGORY_GET) ? ins_art_get :
+      (category == ART_CATEGORY_ADD)               ? ins_art_add :
+      (category == ART_CATEGORY_MULT)              ? ins_art_mult :
+      (category == ART_CATEGORY_DOT)               ? ins_art_dot :
+      (category == PEI_CATEGORY_DOT)               ? ins_pei_dot :
+      (category == PEI_CATEGORY_ATOMIC)            ? ins_pei_atomic :
       (islock == true && isunlock == true && isbarrier == false) ? ins_notify :
       (islock == true && isunlock == true && isbarrier == true) ? ins_waitfor :
       (isbranch && isbranchtaken)        ? ins_branch_taken :

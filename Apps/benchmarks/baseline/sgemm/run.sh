@@ -8,4 +8,6 @@
 #./sgemm -i 1024,992,1056 -o ./output/medium/matrix3.txt -n 8
 
 # self defined input
-./sgemm -i 512,256,512 -n 8
+#./sgemm -i 512,256,512 -n 8
+#./sgemm -i 1024,512,1024 -n 8
+./sgemm -i 2048,1024,2048 -n 16

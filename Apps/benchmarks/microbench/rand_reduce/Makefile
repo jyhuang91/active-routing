@@ -1,5 +1,5 @@
 
-TRGS = rand_reduce ar_rand_reduce pei_rand_reduce
+TRGS = rand_reduce naive_art_rand_reduce ar_rand_reduce pei_rand_reduce
 
 LIB_DEPEND = hooks
 
@@ -7,7 +7,7 @@ LIB_DEPEND = hooks
 LIBS += -lrt
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks
+INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks/include
 LDFLAGS = $(MCSIM_PARENT_DIR)/Pthread/libmypthread.a
 
 #CXXFLAGS = -g --std=c++0x -O0 -static
@@ -23,6 +23,8 @@ $(LIB_DEPEND):
 
 rand_reduce: main.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+naive_art_rand_reduce: $(ar_rand_reduce)
+	ln -s ar_rand_reduce naive_art_rand_reduce
 ar_rand_reduce: main_ar.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 pei_rand_reduce: main_pei.cc

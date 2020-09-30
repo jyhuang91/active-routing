@@ -32,6 +32,6 @@ clean_opt: obj_opt
 	@$(MAKE) TAG=opt -C . -f $(TARGET).mk clean
 	rm -rf $<
 
-clean_opt: obj_rb
+clean_rb: obj_rb
 	@$(MAKE) TAG=rb -C . -f $(TARGET).mk clean
 	rm -rf $<

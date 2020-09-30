@@ -250,8 +250,6 @@ uint32_t O3Core::process_event(uint64_t curr_time)
     uint64_t dependency_distance = o3rob_size;
     O3Queue & o3queue_entry      = o3queue[o3queue_head];
 
-    //if(o3queue_entry.type == ins_pei && o3rob_size >= o3rob_max_size - 5 ) break;
-
     if (o3queue_entry.state == o3iqs_ready && o3queue_entry.ready_time <= curr_time)
     {
       unsigned int rob_idx = (o3rob_head + o3rob_size) % o3rob_max_size;
@@ -287,12 +285,27 @@ uint32_t O3Core::process_event(uint64_t curr_time)
       int32_t rr1 = -1;
       int32_t rr2 = -1;
       int32_t rr3 = -1;
-      if (o3queue_entry.type == ins_update_add ||
-          o3queue_entry.type == ins_update_mult ||
-          o3queue_entry.type == ins_gather ||
-          o3queue_entry.type == ins_pei)
+      if (o3queue_entry.type == ins_art_get ||
+          o3queue_entry.type == ins_art_add ||
+          o3queue_entry.type == ins_art_mult)
       {
-        /*Handle dependency for ins_pei*/
+        /* no dependency */
+      }
+      else if (o3queue_entry.type == ins_pei_dot ||
+               o3queue_entry.type == ins_art_dot)
+      {
+        // make it depend on last 4 load instructions
+        rr0 = (o3rob_head + o3rob_size - 4) % o3rob_max_size;
+        rr1 = (o3rob_head + o3rob_size - 3) % o3rob_max_size;
+        rr2 = (o3rob_head + o3rob_size - 2) % o3rob_max_size;
+        rr3 = (o3rob_head + o3rob_size - 1) % o3rob_max_size;
+        dependency_distance = 4;
+      }
+      else if (o3queue_entry.type == ins_pei_atomic)
+      {
+        // depends on last load instruction
+        rr0 = (o3rob_head + o3rob_size - 1) % o3rob_max_size;
+        dependency_distance = 1;
       }
       else
       {
@@ -341,26 +354,40 @@ uint32_t O3Core::process_event(uint64_t curr_time)
  
       // fill ROB
       geq->add_event(curr_time + process_interval, this);
-      if (o3queue_entry.type == ins_update_add ||
-          o3queue_entry.type == ins_update_mult ||
-          o3queue_entry.type == ins_gather)
+      if (o3queue_entry.type == ins_art_add ||
+          o3queue_entry.type == ins_art_mult ||
+          o3queue_entry.type == ins_art_get ||
+            o3queue_entry.type == ins_art_dot ||
+            o3queue_entry.type == ins_pei_dot ||
+            o3queue_entry.type == ins_pei_atomic)
       {
         O3ROB & o3rob_entry    = o3rob[rob_idx];
         o3rob_entry.state      = o3irs_issued;
         o3rob_entry.ready_time = curr_time + process_interval;
         o3rob_entry.ip         = o3queue_entry.ip;
-        int32_t mem_dep        = -1;
-        o3rob_entry.memaddr    = o3queue_entry.waddr;
+        int32_t mem_dep        = (o3rob_head + o3rob_size - 1) % o3rob_max_size;
         o3rob_entry.branch_miss = branch_miss;
         o3rob_entry.isread     = false;
-        o3rob_entry.mem_dep    = mem_dep;
+        if (o3queue_entry.type == ins_art_add ||
+            o3queue_entry.type == ins_art_mult ||
+            o3queue_entry.type == ins_art_get ||
+            o3queue_entry.type == ins_pei_atomic)
+        {
+          o3rob_entry.mem_dep = -1;
+          o3rob_entry.memaddr = o3queue_entry.waddr;
+        }
+        else
+        {
+          o3rob_entry.mem_dep = (o3rob[mem_dep].state == o3irs_issued || o3rob[mem_dep].state == o3irs_executing) ? mem_dep : -1;
+          o3rob_entry.memaddr = o3queue_entry.raddr2; // used to route to directory in noc
+        }
         o3rob_entry.instr_dep  = instr_dep;
         o3rob_entry.branch_dep = branch_dep;
         o3rob_entry.type       = o3queue_entry.type;
-        o3rob_entry.rr0        = -1;
-        o3rob_entry.rr1        = -1;
-        o3rob_entry.rr2        = -1;
-        o3rob_entry.rr3        = -1;
+        o3rob_entry.rr0        = rr0;
+        o3rob_entry.rr1        = rr1;
+        o3rob_entry.rr2        = rr2;
+        o3rob_entry.rr3        = rr3;
         o3rob_entry.rw0        = -1;
         o3rob_entry.rw1        = -1;
         o3rob_entry.rw2        = -1;
@@ -368,51 +395,11 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         o3rob_entry.updtsrc1   = o3queue_entry.raddr;
         o3rob_entry.updtsrc2   = o3queue_entry.raddr2;
         o3rob_entry.updtdest   = o3queue_entry.waddr;
+        o3rob_entry.rlen       = o3queue_entry.rlen;
+        o3rob_entry.nthreads   = (o3queue_entry.type == ins_art_get) ? o3queue_entry.wlen : -1;  // Jiayi, 03/31/17
         instr_dep              = rob_idx;
         rob_idx = (rob_idx + 1) % o3rob_max_size;
         o3rob_size++;
-        o3rob_entry.nthreads   = (o3queue_entry.type == ins_gather) ? o3queue_entry.wlen : -1;  // Jiayi, 03/31/17
-      }
-      else if(o3queue_entry.type == ins_pei || o3queue_entry.type == ins_pei_rand){
-        /*Handle raddr dependency for pei instructions
-          Since data(belongs to one of the source operands) 
-          is read from memory location to CPU and then 
-          sent back to MemNet for processing DOT product*/
-        if (o3queue_entry.raddr != 0)
-        {
-           
-          O3ROB & o3rob_entry    = o3rob[rob_idx];
-          o3rob_entry.state      = o3irs_issued;
-          o3rob_entry.ready_time = curr_time + process_interval;
-          o3rob_entry.ip         = o3queue_entry.ip;
-          int32_t mem_dep        = (o3rob_head + o3rob_size - 1) % o3rob_max_size;;
-          rr0 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 2) % o3rob_max_size;    
-          rr1 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 3) % o3rob_max_size;    
-          rr2 = (o3queue_entry.type == ins_pei_rand) ? -1 : (o3rob_head + o3rob_size - 4) % o3rob_max_size;    
-          dependency_distance    = 1; 
-          /*pei_instruction is dependend on the previously issued mem_rd*/   
-          o3rob_entry.memaddr    = o3queue_entry.raddr2;
-          o3rob_entry.branch_miss = branch_miss;
-          o3rob_entry.isread     = false;
-          o3rob_entry.mem_dep    = (o3rob[mem_dep].state == o3irs_issued || o3rob[mem_dep].state == o3irs_executing) ? mem_dep : -1;
-          o3rob_entry.instr_dep  = instr_dep;
-          o3rob_entry.branch_dep = branch_dep;
-          o3rob_entry.type       = ins_pei;
-          o3rob_entry.rr0        = (o3rob[rr0].state == o3irs_issued || o3rob[rr0].state == o3irs_executing) ? rr0 : -1;
-          o3rob_entry.rr1        = (o3rob[rr1].state == o3irs_issued || o3rob[rr1].state == o3irs_executing) ? rr1 : -1;
-          o3rob_entry.rr2        = (o3rob[rr2].state == o3irs_issued || o3rob[rr2].state == o3irs_executing) ? rr2 : -1;
-          o3rob_entry.rr3        = -1;
-          o3rob_entry.rw0        = -1;
-          o3rob_entry.rw1        = -1;
-          o3rob_entry.rw2        = -1;
-          o3rob_entry.rw3        = -1;
-          o3rob_entry.updtsrc1   = o3queue_entry.raddr;       /*Local arg 32B*/
-          o3rob_entry.updtsrc2   = o3queue_entry.raddr2;      /*Mem address destination*/
-          o3rob_entry.updtdest   = o3queue_entry.waddr;
-          instr_dep              = rob_idx;
-          rob_idx = (rob_idx + 1) % o3rob_max_size;
-          o3rob_size++;
-        }
       }
       else
       {
@@ -425,9 +412,12 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           int32_t mem_dep        = -1;
           for (unsigned int j = 0; j < o3rob_size; j++)
           {
-            if (o3queue_entry.type == ins_update_add ||
-                o3queue_entry.type == ins_update_mult ||
-                o3queue_entry.type == ins_gather)
+            if (o3queue_entry.type == ins_art_get ||
+                o3queue_entry.type == ins_art_add ||
+                o3queue_entry.type == ins_art_mult ||
+                o3queue_entry.type == ins_art_dot ||
+                o3queue_entry.type == ins_pei_dot ||
+                o3queue_entry.type == ins_pei_atomic)
             {
               continue;
             }
@@ -471,9 +461,12 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           int32_t mem_dep        = -1;
           for (unsigned int j = 0; j < o3rob_size; j++)
           {
-            if (o3queue_entry.type == ins_update_add ||
-                o3queue_entry.type == ins_update_mult ||
-                o3queue_entry.type == ins_gather)
+            if (o3queue_entry.type == ins_art_get ||
+                o3queue_entry.type == ins_art_add ||
+                o3queue_entry.type == ins_art_mult ||
+                o3queue_entry.type == ins_art_dot ||
+                o3queue_entry.type == ins_pei_dot ||
+                o3queue_entry.type == ins_pei_atomic)
             {
               continue;
             }
@@ -510,9 +503,12 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         }
         if (o3queue_entry.waddr != 0)
         {
-          if (o3queue_entry.type == ins_update_add ||
-              o3queue_entry.type == ins_update_mult ||
-              o3queue_entry.type == ins_gather)
+            if (o3queue_entry.type == ins_art_get ||
+                o3queue_entry.type == ins_art_add ||
+                o3queue_entry.type == ins_art_mult ||
+                o3queue_entry.type == ins_art_dot ||
+                o3queue_entry.type == ins_pei_dot ||
+                o3queue_entry.type == ins_pei_atomic)
           {
             continue;
           }
@@ -630,21 +626,30 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           i = o3rob_size;
         }
       }
-      else if (o3rob_entry.type == ins_update_add ||
-          o3rob_entry.type == ins_update_mult ||
-          o3rob_entry.type == ins_gather ||
-          o3rob_entry.type == ins_pei)
+      else if (o3rob_entry.type == ins_art_get ||
+          o3rob_entry.type == ins_art_add ||
+          o3rob_entry.type == ins_art_mult ||
+          o3rob_entry.type == ins_art_dot ||
+          o3rob_entry.type == ins_pei_dot ||
+          o3rob_entry.type == ins_pei_atomic)
       {
-        // make sure that gather is after all updates, TODO: may degrade performance
-        if (o3rob_entry.type == ins_gather && i != 0) continue;
+        // make sure that gather is after all updates, XXX: may degrade performance
+        if (o3rob_entry.type == ins_art_get && i != 0) continue;
 
-        if(o3rob_entry.type == ins_pei && i == 0) assert(o3rob_entry.mem_dep == -1); 
+        if ((o3rob_entry.type == ins_art_dot ||
+              o3rob_entry.type == ins_pei_dot ||
+              o3rob_entry.type == ins_pei_atomic) && i == 0)
+          assert(o3rob_entry.mem_dep == -1);
 
-        if (o3rob_entry.type == ins_pei && 
-            o3rob_entry.mem_dep != -1 && 
-            o3rob_entry.rr2 != -1 && 
-            o3rob_entry.rr1 != -1 && 
-            o3rob_entry.rr0 != -1 ) continue;
+        if ((o3rob_entry.type == ins_art_dot ||
+              o3rob_entry.type == ins_pei_dot ||
+              o3rob_entry.type == ins_pei_atomic) &&
+            o3rob_entry.mem_dep != -1 &&
+            o3rob_entry.rr0 != -1 &&
+            o3rob_entry.rr1 != -1 &&
+            o3rob_entry.rr2 != -1 &&
+            o3rob_entry.rr3 != -1)
+          continue;
         o3rob_entry.state = o3irs_executing;
         o3rob_entry.ready_time = curr_time + process_interval;
 
@@ -658,31 +663,31 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         lqe->src_addr1 = o3rob_entry.updtsrc1;
         lqe->src_addr2 = o3rob_entry.updtsrc2;
         lqe->dest_addr = o3rob_entry.updtdest;
+        lqe->rlen = o3rob_entry.rlen;
         o3rob_entry.ready_time = curr_time + process_interval;
         //geq->add_event(o3rob_entry.ready_time, this); //cache will add the event on response
-        lqe->type = (o3rob_entry.type == ins_update_add) ? et_hmc_update_add :
-          (o3rob_entry.type == ins_update_mult) ? et_hmc_update_mult : 
-          (o3rob_entry.type == ins_gather) ? et_hmc_gather : et_hmc_pei;
+        lqe->type = (o3rob_entry.type == ins_art_get) ? et_art_get :
+          (o3rob_entry.type == ins_art_add)  ? et_art_add :
+          (o3rob_entry.type == ins_art_mult) ? et_art_mult :
+          (o3rob_entry.type == ins_art_dot)  ? et_art_dot :
+          (o3rob_entry.type == ins_pei_dot)  ? et_pei_dot : et_pei_atomic;
         lqe->nthreads = o3rob_entry.nthreads; // Jiayi, for gather barrier, 03/31/17
         lqe->issue_time = curr_time;
-        if (o3rob_entry.type == ins_gather)
+        if (o3rob_entry.type == ins_art_get)
         {
           noc->add_req_event(curr_time + lsu_to_noc_t, lqe, this);
           //((Component *) mcsim->hmcs[0])->add_req_event(curr_time + 2*lsu_to_l1d_t, lqe);
         }
-        else if (o3rob_entry.type == ins_pei)
+        else if (o3rob_entry.type == ins_art_add ||
+            o3rob_entry.type == ins_art_dot ||
+            o3rob_entry.type == ins_pei_dot ||
+            o3rob_entry.type == ins_pei_atomic)
         {
           noc->add_req_event(curr_time + lsu_to_noc_t, lqe, this);
           //uint32_t dir_num = geq->which_mc(lqe->src_addr1);
           //((Component *) mcsim->dirs[dir_num])->add_req_event(curr_time + 2 * lsu_to_l1d_t, lqe);
         }
-        else if (o3rob_entry.type == ins_update_add)
-        {
-          noc->add_req_event(curr_time + lsu_to_noc_t, lqe, this);
-          //uint32_t dir_num = geq->which_mc(lqe->src_addr1);
-          //((Component *) mcsim->dirs[dir_num])->add_req_event(curr_time + 2 * lsu_to_l1d_t, lqe);
-        }
-        else  // hmc_update_mult
+        else  // art_mult
         {
           LocalQueueElement *twin_lqe = new LocalQueueElement();
           twin_lqe->th_id = num;
@@ -692,7 +697,8 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           twin_lqe->src_addr1 = o3rob_entry.updtsrc1;
           twin_lqe->src_addr2 = o3rob_entry.updtsrc2;
           twin_lqe->dest_addr = o3rob_entry.updtdest;
-          twin_lqe->type = et_hmc_update_mult;
+          twin_lqe->rlen = o3rob_entry.rlen;
+          twin_lqe->type = et_art_mult;
           twin_lqe->nthreads = o3rob_entry.nthreads;
           twin_lqe->twin_lqe1 = lqe;
           twin_lqe->twin_lqe2 = NULL;
@@ -821,7 +827,11 @@ uint32_t O3Core::process_event(uint64_t curr_time)
     geq->add_event(curr_time + process_interval, this);
   }
   // Jiayi, for gather
-  else if (o3rob_size > 0 && o3rob[o3rob_head].state == o3irs_issued && ( o3rob[o3rob_head].type == ins_gather || o3rob[o3rob_head].type == ins_pei ))
+  else if (o3rob_size > 0 && o3rob[o3rob_head].state == o3irs_issued &&
+      ( o3rob[o3rob_head].type == ins_art_get ||
+        o3rob[o3rob_head].type == ins_art_dot ||
+        o3rob[o3rob_head].type == ins_pei_dot ||
+        o3rob[o3rob_head].type == ins_pei_atomic ))
   {
     geq->add_event(curr_time + process_interval, this);
   }
@@ -919,22 +929,20 @@ void O3Core::add_rep_event(
     local_event->type = (o3rob[local_event->rob_entry].isread == true) ? et_read : et_write;
     cachel1d->add_req_event(event_time + lsu_to_l1d_t, local_event); 
   }
-  else if (local_event->type == et_hmc_update_add ||
-      local_event->type == et_hmc_update_mult ||
-      local_event->type == et_hmc_gather)
+  else if (local_event->type == et_art_get ||
+      local_event->type == et_art_add ||
+      local_event->type == et_art_mult ||
+      local_event->type == et_art_dot)
   {
-    if (local_event->type == et_hmc_update_add)
+    if (local_event->type == et_art_add ||
+        local_event->type == et_art_mult ||
+        local_event->type == et_art_dot)
     {
       //cout << "receive update ack" << endl;
       num_update_ins++;
       total_update_roundtrip_time += geq->curr_time - local_event->issue_time;
     }
-    else if (local_event->type == et_hmc_update_mult)
-    {
-      num_update_ins++;
-      total_update_roundtrip_time += geq->curr_time - local_event->issue_time;
-    }
-    else if (local_event->type == et_hmc_gather)
+    else if (local_event->type == et_art_get)
     {
       num_gather_ins++;
       total_gather_roundtrip_time += geq->curr_time - local_event->issue_time;
@@ -952,6 +960,7 @@ void O3Core::add_rep_event(
     o3rob_entry.state      = o3irs_completed;
     o3rob_entry.ready_time = aligned_event_time + ((o3rob_entry.branch_miss == true) ? branch_miss_penalty : 0);
     geq->add_event(o3rob_entry.ready_time, this);
+    //mcsim->update_os_page_req_dist(local_event->address);
     delete local_event;
   }
   else if (local_event->type == et_nack)
@@ -976,7 +985,7 @@ void O3Core::add_rep_event(
   }
   else
   {
-    if (local_event->type == et_hmc_pei)
+    if (local_event->type == et_pei_dot || local_event->type == et_pei_atomic)
     {
       num_update_ins++;
       total_update_roundtrip_time += geq->curr_time - local_event->issue_time;

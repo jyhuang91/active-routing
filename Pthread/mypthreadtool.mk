@@ -48,6 +48,11 @@ PIN_LDFLAGS +=  ${PIN_LPATHS}
 LIBS += -L/usr/local/lib -lsnappy
 INCS += -I/usr/local/include
 
+# add hooks
+LIB_DEPEND = hooks
+LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
+INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
+
 ifeq ($(TAG),dbg)
   DBG = -Wall
   OPT = -ggdb -g -O0
@@ -92,9 +97,12 @@ OBJS = $(patsubst %.cc,obj_$(TAG)/%.o,$(SRCS))
 MYPIN_CXXFLAGS = $(subst -I../,-I$(TOOLS_DIR)/,$(PIN_CXXFLAGS))
 MYPIN_LDFLAGS  = $(subst -L../,-L$(TOOLS_DIR)/,$(PIN_LDFLAGS))
 
-all: obj_$(TAG)/mypthreadtool obj_$(TAG)/libmypthread.a
+all: obj_$(TAG)/mypthreadtool obj_$(TAG)/libmypthread.a $(LIB_DEPEND)
 	cp -f obj_$(TAG)/mypthreadtool mypthreadtool
 	cp -f obj_$(TAG)/libmypthread.a libmypthread.a
+
+$(LIB_DEPEND):
+	(cd $(MCSIM_PARENT_DIR)/Apps/hooks; $(MAKE); cd $(CUR_DIR))
 
 obj_$(TAG)/mypthreadtool : $(OBJS) obj_$(TAG)/mypthreadtool.o 
 	$(CXX) $(OBJS) $@.o $(MYPIN_LDFLAGS) -o $@ $(PIN_LIBS) $(LIBS) -pthread

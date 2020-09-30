@@ -29,6 +29,8 @@
   for (_i = 0; _i < _l; _i++) *_to++ = *_from++;\
 }
 
+extern int nthreads;
+
 /*** Return random number between 0.0 and 1.0 ***/
 float drnd()
 {
@@ -61,8 +63,10 @@ int n;
 {
   float *new;
 
-  new = (float *) malloc ((unsigned) (n * sizeof (float)));
-  if (new == NULL) {
+  //new = (float *) malloc ((unsigned) (n * sizeof (float)));
+  //if (new == NULL)
+  if (posix_memalign((void **) &new, CACHELINE_SIZE, n * sizeof(float)))
+  {
     printf("ALLOC_1D_DBL: Couldn't allocate array of floats\n");
     return (NULL);
   }
@@ -78,8 +82,10 @@ int m, n;
   int i;
   float **new;
 
-  new = (float **) malloc ((unsigned) (m * sizeof (float *)));
-  if (new == NULL) {
+  //new = (float **) malloc ((unsigned) (m * sizeof (float *)));
+  //if (new == NULL)
+  if (posix_memalign((void **) &new, CACHELINE_SIZE, m * sizeof(float *)))
+  {
     printf("ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs\n");
     return (NULL);
   }
@@ -112,9 +118,8 @@ int m;
 {
 	int i;
 	for (i = 0; i <= m; i++) {
-     //w[i] = (float) rand()/RAND_MAX;
-	 w[i] = 0.1;
-    }
+    w[i] = (float) rand()/RAND_MAX;
+  }
 }
 
 
@@ -161,11 +166,18 @@ int n_in, n_hidden, n_out;
   newnet->output_delta = alloc_1d_dbl(n_out + 1);
   newnet->target = alloc_1d_dbl(n_out + 1);
 
-  newnet->input_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
-  newnet->hidden_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
+  //newnet->input_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
+  //newnet->hidden_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
 
-  newnet->input_prev_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
-  newnet->hidden_prev_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
+  //newnet->input_prev_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
+  //newnet->hidden_prev_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
+
+  // weight from input to output is stored in weights[output][input] for optimization
+  newnet->input_weights = alloc_2d_dbl(n_hidden + 1, n_in + 1);
+  newnet->hidden_weights = alloc_2d_dbl(n_out + 1, n_hidden + 1);
+
+  newnet->input_prev_weights = alloc_2d_dbl(n_hidden + 1, n_in + 1);
+  newnet->hidden_prev_weights = alloc_2d_dbl(n_out + 1, n_hidden + 1);
 
   return (newnet);
 }
@@ -176,8 +188,11 @@ BPNN *net;
 {
   int n1, n2, i;
 
-  n1 = net->input_n;
-  n2 = net->hidden_n;
+  //n1 = net->input_n;
+  //n2 = net->hidden_n;
+
+  n1 = net->hidden_n;
+  n2 = net->output_n;
 
   free((char *) net->input_units);
   free((char *) net->hidden_units);
@@ -223,13 +238,20 @@ int n_in, n_hidden, n_out;
   newnet = bpnn_internal_create(n_in, n_hidden, n_out);
 
 #ifdef INITZERO
-  bpnn_zero_weights(newnet->input_weights, n_in, n_hidden);
+  //bpnn_zero_weights(newnet->input_weights, n_in, n_hidden);
+  bpnn_zero_weights(newnet->input_weights, n_hidden, n_in);
 #else
-  bpnn_randomize_weights(newnet->input_weights, n_in, n_hidden);
+  //bpnn_randomize_weights(newnet->input_weights, n_in, n_hidden);
+  bpnn_randomize_weights(newnet->input_weights, n_hidden, n_in);
 #endif
+  /*
   bpnn_randomize_weights(newnet->hidden_weights, n_hidden, n_out);
   bpnn_zero_weights(newnet->input_prev_weights, n_in, n_hidden);
   bpnn_zero_weights(newnet->hidden_prev_weights, n_hidden, n_out);
+  */
+  bpnn_randomize_weights(newnet->hidden_weights, n_out, n_hidden);
+  bpnn_zero_weights(newnet->input_prev_weights, n_hidden, n_in);
+  bpnn_zero_weights(newnet->hidden_prev_weights, n_out, n_hidden);
   bpnn_randomize_row(newnet->target, n_out);
   return (newnet);
 }
@@ -272,21 +294,23 @@ void *bpnn_pthread_worker(void *args)
   double start, end;
   int start_hid, end_hid, start_out, end_out;
 
-  start = tid * (hid / NUM_THREAD);
-  end = (tid + 1.0) * (hid / NUM_THREAD);
-  start_hid = (hid < NUM_THREAD) ?
+  int stride = PEI_GRANULARITY;
+
+  start = tid * (hid / nthreads);
+  end = (tid + 1.0) * (hid / nthreads);
+  start_hid = (hid < nthreads) ?
     (tid < hid) ? tid + 1 : tid
     : start + 1;
-  end_hid = (hid < NUM_THREAD) ?
+  end_hid = (hid < nthreads) ?
     (tid < hid) ? start_hid + 1: tid
     : end + 1;
 
-  start = tid * (out / NUM_THREAD);
-  end = (tid + 1.0) * (out / NUM_THREAD);
-  start_out = (out < NUM_THREAD) ?
+  start = tid * (out / nthreads);
+  end = (tid + 1.0) * (out / nthreads);
+  start_out = (out < nthreads) ?
     (tid < out) ? tid + 1 : tid
     : start + 1;
-  end_out = (out < NUM_THREAD) ?
+  end_out = (out < nthreads) ?
     (tid < out) ? start_out + 1 : tid
     : end + 1; 
 
@@ -302,17 +326,19 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_hid; j < end_hid; j++) {
     /*** Compute weighted sum of its inputs ***/
     hl[j] = 0.0;
-    for (k = 0; k <= in; k+=4) {
-      UPDATE(&iw[k][j], &il[k], &hl[j], PEI_DOT);
+    for (k = 0; k <= in - stride; k += stride) {
+      UpdateRR(&iw[j][k], &il[k], &hl[j], FPEI_DOT);
       /*mcsim_skip_instrs_begin();
       hl[j] += iw[k][j] * il[k];
       mcsim_skip_instrs_end();*/
     }
-    //GATHER(0, 0, &hl[j], 1);
+    for (; k <= in; k++) {
+      hl[j] += iw[j][k] * il[k];
+    }
     hl[j] = squash(hl[j]);
     /*sum = 0.0;
     for (k = 0; k <= in; k++) {
-      sum += iw[k][j] * il[k];
+      sum += iw[j][k] * il[k];
     }
     hl[j] = squash(sum);*/
     //printf("hl[%d]: %f\n", j, hl[j]);
@@ -326,17 +352,18 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_out; j < end_out; j++) {
     /*** Compute weighted sum of its inputs ***/
     ol[j] = 0.0;
-    for (k = 0; k <= hid; k+=4) {
-      UPDATE(&hw[k][j], &hl[k], &ol[j], PEI_DOT);
+    for (k = 0; k <= hid - stride; k += stride) {
+      UpdateRR(&hw[j][k], &hl[k], &ol[j], FPEI_DOT);
       /*mcsim_skip_instrs_begin();
       ol[j] += hw[k][j] * hl[k];
       mcsim_skip_instrs_end();*/
     }
-    //GATHER(0, 0, &ol[j], 1);
+    for (; k <= hid; k++)
+      ol[j] += hw[j][k] * hl[k];
     ol[j] = squash(ol[j]);
     /*sum = 0.0;
     for (k = 0; k <= hid; k++) {
-      sum += hw[k][j] * hl[k];
+      sum += hw[j][k] * hl[k];
     }
     ol[j] = squash(sum);
     */
@@ -361,7 +388,7 @@ void *bpnn_pthread_worker(void *args)
       h = hl[j];
       sum = 0.0;
       for (k = 1; k <= out; k++) {
-        sum += delta_o[k] * hw[j][k];
+        sum += delta_o[k] * hw[k][j];
       }
       delta_h[j] = h * (1.0 - h) * sum;
       *hid_err += ABS(delta_h[j]);
@@ -374,8 +401,8 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_out; j < end_out; j++) {
     for (k = 0; k <= hid; k++) {
       new_dw = ((ETA * delta_o[j] * hl[k]) + (MOMENTUM * old_hw[j][j]));
-      hw[k][j] += new_dw;
-      old_hw[k][j] = new_dw;
+      hw[j][k] += new_dw;
+      old_hw[j][k] = new_dw;
     }
   }
 
@@ -385,8 +412,8 @@ void *bpnn_pthread_worker(void *args)
   for (j = start_hid; j < end_hid; j++) {
     for (k = 0; k <= in; k++) {
       new_dw = ((ETA * delta_h[j] * il[k]) + (MOMENTUM * old_iw[j][j]));
-      iw[k][j] += new_dw;
-      old_iw[k][j] = new_dw;
+      iw[j][k] += new_dw;
+      old_iw[j][k] = new_dw;
     }
   }
 }
@@ -399,15 +426,15 @@ int in, hid, out;
   float hid_err, out_err;
 
   /* allocate memory for thread argument */
-  thread_arg_t *thread_arg = (thread_arg_t *) malloc(sizeof(thread_arg_t) * NUM_THREAD);
-  pthread_t *thread_handle = (pthread_t *) malloc(sizeof(pthread_t) * NUM_THREAD);
+  thread_arg_t *thread_arg = (thread_arg_t *) malloc(sizeof(thread_arg_t) * nthreads);
+  pthread_t *thread_handle = (pthread_t *) malloc(sizeof(pthread_t) * nthreads);
   pthread_mutex_t lock;
   pthread_barrier_t barrier;
 
   pthread_mutex_init(&lock, NULL);
-  pthread_barrier_init(&barrier, NULL, NUM_THREAD);
+  pthread_barrier_init(&barrier, NULL, nthreads);
 
-  for (i = 0; i < NUM_THREAD; i++) {
+  for (i = 0; i < nthreads; i++) {
     thread_arg[i].in = in;
     thread_arg[i].hid = hid;
     thread_arg[i].out = out;
@@ -435,11 +462,11 @@ int in, hid, out;
     thread_arg[i].barrier = &barrier;
   }
 
-  printf("Total threads created = %d\n", NUM_THREAD);
+  printf("Total threads created = %d\n", nthreads);
 
   roi_begin();
 
-  for (i = 1; i < NUM_THREAD; i++) {
+  for (i = 1; i < nthreads; i++) {
     pthread_create(thread_handle+i,
         NULL,
         bpnn_pthread_worker,
@@ -449,7 +476,7 @@ int in, hid, out;
 
   printf("Threads returned!\n");
 
-  for (i = 1; i < NUM_THREAD; i++) {
+  for (i = 1; i < nthreads; i++) {
     pthread_join(thread_handle[i], NULL);
   }
 

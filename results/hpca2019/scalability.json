@@ -1,0 +1,68 @@
+{
+  "16-cube-6.4M": {
+    "reduce": {
+      "PEI": 6842304,
+      "ART-tid": 269248,
+      "ART-addr": 130100
+    },
+    "rand_reduce": {
+      "PEI": 36181818,
+      "ART-tid": 4349874,
+      "ART-addr": 2263687
+    },
+    "mac": {
+      "PEI": 2115379,
+      "ART-tid": 450680,
+      "ART-addr": 336752
+    },
+    "rand_mac": {
+      "PEI": 15922585,
+      "ART-tid": 7495577,
+      "ART-addr": 5597847
+    }
+  },
+  "64-cube-6.4M": {
+    "reduce": {
+      "PEI": 7097709,
+      "ART-tid": 270167,
+      "ART-addr": 130391
+    },
+    "rand_reduce": {
+      "PEI": 37364907,
+      "ART-tid": 4351559,
+      "ART-addr": 2265392
+    },
+    "mac": {
+      "PEI": 2160302,
+      "ART-tid": 450947,
+      "ART-addr": 336712
+    },
+    "rand_mac": {
+      "PEI": 15987628,
+      "ART-tid": 7493922,
+      "ART-addr": 5598208
+    }
+  },
+  "64-cube-25.6M": {
+    "reduce": {
+      "PEI": 27196389,
+      "ART-tid": 1074476,
+      "ART-addr": 518166
+    },
+    "rand_reduce": {
+      "PEI": -1,
+      "ART-tid": 17398121,
+      "ART-addr": 9060372
+    },
+    "mac": {
+      "PEI": 8646009,
+      "ART-tid": 1865248,
+      "ART-addr": 1219551
+    },
+    "rand_mac": {
+      "PEI": -1,
+      "ART-tid": 30607578,
+      "ART-addr": 19254632
+    }
+  }
+}

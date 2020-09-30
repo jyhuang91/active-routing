@@ -43,11 +43,23 @@ void mcsim_spinning_end()
   magic_op(MAGIC_OP_SPIN_END);
 }
 
-void UPDATE(void *src_addr1, void *src_addr2, void *dest_addr, int op)
+void UpdateRR(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op)
 {
   //magic_op(MAGIC_OP_UPDATE);
 }
-void GATHER(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads)
+void UpdateRI(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op)
+{
+  //magic_op(MAGIC_OP_UPDATE);
+}
+void UpdateII(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op)
+{
+  //magic_op(MAGIC_OP_UPDATE);
+}
+void Update(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op)
+{
+  //magic_op(MAGIC_OP_UPDATE);
+}
+void Gather(void *src_addr1, void *src_addr2, void *dest_addr, int nthreads)
 {
   //magic_op(MAGIC_OP_GATHER);
 }

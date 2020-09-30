@@ -36,7 +36,7 @@ void DeleteVector(float* vec);
 void DeleteSparseMatrix(spm_t* spm);
 void printSparseMat(spm_t* sparse_mat);
 void* matVecMul(void *args);
-float THRESHOLD = 0.2; 
+float THRESHOLD = 0.2;
 
 int main(int argc, char* argv[]){
   int matrix_dim = 32; /*default*/
@@ -135,7 +135,12 @@ spm_t *CompressMatrix(float **matrix, int matrix_dim){
 //  }
   int val_ind = 0; 
   int *col_ind = (int *)malloc((nnz)*sizeof(int)); 
-  float *vals = (float *)malloc((nnz)*sizeof(float));
+  float *vals;
+  //vals = (float *)malloc((nnz)*sizeof(float));
+  if (posix_memalign((void **) &vals, CACHELINE_SIZE, nnz * sizeof(float))) {
+    fprintf(stderr, "Fail to allocate vals\n");
+    exit(1);
+  }
   for(int i = 0; i < matrix_dim; i++){
     row_ptr[row_ind] = val_ind;
     row_ind++; 

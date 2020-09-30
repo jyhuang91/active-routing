@@ -1,5 +1,5 @@
 
-TRGS = reduce ar_reduce pei_reduce
+TRGS = reduce naive_art_reduce ar_reduce pei_reduce
 
 LIB_DEPEND = hooks
 
@@ -7,7 +7,7 @@ LIB_DEPEND = hooks
 LIBS += -lrt
 LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks
+INCS += -I${MCSIM_PARENT_DIR}/Apps/hooks/include
 LDFLAGS = $(MCSIM_PARENT_DIR)/Pthread/libmypthread.a
 
 #CXXFLAGS = -g --std=c++0x -O0 -static
@@ -22,6 +22,8 @@ $(LIB_DEPEND):
 	(cd $(MCSIM_PARENT_DIR)/Apps/hooks; $(MAKE); cd $(CUR_DIR))
 
 reduce: main.cc
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
+naive_art_reduce: main_naive_art.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)
 ar_reduce: main_ar.cc
 	$(CXX) $(CXXFLAGS) $< -o $@ $(LIBS) $(INCS) $(LDFLAGS)

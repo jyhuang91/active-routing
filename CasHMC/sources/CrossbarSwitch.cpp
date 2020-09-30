@@ -18,7 +18,8 @@ namespace CasHMC
   // Ram & Jiayi, 03/13/17
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_,unsigned id_, RoutingFunction *rf_ = NULL):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF), cubeID(id_), rf(rf_),
-    operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0)
+    operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0),
+    numMultStages(5), multPipeOccupancy(0)
   {
     classID << cubeID;
     header = "        (CS";
@@ -33,7 +34,7 @@ namespace CasHMC
 
     // Jiayi, 03/15/17
     neighborCubeID = vector<int>(NUM_LINKS, -1);
-    operandBuffers.resize(operandBufSize, OperandEntry());
+    operandBuffers.resize(operandBufSize, OperandEntry(numMultStages));
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
@@ -46,7 +47,7 @@ namespace CasHMC
       inputBuffers[l]->xbar = this;
     }
   }
-  
+
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF),
     opbufStalls(0), numUpdates(0), numOperands(0)
@@ -60,10 +61,10 @@ namespace CasHMC
   }
 
   CrossbarSwitch::~CrossbarSwitch()
-  {	
+  {
     downBufferDest.clear();
     upBufferDest.clear();
-    pendingSegTag.clear(); 
+    pendingSegTag.clear();
     pendingSegPacket.clear();
 
     flowTable.clear();
@@ -122,7 +123,7 @@ namespace CasHMC
               if(curUpBuffers[i]->TAG == pendingSegTag[j]) {
                 pendingSegTag.erase(pendingSegTag.begin()+j);
                 foundSeg = true;
-                //Check whether curUpBuffers[i] packet is the last segment packet or not 
+                //Check whether curUpBuffers[i] packet is the last segment packet or not
                 for(int k=j; k<pendingSegTag.size(); k++) {
                   if(curUpBuffers[i]->TAG == pendingSegTag[k]) {
                     DEBUG(ALI(18)<<header<<ALI(15)<<*curUpBuffers[i]<<"Up)   Segment packet is WAITING for the others");
@@ -145,8 +146,8 @@ namespace CasHMC
             foundSeg = false;
             for(int j=0; j<pendingSegPacket.size(); j++) {
               if(curUpBuffers[i]->TAG == pendingSegPacket[j]->TAG) {
-                if(curUpBuffers[i]->LNG > 1)	pendingSegPacket[j]->LNG += ADDRESS_MAPPING/16;
-                if(curUpBuffers[i]->trace != NULL)	pendingSegPacket[j]->trace = curUpBuffers[i]->trace;
+                if(curUpBuffers[i]->LNG > 1)  pendingSegPacket[j]->LNG += ADDRESS_MAPPING/16;
+                if(curUpBuffers[i]->trace != NULL)  pendingSegPacket[j]->trace = curUpBuffers[i]->trace;
                 //Delete a segment packet
                 int packetLNG = curUpBuffers[i]->LNG;
                 delete curUpBuffers[i];
@@ -159,7 +160,7 @@ namespace CasHMC
                   pendingSegPacket.erase(pendingSegPacket.begin()+j);
                   combPacket->segment = false;
                   curUpBuffers.insert(curUpBuffers.begin(), combPacket);
-                  for(int k=1; k<combPacket->LNG; k++) {	//Virtual tail packet
+                  for(int k=1; k<combPacket->LNG; k++) {  //Virtual tail packet
                     curUpBuffers.insert(curUpBuffers.begin()+1, NULL);
                   }
                 }
@@ -177,7 +178,8 @@ namespace CasHMC
             }
           }
           else {
-            if (curUpBuffers[i]->CMD == ACT_ADD) {
+            if (curUpBuffers[i]->CMD == ACT_ADD ||
+                curUpBuffers[i]->CMD == ACT_DOT) {
               assert(curUpBuffers[i]->DESTCUB == cubeID);
               uint64_t dest_addr = curUpBuffers[i]->DESTADRS;
               uint64_t src_addr = curUpBuffers[i]->SRCADRS1;
@@ -290,13 +292,13 @@ namespace CasHMC
                 //the packet is divided into segment packets.
                 Packet *tempPacket = curDownBuffers[i];
                 curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
-                if(tempPacket->LNG > 1)	tempPacket->LNG = 1 + ADDRESS_MAPPING/16;	//one flit is 16 bytes
+                if(tempPacket->LNG > 1) tempPacket->LNG = 1 + ADDRESS_MAPPING/16; //one flit is 16 bytes
                 for(int j=0; j<segPacket; j++) {
                   Packet *vaultPacket = new Packet(*tempPacket);
                   vaultPacket->ADRS += j*ADDRESS_MAPPING;
-                  if(j>1)	vaultPacket->trace = NULL;
+                  if(j>1) vaultPacket->trace = NULL;
                   curDownBuffers.insert(curDownBuffers.begin()+i, vaultPacket);
-                  for(int k=1; k<vaultPacket->LNG; k++) {		//Virtual tail packet
+                  for(int k=1; k<vaultPacket->LNG; k++) {   //Virtual tail packet
                     curDownBuffers.insert(curDownBuffers.begin()+i+1, NULL);
                   }
                   i += vaultPacket->LNG;
@@ -307,7 +309,8 @@ namespace CasHMC
               }
               else {
                 unsigned vaultMap = (curDownBuffers[i]->ADRS >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
-                if (curDownBuffers[i]->CMD == ACT_ADD) {
+                if (curDownBuffers[i]->CMD == ACT_ADD ||
+                    curDownBuffers[i]->CMD == ACT_DOT) {
                   bool operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
                   if (operand_buf_avail && downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
 #ifdef DEBUG_ROUTING
@@ -461,15 +464,21 @@ namespace CasHMC
                   // Jiayi, force the ordering for gather after update, 07/02/17
                   bool is_inorder = true;
                   for (int j = 0; j < i; j++) {
-                    if (curDownBuffers[j] != NULL && ((curDownBuffers[j]->CMD == ACT_ADD ||
-                            curDownBuffers[j]->CMD == ACT_MULT) && curDownBuffers[j]->DESTADRS == dest_addr)) {
+                    if (curDownBuffers[j] != NULL &&
+                        ((curDownBuffers[j]->CMD == ACT_ADD ||
+                          curDownBuffers[j]->CMD == ACT_DOT ||
+                          curDownBuffers[j]->CMD == ACT_MULT) &&
+                         curDownBuffers[j]->DESTADRS == dest_addr)) {
                       is_inorder = false;
                       break;
                     }
                   }
 #ifdef DEBUG_VERIFY
                   for (int j = i + 1; j < curDownBuffers.size(); j++) {
-                    if (curDownBuffers[j] != NULL && (curDownBuffers[j]->CMD == ACT_ADD || curDownBuffers[j]->CMD == ACT_MULT))
+                    if (curDownBuffers[j] != NULL &&
+                        (curDownBuffers[j]->CMD == ACT_ADD ||
+                         curDownBuffers[j]->CMD == ACT_DOT ||
+                         curDownBuffers[j]->CMD == ACT_MULT))
                       assert(curDownBuffers[j]->DESTADRS != dest_addr);
                   }
 #endif
@@ -538,7 +547,7 @@ namespace CasHMC
                   i--;
                 }
                 else {
-                  //DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) Vault controller buffer FULL");	
+                  //DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) Vault controller buffer FULL");
                 }
               }
             } else {  // not destined for this cube
@@ -730,7 +739,8 @@ namespace CasHMC
               }
               else if (upBufferDest[link]->currentState != LINK_RETRY) {
                 if (upBufferDest[link]->ReceiveDown(curDownBuffers[i])) {
-                  if (curDownBuffers[i]->CMD == ACT_ADD) {
+                  if (curDownBuffers[i]->CMD == ACT_ADD ||
+                      curDownBuffers[i]->CMD == ACT_DOT) {
                     assert(curDownBuffers[i]->packetType == REQUEST);
                     uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                     map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
@@ -773,12 +783,34 @@ namespace CasHMC
 
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
+    bool startedMult = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
+        //cout << CYCLE() << "cubeID " << cubeID << " Current Occupancy: " << multPipeOccupancy << endl;
+        if (flowEntry.opcode == MAC) {
+          if (operandEntry.multStageCounter == numMultStages) {
+            if (!startedMult && multPipeOccupancy < numMultStages) {
+              //cout << CYCLE() << "cubeID " << cubeID << " Starting operand (incrementing counter)..." << endl;
+              startedMult = true;
+              multPipeOccupancy++;
+              operandEntry.multStageCounter--;
+            }
+            // Otherwise wait to start until pipeline is not full
+            continue; // don't free the buffer
+          } else {
+            //cout << CYCLE() << "cubeID " << cubeID << " Moving operand in stage " << (int) operandEntry.multStageCounter << endl;
+            operandEntry.multStageCounter--;
+            if (operandEntry.multStageCounter > 0)
+              continue;
+            else
+              multPipeOccupancy--;
+          }
+        }
+        //cout << CYCLE() << "cubeID " << cubeID << " ...Finised an operand" << endl;
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -817,6 +849,7 @@ namespace CasHMC
         operandEntry.op1_ready = false;
         operandEntry.op2_ready = false;
         operandEntry.ready = false;
+        operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
       }
     }
@@ -933,6 +966,27 @@ namespace CasHMC
   void CrossbarSwitch::PrintBuffers()
   {
     cout << "Crossbar (HMC) " << cubeID << endl;
+    int i = 0;
+    for (map<FlowID, FlowEntry>::iterator it = flowTable.begin();
+        it != flowTable.end(); it++) {
+      cout << " -- flow entry " << i << ":" << endl;
+      cout << "    [flowID: " << hex << it->first << dec
+        << "] [opcode: " << it->second.opcode
+        << "] [result: " << it->second.result
+        << "] [req_count: " << it->second.req_count
+        << "] [rep_count: " << it->second.rep_count
+        << "] [parent: " << it->second.parent
+        << "] [children_gflag_count:";
+      for (int c = 0; c < NUM_LINKS; c++) {
+        if (it->second.children_gflag[c]) {
+          cout << " true:" << it->second.children_count[c];
+        } else {
+          cout << " false:" << it->second.children_count[c];
+        }
+      }
+      cout << "] [gflag: " << it->second.g_flag << "]" << endl;
+      i++;
+    }
     for (int i = 0; i < inputBuffers.size(); i++) {
       vector<Packet *> downBuffer = inputBuffers[i]->downBuffers;
       vector<Packet *> upBuffer = inputBuffers[i]->upBuffers;

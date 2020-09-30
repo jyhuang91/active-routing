@@ -11,7 +11,7 @@
 
 default: all
 
-CXXFLAGS=-O3 -g -DDEBUG_LOG
+CXXFLAGS=-g -DDEBUG_LOG
 #DFLAGS=-DDEBUG_FLOW_CONTROL -DDEBUG_GATHER
 #DFLAGS += -DDEBUG_UPDATE -DDEBUG_GATHER
 #DFLAGS += -DCOMPUTE
@@ -31,7 +31,11 @@ OBJ = $(subst LibraryStubs.o,,$(addprefix $(OBJDIR)/,$(addsuffix .o, $(basename 
 
 REBUILDABLES=$(OBJ) $(EXE_NAME)
 
+all: CXXFLAGS+=-O3
 all: ${OBJ}
+
+dbg: CXXFLAGS+=-O0
+dbg: ${OBJ}
 
 #   $@ target name, $^ target deps, $< matched pattern
 #$(EXE_NAME): $(OBJ)

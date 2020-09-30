@@ -35,6 +35,9 @@ struct Programs
   int port_num;
   int pid;
   string run_roi;
+#ifdef RUNTIME_KNOB
+  string active_mode;
+#endif
 };
 
 
@@ -47,7 +50,8 @@ int main(int argc, char * argv[])
   bool   run_manually = false;
   uint64_t remap_interval = 0;
   string remapfile;
-  string benchname; // Jiayi, 01/30/2018
+  map<string, string> params;
+  params.clear();
   for (int i = 0; i < argc; i++)
   {
     if (argv[i] == string("-mdfile"))
@@ -81,14 +85,21 @@ int main(int argc, char * argv[])
       i++;
       remapfile = argv[i];
     }
-    else if (argv[i] == string("-benchname"))
+    else
     {
-      i++;
-      benchname = argv[i];
+      string param = argv[i];
+      if (param[0] == '-') {
+        assert(i + 1 < argc);
+        i++;
+        param.erase(param.begin());
+        param = string("pts.") + param;
+        string value = argv[i];
+        params[param] = value;
+      }
     }
   }
 
-  PthreadTimingSimulator * pts = new PthreadTimingSimulator(mdfile, benchname);
+  PthreadTimingSimulator * pts = new PthreadTimingSimulator(mdfile, params);
   string pin_name;
   string pintool_name;
   string ld_library_path_full;
@@ -99,9 +110,10 @@ int main(int argc, char * argv[])
   uint64_t        max_total_instrs = pts->get_param_uint64("max_total_instrs", 1000000000);
   uint64_t       num_instrs_per_th = pts->get_param_uint64("num_instrs_per_th", 0);
   int32_t      interleave_base_bit = pts->get_param_uint64("pts.mc.interleave_base_bit", 14);
-  if (benchname.empty()) {
+  if (params.find("pts.benchname") == params.end())
+  {
     cerr << "no benchname povided! help:" << endl;
-    cerr << argv[0] << " -mdfile mdfile -runfile runfile -run_manually -remapfile remapfile -remap_interval instrs -benchname benchname" << endl;
+    cerr << argv[0] << " -mdfile mdfile -runfile runfile -run_manually -remapfile remapfile -remap_interval instrs -benchname benchname [-overrided_param overrided_value]" << endl;
     exit(0);
   }
 
@@ -165,7 +177,12 @@ int main(int argc, char * argv[])
       else
       {
         programs[idx].trace_name = string();
+#ifdef RUNTIME_KNOB
+        sline >> programs[idx].num_skip_first_instrs >> programs[idx].run_roi
+            >> programs[idx].active_mode >> programs[idx].directory;
+#else
         sline >> programs[idx].num_skip_first_instrs >> programs[idx].run_roi >> programs[idx].directory;
+#endif
       }
     }
     
@@ -301,6 +318,10 @@ int main(int argc, char * argv[])
         argp[curr_argc++] = (char *)programs[i].num_skip_first_instrs.c_str();
         argp[curr_argc++] = (char *)"-run_roi";
         argp[curr_argc++] = (char *)programs[i].run_roi.c_str();
+#ifdef RUNTIME_KNOB
+        argp[curr_argc++] = (char *)"-active_mode";
+        argp[curr_argc++] = (char *)programs[i].active_mode.c_str();
+#endif
       }
       if (programs[i].agile_bank_th_perc > 0)
       {

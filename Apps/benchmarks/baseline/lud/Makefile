@@ -24,7 +24,7 @@ PTS_LIB_DEPEND = hooks
 PTS_LIBS += -lrt
 PTS_LIBS += -L$(MCSIM_PARENT_DIR)/Apps/hooks/lib -lhooks
 PTS_LIBS += -L$(MCSIM_PARENT_DIR)/Pthread -lmypthread
-PTS_INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks
+PTS_INCS += -I$(MCSIM_PARENT_DIR)/Apps/hooks/include
 
 # ------------  compiler flags  ------------------------------------------------
 DEBUG_CFLAGS    := -Wall -O0 -g
@@ -97,7 +97,7 @@ BASENAMES       = $(basename $(SOURCES))
 OBJECTS         = $(addsuffix .o,$(BASENAMES))
  
 # ------------  make the executable (the default goal)  ------------------------
-$(EXECUTABLE):	$(OBJECTS)
+$(EXECUTABLE): $(OBJECTS)	$(PTS_LIB_DEPEND)
 ifeq ($(strip $(CPP_SOURCES)),)
 	$(CC)  $(ALL_LFLAGS) -o $(EXECUTABLE) $(OBJECTS) $(LOCAL_LIBSS) $(GLOBAL_LIBSS) $(SYS_LIBS)
 else
@@ -116,6 +116,10 @@ endif
 
 %.o:		%.C
 				$(CXX) -c $(ALL_CFLAGS) $< -o $@
+
+# ------------  generate the hook library  -------------------------------------
+$(PTS_LIB_DEPEND):
+	(cd $(MCSIM_PARENT_DIR)/Apps/hooks; $(MAKE); cd $(CUR_DIR))
 
 clean:
 	-rm --force $(EXECUTABLE) $(OBJECTS) *~

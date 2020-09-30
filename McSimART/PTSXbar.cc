@@ -241,9 +241,10 @@ uint32_t Crossbar::process_event(uint64_t curr_time)
       uint32_t which_mc = geq->which_mc(rep_event_iter->second.first->address);
       queues[rep_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_rep, EventPair(rep_event_iter->second.first, directory[which_mc])));
     }
-    else if(rep_event_iter->second.first->type == et_hmc_update_add ||
-          rep_event_iter->second.first->type == et_hmc_update_mult ||
-          rep_event_iter->second.first->type == et_hmc_gather)
+    else if(rep_event_iter->second.first->type == et_art_get ||
+          rep_event_iter->second.first->type == et_art_add ||
+          rep_event_iter->second.first->type == et_art_mult ||
+          rep_event_iter->second.first->type == et_art_dot)
     {
       assert(rep_event_iter->second.first->from.top()->type == ct_o3core);
       assert(rep_event_iter->second.second->type == ct_hmc_controller);
@@ -269,7 +270,7 @@ uint32_t Crossbar::process_event(uint64_t curr_time)
   {
     // process the first request event
     /*
-    uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // TODO : it is assumed that (directory[i]->num == i)
+    uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // XXX: it is assumed that (directory[i]->num == i)
     queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, directory[which_mc])));
     */
     if ((req_event_iter->second.first->from.top()->type == ct_cachel1i && req_event_iter->second.second->type == ct_cachel1i) ||
@@ -282,34 +283,62 @@ uint32_t Crossbar::process_event(uint64_t curr_time)
     else if(req_event_iter->second.first->from.top()->type == ct_o3core)
     {
       event_type etype = req_event_iter->second.first->type; 
-      if(etype == et_hmc_update_add)
+      if(etype == et_art_add)
       {
         uint32_t which_mc = geq->which_mc(req_event_iter->second.first->src_addr1); 
         queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first,directory[which_mc])));
       }
-      else if(etype == et_hmc_update_mult)
+      else if(etype == et_art_mult)
       {
         uint32_t which_mc = (req_event_iter->second.first->twin_lqe1 == NULL) ? 
                             geq->which_mc(req_event_iter->second.first->src_addr1) : 
                             geq->which_mc(req_event_iter->second.first->src_addr2);
         queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first,directory[which_mc])));
       }
-      else if(etype == et_hmc_gather)
+      else if(etype == et_art_get)
       {
-        queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[0])));
+        uint32_t which_hmc;
+        switch (mcsim->art_scheme)
+        {
+          case art_naive:
+            which_hmc = 0;
+            break;
+          case art_tid:
+          case art_addr:
+            which_hmc = req_event_iter->second.first->th_id % 4;
+            break;
+          default:
+            assert(0);
+        }
+        queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[which_hmc])));
       }
     }
     else if(req_event_iter->second.first->from.top()->type == ct_directory &&
-          (req_event_iter->second.first->type == et_hmc_update_mult || req_event_iter->second.first->type == et_hmc_update_add))
+          (req_event_iter->second.first->type == et_art_mult || req_event_iter->second.first->type == et_art_add))
     {
+      uint32_t which_hmc;
+      switch (mcsim->art_scheme)
+      {
+        case art_naive:
+          which_hmc = 0;
+          break;
+        case art_tid:
+          which_hmc = req_event_iter->second.first->th_id % 4;
+          break;
+        case art_addr:
+          which_hmc = geq->which_mc(req_event_iter->second.first->src_addr1);
+          break;
+        default:
+          assert(0);
+      }
       req_event_iter->second.first->from.pop();
-      queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[0])));
+      queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, hmccontroller[which_hmc])));
     } 
     else
     {
       // process the first request event
       assert(req_event_iter->second.first->from.top()->type == ct_cachel2);
-      uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // TODO : it is assumed that (directory[i]->num == i)
+      uint32_t which_mc  = geq->which_mc(req_event_iter->second.first->address);  // XXX: it is assumed that (directory[i]->num == i)
       queues[req_event_iter->second.second->num].insert(std::pair<noc_priority, EventPair>(noc_req, EventPair(req_event_iter->second.first, directory[which_mc])));
     }
     ++req_event_iter;
@@ -499,7 +528,10 @@ void Mesh2D::add_req_event(
   ++num_req;
   num_flits++;
   event_type etype = local_event->type;
-  if (etype != et_hmc_update_add && etype != et_hmc_update_mult && etype != et_hmc_gather)
+  if (etype != et_art_get &&
+      etype != et_art_add &&
+      etype != et_art_mult &&
+      etype != et_art_dot)
   {
     local_event->issue_time = event_time;
   }
@@ -529,7 +561,10 @@ void Mesh2D::add_crq_event(
   ++num_crq;
   num_flits++;
   event_type etype = local_event->type;
-  if (etype != et_hmc_update_add && etype != et_hmc_update_mult && etype != et_hmc_gather)
+  if (etype != et_art_get &&
+      etype != et_art_add &&
+      etype != et_art_mult &&
+      etype != et_art_dot)
   {
     local_event->issue_time = event_time;
   }
@@ -558,7 +593,10 @@ void Mesh2D::add_crq_event(
   add_crq_event(event_time, local_event, from);
   num_data_transfers++;
   event_type etype = local_event->type;
-  if (etype != et_hmc_update_add && etype != et_hmc_update_mult && etype != et_hmc_gather)
+  if (etype != et_art_get &&
+      etype != et_art_add &&
+      etype != et_art_mult &&
+      etype != et_art_dot)
   {
     local_event->issue_time = event_time;
   }
@@ -616,7 +654,10 @@ void Mesh2D::add_rep_event(
   ++num_rep;
   num_flits++;
   event_type etype = local_event->type;
-  if (etype != et_hmc_update_add && etype != et_hmc_update_mult && etype != et_hmc_gather)
+  if (etype != et_art_get &&
+      etype != et_art_add &&
+      etype != et_art_mult &&
+      etype != et_art_dot)
   {
     local_event->issue_time = event_time;
   }
@@ -645,7 +686,10 @@ void Mesh2D::add_rep_event(
   add_rep_event(event_time, local_event, from);
   num_data_transfers++;
   event_type etype = local_event->type;
-  if (etype != et_hmc_update_add && etype != et_hmc_update_mult && etype != et_hmc_gather)
+  if (etype != et_art_get &&
+      etype != et_art_add &&
+      etype != et_art_mult &&
+      etype != et_art_dot)
   {
     local_event->issue_time = event_time;
   }
@@ -777,10 +821,12 @@ void Mesh2D::process_qs(
         row = mc_pos[which_mc] / num_cols;
         to_dir = directory[which_mc];
       }
-      else if (curr_q.first->type == et_hmc_update_add ||
-          curr_q.first->type == et_hmc_update_mult ||
-          curr_q.first->type == et_hmc_gather ||
-          curr_q.first->type == et_hmc_pei)
+      else if (curr_q.first->type == et_art_get ||
+          curr_q.first->type == et_art_add ||
+          curr_q.first->type == et_art_mult ||
+          curr_q.first->type == et_art_dot ||
+          curr_q.first->type == et_pei_dot ||
+          curr_q.first->type == et_pei_atomic)
       {
         uint32_t cluster_num = curr_q.first->from.top()->num;
         col = cluster_num % num_cols;
@@ -816,14 +862,14 @@ void Mesh2D::process_qs(
       else if (curr_q.first->from.top()->type == ct_o3core)
       {
         event_type etype = curr_q.first->type;
-        if (etype == et_hmc_update_add)
+        if (etype == et_art_add)
         {
           uint32_t which_mc = geq->which_mc(curr_q.first->src_addr1);
           col = mc_pos[which_mc] % num_cols;
           row = mc_pos[which_mc] / num_cols;
           to_dir = directory[which_mc];
         }
-        else if (etype == et_hmc_update_mult)
+        else if (etype == et_art_mult)
         {
           uint32_t which_mc = (curr_q.first->twin_lqe1 == NULL) ?
                               geq->which_mc(curr_q.first->src_addr1) :
@@ -832,15 +878,35 @@ void Mesh2D::process_qs(
           row = mc_pos[which_mc] / num_cols;
           to_dir = directory[which_mc];
         }
-        else if (etype == et_hmc_gather)
+        else if (etype == et_art_get)
         {
-          to_hmc = hmccontroller[0];
-          col = mc_pos[0] % num_cols;
-          row = mc_pos[0] / num_cols;
+          uint32_t which_hmc;
+          switch (mcsim->art_scheme)
+          {
+            case art_naive:
+              which_hmc = 0;
+              break;
+            case art_tid:
+            case art_addr:
+              which_hmc = curr_q.first->th_id % 4;
+              break;
+            default:
+              assert(0);
+          }
+          to_hmc = hmccontroller[which_hmc];
+          col = mc_pos[which_hmc] % num_cols;
+          row = mc_pos[which_hmc] / num_cols;
         }
-        else if (etype == et_hmc_pei)
+        else if (etype == et_art_dot || etype == et_pei_dot)
         {
           uint32_t which_mc = geq->which_mc(curr_q.first->src_addr2); /*Remote arg for invalidation*/
+          col = mc_pos[which_mc] % num_cols;
+          row = mc_pos[which_mc] / num_cols;
+          to_dir = directory[which_mc];
+        }
+        else if (etype == et_pei_atomic)
+        {
+          uint32_t which_mc = geq->which_mc(curr_q.first->dest_addr); /*Remote arg for invalidation*/
           col = mc_pos[which_mc] % num_cols;
           row = mc_pos[which_mc] / num_cols;
           to_dir = directory[which_mc];
@@ -852,20 +918,37 @@ void Mesh2D::process_qs(
         }
       }
       else if (curr_q.first->from.top()->type == ct_directory &&
-          (curr_q.first->type == et_hmc_update_mult || curr_q.first->type == et_hmc_update_add))
+          (curr_q.first->type == et_art_add ||
+           curr_q.first->type == et_art_mult ||
+           curr_q.first->type == et_art_dot))
       {
-        col = mc_pos[0] % num_cols;
-        row = mc_pos[0] / num_cols;
-        to_hmc = hmccontroller[0];
+        uint32_t which_hmc;
+        switch (mcsim->art_scheme)
+        {
+          case art_naive:
+            which_hmc = 0;
+            break;
+          case art_tid:
+            which_hmc = curr_q.first->th_id % 4;
+            break;
+          case art_addr:
+            assert(curr_q.first->type == et_art_mult);
+            which_hmc = geq->which_mc(curr_q.first->src_addr1);
+            break;
+          default:
+            assert(0);
+        }
+        col = mc_pos[which_hmc] % num_cols;
+        row = mc_pos[which_hmc] / num_cols;
+        to_hmc = hmccontroller[which_hmc];
       }
       else if (curr_q.first->from.top()->type == ct_directory &&
-                (curr_q.first->type == et_hmc_pei))
+                (curr_q.first->type == et_pei_dot ||
+                 curr_q.first->type == et_pei_atomic))
       { 
         /*RAM: VERIFY with jiayi: Should never reach here but there are req's*/
+        // will be sent directly to hmc from directory since no detour
         assert(false); 
-        col = mc_pos[0] % num_cols;
-        row = mc_pos[0] / num_cols;
-        to_hmc = hmccontroller[0];
       }  
       else
       {
@@ -928,9 +1011,9 @@ void Mesh2D::process_qs(
       {
         if (curr_q.first->from.top()->type == ct_directory)
         {
-          assert(curr_q.first->type == et_hmc_update_mult || 
-                 curr_q.first->type == et_hmc_update_add ||
-                 curr_q.first->type == et_hmc_pei);
+          assert(curr_q.first->type == et_art_add ||
+                 curr_q.first->type == et_art_mult ||
+                 curr_q.first->type == et_art_dot);
           curr_q.first->from.pop();
         }
         to_hmc->add_req_event(curr_time + sw_to_sw_t, curr_q.first);
@@ -969,10 +1052,12 @@ void Mesh2D::process_qs(
         to_dir->add_req_event(curr_time + sw_to_sw_t, curr_q.first);
         //cout << to_dir->num << ", " << curr_time << endl;
         event_type etype = curr_q.first->type;
-        if (etype != et_hmc_update_add && 
-            etype != et_hmc_update_mult && 
-            etype != et_hmc_gather && 
-            etype != et_hmc_pei)
+        if (etype != et_art_get &&
+            etype != et_art_add &&
+            etype != et_art_mult &&
+            etype != et_art_dot &&
+            etype != et_pei_dot &&
+            etype != et_pei_atomic)
         {
           num_req_done++;
           req_noc_latency = (req_noc_latency * (num_req_done - 1) + curr_time - curr_q.first->issue_time) / num_req_done;
