@@ -5,7 +5,7 @@ import numpy as np
 import re, string, fpformat
 import matplotlib.pyplot as plt
 from scipy import stats
-from easypyplot import barchart, color
+from easypyplot import barchart, color, pdf
 from easypyplot import format as fmt
 from optparse import OptionParser
 from pinsim_log_parser import *
@@ -30,7 +30,7 @@ def main(folder_path):
         "--mdfile",
         action="store",
         type="string",
-        default="../Apps/md/md-16o3core2GHz-mesh-hmc.py",
+        default="../../../Apps/md/md-16o3core2GHz-mesh-hmc.py",
         dest="mdfile",
         help="specify the machine description file (default = /dev/null)")
     parser.add_option(
@@ -631,8 +631,8 @@ def main(folder_path):
 
     colors = ['#f0f9e8', '#bae4bc',
               '#7bccc4']  #, '#43a2ca', '#0868ac', '#0796ac']
-    plt.rc('legend', fontsize=18)
-    plt.rc('font', size=18)
+    plt.rc('legend', fontsize=24)
+    plt.rc('font', size=24)
 
     # - benchmark
     xticks = []
@@ -647,7 +647,8 @@ def main(folder_path):
     data = [list(i) for i in zip(*power_breakdown)]
     data = np.array(data, dtype=np.float64)
 
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/benchPower.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -659,8 +660,8 @@ def main(folder_path):
         width=0.8,
         colors=colors,
         legendloc='upper center',
-        legendncol=4,
-        xticklabelfontsize=16,
+        legendncol=3,
+        xticklabelfontsize=22,
         xticklabelrotation=90)
     ax.set_ylabel('Normalized Power Breakdown')
     ax.yaxis.grid(True, linestyle='--')
@@ -668,15 +669,16 @@ def main(folder_path):
         hdls,
         entry_names,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.2),
         ncol=4,
         frameon=False,
-        handletextpad=0.1)
+        handletextpad=0.5,
+        columnspacing=1.0)
     fmt.resize_ax_box(ax, hratio=0.8)
 
     ly = len(benchmarks)
     scale = 1. / ly
-    ypos = -0.4
+    ypos = -0.5
     for pos in xrange(ly + 1):
         lxpos = (pos + 0.5) * scale
         if pos < ly:
@@ -687,13 +689,15 @@ def main(folder_path):
                 ha='center',
                 transform=ax.transAxes)
         add_line(ax, pos * scale, ypos)
+    #pdf.plot_teardown(pdfpage, fig)
     fig.savefig(folder_path + '/results/benchPower.pdf', bbox_inches='tight')
 
     # energy breakdown
     data = [list(i) for i in zip(*energy_breakdown)]
     data = np.array(data, dtype=np.float64)
 
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/benchEnergy.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -706,7 +710,7 @@ def main(folder_path):
         colors=colors,
         legendloc='upper center',
         legendncol=4,
-        xticklabelfontsize=16,
+        xticklabelfontsize=22,
         xticklabelrotation=90)
     ax.set_ylabel('Normalized Energy Breakdown')
     ax.yaxis.grid(True, linestyle='--')
@@ -714,15 +718,16 @@ def main(folder_path):
         hdls,
         entry_names,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
-        ncol=4,
+        bbox_to_anchor=(0.5, 1.2),
+        ncol=3,
         frameon=False,
-        handletextpad=0.1)
+        handletextpad=0.5,
+        columnspacing=1.0)
     fmt.resize_ax_box(ax, hratio=0.8)
 
     ly = len(benchmarks)
     scale = 1. / ly
-    ypos = -0.4
+    ypos = -0.5
     for pos in xrange(ly + 1):
         lxpos = (pos + 0.5) * scale
         if pos < ly:
@@ -733,12 +738,15 @@ def main(folder_path):
                 ha='center',
                 transform=ax.transAxes)
         add_line(ax, pos * scale, ypos)
-    fig.savefig(folder_path + '/results/benchEnergy.pdf', bbox_inches='tight')
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/benchEnergy.pdf', bbox_inches='tight')
 
+    '''
     # energy-delay product
     data = [list(i) for i in zip(*norm_edp)]
     data = np.array(data, dtype=np.float64)
-    fig = plt.figure(figsize=(8, 5.5))
+    figname = folder_path + '/results/benchEDP.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=18)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -758,16 +766,19 @@ def main(folder_path):
         schemes,
         loc='upper center',
         bbox_to_anchor=(0.5, 1.18),
-        ncol=6,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.3)
-    fig.savefig(folder_path + '/results/benchEDP.pdf', bbox_inches='tight')
+        ncol=3,
+        frameon=False)#,
+        #handletextpad=0.1,
+        #columnspacing=0.3)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/benchEDP.pdf', bbox_inches='tight')
+    '''
 
     # energy-delay product (log)
     logschemes = ['ART-tid', 'ART-addr']
     data = [list(i) for i in zip(*log_norm_edp)]
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/benchLogEDP.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -777,22 +788,23 @@ def main(folder_path):
         colors=colors[1:],
         breakdown=False,
         legendloc='upper center',
-        legendncol=6)
+        legendncol=2)
     fig.autofmt_xdate()
     ax.yaxis.grid(True, linestyle='--')
     ax.locator_params(nbins=10, axis='y')
     #ax.set_ylim([0, 1.2])
-    ax.set_ylabel('Normalized Energy-Delay Product (log)')
+    ax.set_ylabel('Normalized EDP (log)')
     ax.legend(
         hdls,
         logschemes,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
-        ncol=6,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.3)
-    fig.savefig(folder_path + '/results/benchLogEDP.pdf', bbox_inches='tight')
+        bbox_to_anchor=(0.5, 1.2),
+        ncol=2,
+        frameon=False)#,
+        #handletextpad=0.1,
+        #columnspacing=0.3)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/benchLogEDP.pdf', bbox_inches='tight')
 
     # - microbenchmark
     xticks = []
@@ -807,7 +819,8 @@ def main(folder_path):
     data = [list(i) for i in zip(*micro_power_breakdown)]
     data = np.array(data, dtype=np.float64)
 
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/microPower.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -820,7 +833,7 @@ def main(folder_path):
         colors=colors,
         legendloc='upper center',
         legendncol=3,
-        xticklabelfontsize=16,
+        xticklabelfontsize=22,
         xticklabelrotation=90)
     ax.set_ylabel('Normalized Power Breakdown')
     ax.yaxis.grid(True, linestyle='--')
@@ -828,15 +841,16 @@ def main(folder_path):
         hdls,
         entry_names,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.2),
         ncol=3,
         frameon=False,
-        handletextpad=0.1)
+        handletextpad=0.5,
+        columnspacing=1.0)
     fmt.resize_ax_box(ax, hratio=0.8)
 
     ly = len(microbenches)
     scale = 1. / ly
-    ypos = -0.4
+    ypos = -0.5
     for pos in xrange(ly + 1):
         lxpos = (pos + 0.5) * scale
         if pos < ly:
@@ -847,13 +861,15 @@ def main(folder_path):
                 ha='center',
                 transform=ax.transAxes)
         add_line(ax, pos * scale, ypos)
-    fig.savefig(folder_path + '/results/microPower.pdf', bbox_inches='tight')
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/microPower.pdf', bbox_inches='tight')
 
     # energy breakdown
     data = [list(i) for i in zip(*micro_energy_breakdown)]
     data = np.array(data, dtype=np.float64)
 
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/microEnergy.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -866,7 +882,7 @@ def main(folder_path):
         colors=colors,
         legendloc='upper center',
         legendncol=3,
-        xticklabelfontsize=16,
+        xticklabelfontsize=22,
         xticklabelrotation=90)
     ax.set_ylabel('Normalized Energy Breakdown')
     ax.yaxis.grid(True, linestyle='--')
@@ -874,15 +890,16 @@ def main(folder_path):
         hdls,
         entry_names,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.2),
         ncol=3,
         frameon=False,
-        handletextpad=0.1)
+        handletextpad=0.5,
+        columnspacing=1.0)
     fmt.resize_ax_box(ax, hratio=0.8)
 
     ly = len(microbenches)
     scale = 1. / ly
-    ypos = -0.4
+    ypos = -0.5
     for pos in xrange(ly + 1):
         lxpos = (pos + 0.5) * scale
         if pos < ly:
@@ -893,12 +910,15 @@ def main(folder_path):
                 ha='center',
                 transform=ax.transAxes)
         add_line(ax, pos * scale, ypos)
-    fig.savefig(folder_path + '/results/microEnergy.pdf', bbox_inches='tight')
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/microEnergy.pdf', bbox_inches='tight')
 
+    '''
     # energy-delay product
     data = [list(i) for i in zip(*norm_micro_edp)]
     data = np.array(data, dtype=np.float64)
-    fig = plt.figure(figsize=(8, 5.5))
+    figname = folder_path + '/results/microEDP.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=18)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -908,7 +928,7 @@ def main(folder_path):
         colors=colors,
         breakdown=False,
         legendloc='upper center',
-        legendncol=5)
+        legendncol=3)
     fig.autofmt_xdate()
     ax.yaxis.grid(True, linestyle='--')
     ax.set_ylim([0, 1.2])
@@ -918,16 +938,19 @@ def main(folder_path):
         schemes,
         loc='upper center',
         bbox_to_anchor=(0.5, 1.18),
-        ncol=6,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.3)
-    fig.savefig(folder_path + '/results/microEDP.pdf', bbox_inches='tight')
+        ncol=3,
+        frameon=False)#,
+        #handletextpad=0.1,
+        #columnspacing=0.3)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/microEDP.pdf', bbox_inches='tight')
+    '''
 
     # energy-delay product (log)
     data = [list(i) for i in zip(*log_norm_micro_edp)]
     data = np.array(data, dtype=np.float64)
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/microLogEDP.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -937,21 +960,22 @@ def main(folder_path):
         colors=colors[1:],
         breakdown=False,
         legendloc='upper center',
-        legendncol=5)
+        legendncol=2)
     fig.autofmt_xdate()
     ax.yaxis.grid(True, linestyle='--')
     #ax.set_ylim([0, 1.2])
-    ax.set_ylabel('Normalized Energy-Delay Product (log)')
+    ax.set_ylabel('Normalized EDP (log)')
     ax.legend(
         hdls,
         logschemes,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
-        ncol=6,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.3)
-    fig.savefig(folder_path + '/results/microLogEDP.pdf', bbox_inches='tight')
+        bbox_to_anchor=(0.5, 1.2),
+        ncol=2,
+        frameon=False)#,
+        #handletextpad=0.1,
+        #columnspacing=0.3)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/microLogEDP.pdf', bbox_inches='tight')
 
     plt.show()
 

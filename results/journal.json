@@ -1,0 +1,45 @@
+{
+  "Instruction-Offloading-CLP": {
+    "sgemm": {
+      "PEI": 117682,
+      "ART-tid": 20606,
+      "ART-addr": 20832
+    },
+    "reduce": {
+      "PEI": 6842304,
+      "ART-tid": 268881,
+      "ART-addr": 129549
+    },
+    "mac": {
+      "PEI": 2115379,
+      "ART-tid": 449903,
+      "ART-addr": 338081
+    }
+  },
+  "Instruction-Offloading-VLP": {
+    "sgemm": {
+      "ART-tid": 20779,
+      "ART-addr": 21068
+    },
+    "reduce": {
+      "ART-tid": 269463,
+      "ART-addr": 130501
+    },
+    "mac": {
+      "ART-tid": 454602,
+      "ART-addr": 360983
+    }
+  },
+  "Page-Offloading-CLP": {
+    "reduce": {
+      "ART-tid": 11536,
+      "ART-addr": 21881
+    }
+  },
+  "Page-Offloading-VLP": {
+    "reduce": {
+      "ART-tid": 6333,
+      "ART-addr": 9938
+    }
+  }
+}

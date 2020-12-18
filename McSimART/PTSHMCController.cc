@@ -301,7 +301,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
               mcsim->hmcs[i]->tran_buf.insert(make_pair(event_time, newTran));
             }
 #ifdef DEBUG_GATHER
-            cout << " hmc" << i << "(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : " ");
+            cout << " hmc" << i << "-(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : "");
 #endif
           }
         }

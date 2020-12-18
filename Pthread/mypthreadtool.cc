@@ -291,7 +291,7 @@ VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UpdateRR API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateRR API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
@@ -362,7 +362,7 @@ VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateRI API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
@@ -398,7 +398,7 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateII API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 // Jiayi, 01/29/2018
@@ -438,7 +438,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode 
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [Update API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthreads)
@@ -453,7 +453,7 @@ VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthr
       0, 0, 0, 0,
       0, 0, 0, 0);
   ngather++;
-  //fprintf(stderr, " [GATHER API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, nthreads, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [Gather API Pin: %p %p %p <%i> (tid: %lu)]\n", a, b, c, nthreads, pthreadsim->scheduler->current->first);
 }
 
 
