@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 
 
 def main(folder_path):
@@ -16,8 +17,8 @@ def main(folder_path):
     dfly_x = [0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3]
     dfly_y = [0, 1, 1, 0, 2, 3, 3, 2, 2, 3, 3, 2, 0, 1, 1, 0]
 
+    plt.rc('font', size=16, family='Times New Roman')
     plt.rc('legend', fontsize=14)
-    plt.rc('font', size=14)
     #plt.rc('figure', figsize=(6, 5))
 
     result_file = open('spmv_heatmap.csv', 'w')
@@ -79,14 +80,17 @@ def main(folder_path):
                     major_ticks = np.arange(0, 4, 1)
                     ax.set_xticks(major_ticks)
                     ax.set_yticks(major_ticks)
-                    ax.grid(True)
+                    ax.grid(True, linestyle='--')
                     ax.set_xticklabels([])
                     ax.set_yticklabels([])
                     if num == 1:
                         ax.set_title(
-                            'Compute point distribution\n', fontsize=14)
+                            'Compute point distribution\n', fontsize=16)
                     ax.set_ylabel(scheme + ' (' + bench + ')')
                     cb = fig.colorbar(im)
+                    tick_locator = ticker.MaxNLocator(nbins=1)
+                    cb.locator = tick_locator
+                    cb.ax.yaxis.set_tick_params(pad=15)
                     cb.formatter.set_powerlimits((0, 0))
                     cb.update_ticks()
                 if 'Number of operands' in line:
@@ -108,12 +112,15 @@ def main(folder_path):
                     major_ticks = np.arange(0, 4, 1)
                     ax.set_xticks(major_ticks)
                     ax.set_yticks(major_ticks)
-                    ax.grid(True)
+                    ax.grid(True, linestyle='--')
                     ax.set_xticklabels([])
                     ax.set_yticklabels([])
                     if num == 2:
-                        ax.set_title('Operand distribution\n', fontsize=14)
+                        ax.set_title('Operand distribution\n', fontsize=16)
                     cb = fig.colorbar(im)
+                    tick_locator = ticker.MaxNLocator(nbins=1)
+                    cb.locator = tick_locator
+                    cb.ax.yaxis.set_tick_params(pad=15)
                     cb.formatter.set_powerlimits((0, 0))
                     cb.update_ticks()
 

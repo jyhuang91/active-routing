@@ -5,7 +5,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-from easypyplot import barchart, color
+from easypyplot import barchart, color, pdf
 from easypyplot import format as fmt
 
 if len(sys.argv) < 3:
@@ -161,39 +161,40 @@ result_file.close()
 
 f_font = {
     #'weight' : 'bold',
-    'size': 18
+    'size': 24,
+    'family': 'Times New Roman'
 }
 f_axes = {
     #'titleweight': 'bold',
-    'titlesize': 18,
-    'labelsize': 18,
+    'titlesize': 30,
+    'labelsize': 30,
     #'labelweight':'bold'
 }
 f_xtick = {
-    'labelsize': 18,
+    'labelsize': 30,
 }
 f_ytick = {
-    'labelsize': 18,
+    'labelsize': 30,
 }
 f_legend = {
-    'fontsize': 18,  #22,
+    'fontsize': 30,  #22,
 }
-f_figure = {
-    'titlesize': 18,
-    #'titleweight' : 'bold'
-}
+#f_figure = {
+#    'titlesize': 18,
+#    #'titleweight' : 'bold'
+#}
 plt.rc('font', **f_font)  # controls default text sizes
 plt.rc('axes', **f_axes)  # fontsize of the axes title
 plt.rc('xtick', **f_xtick)  # fontsize of the tick labels
 plt.rc('ytick', **f_ytick)  # fontsize of the tick labels
 plt.rc('legend', **f_legend)  # legend fontsize
-plt.rc('figure', **f_figure)  # fontsize of the figure title
+#plt.rc('figure', **f_figure)  # fontsize of the figure title
 
 #plt.rc('legend', fontsize=20)
 #plt.rc('font', size=20)
 
-fig = plt.figure(figsize=(13, 6.6))
-fig.tight_layout()
+fig = plt.figure(figsize=(13, 8))
+#fig.tight_layout()
 #fig.set_size_inches(18.5, 10.5, forward=True)
 plt.subplots_adjust(wspace=0.26, left=0.16, right=0.97, top=0.95)
 
@@ -227,10 +228,14 @@ for i, logfile in enumerate(logfiles):
 
     lines.append(line)
 
-ax0.yaxis.grid(True)
-ax0.set_ylabel('Cycles', fontsize=24)
-ax0.set_xlabel('Phases', fontsize=24)
-ax0.legend(loc='upper left', fontsize=20)
+ax0.yaxis.grid(True, linestyle='--')
+#ax0.set_ylabel('Cycles', fontsize=24)
+#ax0.set_xlabel('Phases', fontsize=24)
+#ax0.legend(loc='upper left', fontsize=20)
+ax0.set_ylabel('Cycles', fontsize=30)
+ax0.set_xlabel('Phases', fontsize=30)
+ax0.xaxis.set_tick_params(pad=5)
+ax0.legend(loc='upper left', fontsize=30)
 
 #ax = plt.axes([.12,.93,.78,.05], frameon=True)
 #plt.xticks([]), plt.yticks([])
@@ -238,10 +243,12 @@ ax0.legend(loc='upper left', fontsize=20)
 
 #====
 
-plt.text(41, 900000, r'First Phase', fontsize=20)
+#plt.text(41, 900000, r'First Phase', fontsize=20)
+plt.text(21, 850000, r'First Phase', fontsize=28)
 plt.arrow(
-    41, 900000, 0, -200000, head_width=1.5, head_length=30000, fc='k', ec='k')
-plt.text(42, 30000, r'Second Phase', fontsize=20)
+    41, 850000, 0, -150000, head_width=1.5, head_length=30000, fc='k', ec='k')
+#plt.text(42, 30000, r'Second Phase', fontsize=20)
+plt.text(42, 30000, r'Second Phase', fontsize=28)
 plt.arrow(
     42, 70000, 0, 90000, head_width=1.5, head_length=30000, fc='k', ec='k')
 
@@ -259,14 +266,18 @@ hdls = barchart.draw(
     colors=colors,
     breakdown=False,
     legendloc='upper center',
-    xticklabelrotation=10)
+    xticklabelrotation=10,
+    xticklabelfontsize=30)
 ax1.yaxis.grid(True, linestyle='--')
-ax1.set_ylabel('Speedup', fontsize=24)
+#ax1.set_ylabel('Speedup', fontsize=24)
+ax1.set_ylabel('Speedup', fontsize=30)
 
 f = ''
 for logf in logfiles:
     tmp = os.path.basename(logf)
     tmp = os.path.splitext(tmp)[0]
     f = f + os.path.basename(tmp)
+fmt.resize_ax_box(ax0, hratio=0.8)
+fmt.resize_ax_box(ax1, hratio=0.8)
 plt.savefig('hpcaLudPhase.pdf', format='pdf')
 plt.show()

@@ -5,7 +5,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 from scipy import stats
-from easypyplot import barchart, color
+from easypyplot import barchart, color, pdf
 from easypyplot import format as fmt
 
 
@@ -30,7 +30,9 @@ def main(folder_path):
     xlabels = ['backprop', 'lud', 'pagerank', 'sgemm', 'spmv', 'gmean']
     microbenches = ['reduce', 'rand_reduce', 'mac', 'rand_mac']
     microxlabels = ['reduce', 'rand_reduce', 'mac', 'rand_mac']
-    entry_names = ['norm_req', 'active_req', 'norm_resp', 'active_resp']
+    #entry_names = ['norm_req', 'active_req', 'norm_resp', 'active_resp']
+    entry_names = ['norm-req', 'active-req', 'norm-resp', 'active-resp']
+    entry_names = ['normal request', 'active request', 'normal response', 'active response']
     eff_entry_names = ['request', 'response']
     group_names = []
     micro_group_names = []
@@ -266,8 +268,8 @@ def main(folder_path):
 
     # plot setting
     colors = ['#f0f9e8', '#bae4bc', '#7bccc4', '#2b8cbe']
-    plt.rc('legend', fontsize=18)
-    plt.rc('font', size=18)
+    plt.rc('legend', fontsize=24)
+    plt.rc('font', size=24)
 
     # benchmark  bandwidth
     xticks = []
@@ -278,7 +280,8 @@ def main(folder_path):
     data = np.array(data, dtype=np.float64)
 
     #fig = plt.figure(figsize=(6.4, 4))
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/benchBW.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -291,7 +294,7 @@ def main(folder_path):
         colors=colors,
         legendloc='upper center',
         legendncol=4,
-        xticklabelfontsize=16,
+        xticklabelfontsize=22,
         xticklabelrotation=90,
         log=False)
     #fig.autofmt_xdate()
@@ -303,16 +306,17 @@ def main(folder_path):
         hdls,
         entry_names,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
-        ncol=4,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.3)
+        #bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.35),
+        ncol=2,
+        frameon=False)#,
+        #handletextpad=0.1,
+        #columnspacing=0.3)
     fmt.resize_ax_box(ax, hratio=0.8)
 
     ly = len(benchmarks)
     scale = 1. / ly
-    ypos = -.4
+    ypos = -.5
     pos = 0
     for pos in xrange(ly + 1):
         lxpos = (pos + 0.5) * scale
@@ -320,6 +324,7 @@ def main(folder_path):
             ax.text(
                 lxpos, ypos, xlabels[pos], ha='center', transform=ax.transAxes)
         add_line(ax, pos * scale, ypos)
+    #pdf.plot_teardown(pdfpage, fig)
     fig.savefig(folder_path + '/results/benchBW.pdf', bbox_inches='tight')
 
     # microbenchmark  bandwidth
@@ -331,7 +336,8 @@ def main(folder_path):
     data = np.array(data, dtype=np.float64)
 
     #fig = plt.figure(figsize=(6.4, 4))
-    fig = plt.figure(figsize=(8.7, 5.5))
+    figname = folder_path + '/results/microBW.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8.7, 5.5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -344,7 +350,7 @@ def main(folder_path):
         colors=colors,
         legendloc='upper center',
         legendncol=4,
-        xticklabelfontsize=16,
+        xticklabelfontsize=22,
         xticklabelrotation=90,
         log=False)
     #fig.autofmt_xdate()
@@ -356,16 +362,16 @@ def main(folder_path):
         hdls,
         entry_names,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
-        ncol=4,
-        frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.3)
+        bbox_to_anchor=(0.5, 1.35),
+        ncol=2,
+        frameon=False)#,
+        #handletextpad=0.1,
+        #columnspacing=0.3)
     fmt.resize_ax_box(ax, hratio=0.8)
 
     ly = len(microbenches)
     scale = 1. / ly
-    ypos = -.4
+    ypos = -.5
     pos = 0
     for pos in xrange(ly + 1):
         lxpos = (pos + 0.5) * scale
@@ -373,6 +379,7 @@ def main(folder_path):
             ax.text(
                 lxpos, ypos, xlabels[pos], ha='center', transform=ax.transAxes)
         add_line(ax, pos * scale, ypos)
+    #pdf.plot_teardown(pdfpage, fig)
     fig.savefig(folder_path + '/results/microBW.pdf', bbox_inches='tight')
 
     plt.show()

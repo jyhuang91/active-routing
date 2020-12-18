@@ -131,7 +131,7 @@ int main(int argc, char * argv[])
   char * ld_library_path = getenv("LD_LIBRARY_PATH");
   pin_name           = (pin_ptr == NULL) ? "pinbin" : pin_ptr;
   pintool_name       = (pintool_ptr == NULL) ? "mypthreadtool" : pintool_ptr;
-  
+
 //  ld_library_path_full = string("LD_LIBRARY_PATH=")+ld_library_path;
 
   struct sockaddr_in their_addr;
@@ -185,7 +185,7 @@ int main(int argc, char * argv[])
 #endif
       }
     }
-    
+
     //programs[idx].directory = string("PATH=")+programs[idx].directory+":"+string(getenv("PATH"));
     programs[idx].tid_to_htid = offset;
     for (int32_t j = 0; j < programs[idx].num_threads; j++)
@@ -283,7 +283,7 @@ int main(int argc, char * argv[])
       else
       {
           envp[1] = (char *)(ld_library_path_full.c_str());
-//    	  envp[1] = (char *)(string("LD_LIBRARY_PATH=")+string(ld_library_path)).c_str();
+//      envp[1] = (char *)(string("LD_LIBRARY_PATH=")+string(ld_library_path)).c_str();
 
       }
       //string ld_path = string("LD_LIBRARY_PATH=")+ld_library_path;
@@ -357,11 +357,11 @@ int main(int argc, char * argv[])
         execve(pin_name.c_str(), argp, envp);
       }
     }
-    else 
+    else
     {
       if (run_manually == false)
       {
-        cout << pID << " ";
+        cout << pID;
       }
       programs[i].pid = pID;
     }
@@ -376,7 +376,7 @@ int main(int argc, char * argv[])
     fin.open(remapfile.c_str());
     if (fin.good() == false)
     {
-      cout << "failed to open the remapfile " << remapfile << endl;
+      cout << " failed to open the remapfile " << remapfile << endl;
       exit(1);
     }
   }
@@ -421,7 +421,7 @@ int main(int argc, char * argv[])
       break;
     }
 
-    if (remap_interval > 0 && 
+    if (remap_interval > 0 &&
         pts_m->type == pts_resume_simulation &&
         pts->mcsim->num_fetched_instrs/remap_interval > old_total_instrs/remap_interval)
     {
@@ -454,14 +454,14 @@ int main(int argc, char * argv[])
       {
         if (old_mapping[i] == new_mapping[i]) continue;
         pts->mcsim->add_instruction(old_mapping[i], pts->get_curr_time(), 0, 0, 0, 0, 0, 0, 0,
-                                    false, false, true, true, false, 
+                                    false, false, true, true, false,
                                     0, 0, 0, 0, new_mapping[i], 0, 0, 0);
       }
       for (uint32_t i = 0; i < htid_to_pid.size(); i++)
       {
         if (old_mapping[i] == new_mapping[i]) continue;
         pts->mcsim->add_instruction(new_mapping[i], pts->get_curr_time(), 0, 0, 0, 0, 0, 0, 0,
-                                    false, false, true, true, true, 
+                                    false, false, true, true, true,
                                     0, 0, 0, 0, old_mapping[i], 0, 0, 0);
       }
       //cout << " NEW mapping ";

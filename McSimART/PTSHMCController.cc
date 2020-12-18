@@ -1,6 +1,6 @@
 #include"PTSHMCController.h"
-#include "PTSCache.h" 
-#include "PTSRBoL.h" 
+#include "PTSCache.h"
+#include "PTSRBoL.h"
 #include "PTSXbar.h"
 #include <assert.h>
 #include <iomanip>
@@ -126,7 +126,7 @@ PTSHMCController::~PTSHMCController()
 
 void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lqele, Component * from)
 {
-  
+
   if (event_time % process_interval != 0)
   {
     event_time += process_interval - event_time % process_interval;
@@ -300,7 +300,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
               mcsim->hmcs[i]->tran_buf.insert(make_pair(event_time, newTran));
             }
 #ifdef DEBUG_GATHER
-            cout << " hmc" << i << "(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : " ");
+            cout << " hmc" << i << "-(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : "");
 #endif
           }
         }
@@ -347,7 +347,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       break;
 
   }
- 
+
   uint64_t req_id = -1;
   if (lqele->type != et_art_get)
   {
@@ -568,7 +568,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
 
   vector<pair<uint64_t, PacketCommandType> > &served_trans = hmc_net->get_serv_trans(net_num);
   bool have_trans = !served_trans.empty();
-  
+
   if (have_trans)
   {
     bool is_active = false;
@@ -699,7 +699,7 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           assert(0);
       }
     }
-    break; //as of now process only one in one cycle 
+    break; //as of now process only one in one cycle
   }
 
   update_hmc(1);
@@ -795,7 +795,7 @@ int PTSHMCController::hmc_transaction_type(LocalQueueElement * lqe){
 
     case et_art_dot:
       return ART_DOT; // Jiayi, type 6 is ACTIVE_PEI
-    
+
     case et_pei_dot:
       return PEI_DOT;
 

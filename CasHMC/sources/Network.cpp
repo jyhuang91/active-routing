@@ -2,11 +2,11 @@
 
 using namespace std;
 
-extern long numSimCycles;				//The number of CPU cycles to be simulated
-extern string traceType;				//Trace type ('random' or 'file')
-extern double memUtil;					//Frequency of requests - 0.0 = no requests, 1.0 = as fast as possible
-extern double rwRatio;					//(%) The percentage of reads in request stream
-extern string traceFileName;			//Trace file name
+extern long numSimCycles;     //The number of CPU cycles to be simulated
+extern string traceType;      //Trace type ('random' or 'file')
+extern double memUtil;        //Frequency of requests - 0.0 = no requests, 1.0 = as fast as possible
+extern double rwRatio;        //(%) The percentage of reads in request stream
+extern string traceFileName;  //Trace file name
 
 int gDim = -1;
 double gCpuClkPeriod = 0;
@@ -37,7 +37,7 @@ namespace CasHMC
     computeFinishCycle = 0;
 
     //Check CPU clock cycle and link speed
-    if(gCpuClkPeriod < linkPeriod) {	//Check CPU clock cycle and link speed
+    if(gCpuClkPeriod < linkPeriod) {  //Check CPU clock cycle and link speed
       ERROR(" == Error - WRONG CPU clock cycle or link speed (gCpuClkPeriod should be bigger than (1/LINK_SPEED))");
       ERROR(" == Error - gCpuClkPeriod : "<<gCpuClkPeriod<<"  1/LINK_SPEED : "<<linkPeriod);
       exit(0);
@@ -61,7 +61,7 @@ namespace CasHMC
     cout<<"*            Date : "<<t.tm_year + 1900<<"/"<<setw(2)<<setfill('0')<<t.tm_mon+1<<"/"<<setw(2)<<setfill('0')<<t.tm_mday
       <<"      Time : "<<setw(2)<<setfill('0')<<t.tm_hour<<":"<<setw(2)<<setfill('0')<<t.tm_min<<":"<<setw(2)<<setfill('0')<<t.tm_sec
       <<"            *"<<endl;
-#ifndef DEBUG_LOG		
+#ifndef DEBUG_LOG
     cout<<"*                                                              *"<<endl;
     cout<<"*  Module abbreviation info.                                   *"<<endl;
     cout<<"*  [HC]   : HMC Controller                                     *"<<endl;
@@ -72,9 +72,9 @@ namespace CasHMC
     cout<<"*  [VC_j] : jth Vault Controller                               *"<<endl;
     cout<<"*  [CQ_k] : k-bank Command Queue                               *"<<endl;
     cout<<"*  [DR_j] : jth DRAM                                           *"<<endl;
-#endif		
+#endif
     cout<<"****************************************************************"<<endl<<endl;
-    cout.setf(ios::left); 
+    cout.setf(ios::left);
     cout<<" = Log folder generating information"<<endl;
     if(status == 0) {
       cout<<"   Making result folder success (./result/)"<<endl;
@@ -97,13 +97,13 @@ namespace CasHMC
 
     unsigned int ver_num = 0;
     stringstream temp_vn;
-    while(1) { 
+    while(1) {
       logName += "_no";
       temp_vn << ver_num;
       logName += temp_vn.str();
       logName += "_setting.log";
 
-      if(access(logName.c_str(), 0) == -1)	break;
+      if(access(logName.c_str(), 0) == -1)  break;
       else {
         logName.erase(logName.find("_no"));
         temp_vn.str( string() );
@@ -113,7 +113,7 @@ namespace CasHMC
     }
     logName.erase(logName.find("_no"));
     cout.setf(ios::left);
-    cout<<endl<<"   === Simulation start === "<<endl;
+    cout<<endl<<"   === Simulation start ==="<<endl;
 
     if(BANDWIDTH_PLOT) {
       hmcTransmitSizeTemp = 0;
@@ -409,7 +409,7 @@ namespace CasHMC
 
     Alloc();
 
-    for (int i = 0; i < ncpus; ++i) { 
+    for (int i = 0; i < ncpus; ++i) {
       hmcConts[i]->downLinkMasters[0]->linkP = hmcCntLinks[i];
       hmcConts[i]->downLinkMasters[0]->localLinkSlave = hmcConts[i]->upLinkSlaves[0];
       hmcCntLinks[i]->linkMasterP = hmcConts[i]->downLinkMasters[0];
@@ -473,14 +473,14 @@ namespace CasHMC
     vector<vector<LinkMaster *> > LM_next;
     vector<vector<LinkSlave *> > LS_next;
     int n = nodes;
-    LM.resize(n); 
+    LM.resize(n);
     LS.resize(n);
     for(int i=0; i<n; i++){
       LS[i].resize(NUM_LINKS);
       LM[i].resize(NUM_LINKS);
       for(int l=0; l<NUM_LINKS; l++){
-        LM[i][l] = hmcs[i]->upLinkMasters[l]; 
-        LS[i][l] = hmcs[i]->downLinkSlaves[l]; 
+        LM[i][l] = hmcs[i]->upLinkMasters[l];
+        LS[i][l] = hmcs[i]->downLinkSlaves[l];
       }
     }
 
@@ -515,7 +515,7 @@ namespace CasHMC
       }
     }
 
-    for(int i=0; i<ncpus; ++i){ 
+    for(int i=0; i<ncpus; ++i){
       hmcConts[i]->downLinkMasters[0]->linkP->linkSlaveP = LS[0][i];
       LM[0][i]->linkP->linkSlaveP = hmcConts[i]->upLinkSlaves[0];
     }
@@ -610,7 +610,7 @@ namespace CasHMC
 
         // connect bottom LinkMaster to top LinkSlave
         if (y < dimension - 1) {
-          hmcs[pos]->upLinkMasters[BOT_LINK]->linkP->linkSlaveP = 
+          hmcs[pos]->upLinkMasters[BOT_LINK]->linkP->linkSlaveP =
             hmcs[pos + dimension]->downLinkSlaves[TOP_LINK];
         } else {
           hmcs[pos]->upLinkMasters[BOT_LINK]->linkP->linkSlaveP =
@@ -702,7 +702,7 @@ namespace CasHMC
     }
   }
 
-  //this function is called from McSim HMCController 
+  //this function is called from McSim HMCController
   uint64_t Network::get_tran_addr(Transaction *tran)
   {//pritam added
     switch (tran->transactionType) {
@@ -991,7 +991,7 @@ namespace CasHMC
     stringstream temp_vn;
     if(DEBUG_SIM) {
       string debName = logName + "_debug";
-      while(1) { 
+      while(1) {
         debName += "[";
         temp_vn << logNum;
         debName += temp_vn.str();
@@ -1014,7 +1014,7 @@ namespace CasHMC
       string staName = logName + "_state";
       if(!DEBUG_SIM) {
         stringstream temp_vn_st;
-        while(1) { 
+        while(1) {
           staName += "[";
           temp_vn_st << logNum;
           staName += temp_vn_st.str();
@@ -1284,7 +1284,7 @@ namespace CasHMC
     double vaultFullMean = (tranCount==0 ? 0 : (double)vaultFullSum/tranCount);
     double errorRetryMean = (errorCount==0 ? 0 : (double)errorRetrySum/errorCount);
 
-    for(int i=0; i<tranCount; i++) {		
+    for(int i=0; i<tranCount; i++) {
       tranFullMax = max(tranFullLat[i], tranFullMax);
       tranFullMin = min(tranFullLat[i], tranFullMin);
       tranStdSum += pow(tranFullLat[i]-tranFullMean, 2);
@@ -1391,7 +1391,7 @@ namespace CasHMC
       STATE("  └───── Total effec Bandwidth : "<<ALI(7)<<linkEffecBandwidth[i]<<" GB/s"<<endl);
     }
 
-    vector<uint64_t> epoch_stalls(nodes, 0); 
+    vector<uint64_t> epoch_stalls(nodes, 0);
     uint64_t tot_epoch_stalls = 0;
     STATEN("  Operand buffer stalls : ");
     for (int i = 0; i < nodes; i++) {
@@ -1506,7 +1506,7 @@ namespace CasHMC
     }
 
     resultOut.open(resName.c_str());
-    cout<<"\n   === Simulation finished  ( CPU clk:"<<currentClockCycle<<" ) ===   "<<endl;
+    cout<<"\n   === Simulation finished  ( CPU clk:"<<currentClockCycle<<" ) ==="<<endl;
     cout<<"  [ "<<resName<<" ] is generated"<<endl<<endl;
     //cout << "sim compute time: " << computeFinishCycle << endl;
 
