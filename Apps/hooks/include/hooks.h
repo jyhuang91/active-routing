@@ -49,6 +49,32 @@ typedef enum {
   DPEI_ATOMIC
 } eOpcode;
 
+const char * const OpcodeString[] = {
+  "GET",
+  "IADD",
+  "FADD",
+  "DADD",
+  "IMULT",
+  "FMULT",
+  "DMULT",
+  "IFMULT",
+  "IDMULT",
+  "FDMULT",
+  "DIDIV",
+  "DEXP",
+  // PEI
+  "IPEI_DOT",
+  "FPEI_DOT",
+  "DPEI_DOT",
+  "IFPEI_DOT",
+  "IDPEI_DOT",
+  "FDPEI_DOT",
+  "IPEI_ATOMIC",
+  "FPEI_ATOMIC",
+  "DPEI_ATOMIC"
+};
+
+
 #define CACHELINE_SIZE 64 // Bytes
 #define PEI_GRANULARITY 4 // elements
 #define PAGE_SIZE 4096    // Bytes

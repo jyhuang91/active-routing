@@ -9,18 +9,18 @@ extern int omp_num_threads;
 //{
 //     int i,j,k;
 //     float sum;
-//	 printf("num of threads = %d\n", omp_num_threads);
+//   printf("num of threads = %d\n", omp_num_threads);
 //     for (i=0; i <size; i++){
-//	 omp_set_num_threads(omp_num_threads);
+//   omp_set_num_threads(omp_num_threads);
 //#pragma omp parallel for default(none) \
-//         private(j,k,sum) shared(size,i,a) 
+//         private(j,k,sum) shared(size,i,a)
 //         for (j=i; j <size; j++){
 //             sum=a[i*size+j];
 //             for (k=0; k<i; k++) sum -= a[i*size+k]*a[k*size+j];
 //             a[i*size+j]=sum;
 //         }
 //#pragma omp parallel for default(none) \
-//         private(j,k,sum) shared(size,i,a) 
+//         private(j,k,sum) shared(size,i,a)
 //         for (j=i+1;j<size; j++){
 //             sum=a[j*size+i];
 //             for (k=0; k<i; k++) sum -=a[j*size+k]*a[k*size+i];
@@ -32,12 +32,12 @@ extern int omp_num_threads;
 //Pthread implmentation of the same function
 typedef struct
 {
-  int tid; 
+  int tid;
   int P;
-  int num_iter; 
-  int i; 
-  int size; 
-  float* shared_mat; 
+  int num_iter;
+  int i;
+  int size;
+  float* shared_mat;
   pthread_barrier_t* barrier;
   float fraction;
   int iteration;
@@ -50,19 +50,19 @@ void* do_work(void* args){
   volatile thread_arg_t* arg = (thread_arg_t*) args;
   int tid           =  arg->tid;
   int P             =  arg->P;
-//  int num_iter      = arg->num_iter; 
+//  int num_iter      = arg->num_iter;
 //  int i    = arg->i;
-  int size          = arg->size; 
-  float* shared_mat = arg->shared_mat; 
+  int size          = arg->size;
+  float* shared_mat = arg->shared_mat;
   int i;
-  double P_d = P; 
+  double P_d = P;
 
   int start = arg->fraction * size;
   int iteration = arg->iteration;
   for(i = start; i < start + iteration ;i++) {
-    //divide work amoung threads; 
+    //divide work amoung threads;
     float local_sum = 0;
-    
+
     int j,k;
     int stride = CACHELINE_SIZE / sizeof(float);
     int ri_start, ri_end;
@@ -97,9 +97,9 @@ void* do_work(void* args){
 
       shared_mat[i*size + j] = local_sum - shared_mat[i*size + j];       //No lock required since j is different for each thread
     }
-    
+
     pthread_barrier_wait(arg->barrier);
-    
+
     for(j=i+tid; j<size; j+=P){
       if(tid == 0 && j == i + tid) continue;
       local_sum = shared_mat[j*size + i];
@@ -114,7 +114,7 @@ void* do_work(void* args){
       if (end_address % CACHELINE_SIZE != 0)
         ri_end -= (end_address % CACHELINE_SIZE) / sizeof(float);
 
-      for (; k < ri_start; k++)
+      for (k = 0; k < ri_start; k++)
         UpdateII(&shared_mat[k*size + i], &shared_mat[j*size + k], &shared_mat[j*size + i], FMULT);
       for (; k < ri_end; k += stride) {
         //local_sum -= shared_mat[j*size + k]*shared_mat[k*size + i];
@@ -160,12 +160,12 @@ void lud_pthread(float *a, int size, float fraction, int iteration)
                      (void*)&thread_arg[j]);
     }
     do_work((void*) &thread_arg[0]);
-    
+
     for(j=1; j<num_threads; j++){
       pthread_join(thread_handle[j],NULL);
     }
     roi_end();
-/*  
+/*
        for (j=i; j <size; j++){
              sum=a[i*size+j];
              for (k=0; k<i; k++) sum -= a[i*size+k]*a[k*size+j];
@@ -178,5 +178,5 @@ void lud_pthread(float *a, int size, float fraction, int iteration)
          }
 *///do_work handles this
 //  }
- 
+
 }
