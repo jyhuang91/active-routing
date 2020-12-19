@@ -2,6 +2,31 @@
 
 #include <stdio.h>
 
+const char * const OpcodeString[] = {
+  "GET",
+  "IADD",
+  "FADD",
+  "DADD",
+  "IMULT",
+  "FMULT",
+  "DMULT",
+  "IFMULT",
+  "IDMULT",
+  "FDMULT",
+  "DIDIV",
+  "DEXP",
+  // PEI
+  "IPEI_DOT",
+  "FPEI_DOT",
+  "DPEI_DOT",
+  "IFPEI_DOT",
+  "IDPEI_DOT",
+  "FDPEI_DOT",
+  "IPEI_ATOMIC",
+  "FPEI_ATOMIC",
+  "DPEI_ATOMIC"
+};
+
 void roi_begin()
 {
   printf("[" HOOKS_STR "] ROI begin\n");
