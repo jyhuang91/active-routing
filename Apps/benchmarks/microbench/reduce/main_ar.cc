@@ -65,16 +65,30 @@ void *do_work(void *args)
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
-  for (v = i_start; v < rr_start; ++v)
+  for (v = i_start; v < rr_start; ++v) {
     UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
+    //uint64_t addr = (uint64_t) &W[v];
+    ////uint32_t base_num = ((addr >> 12) ^ (addr >> 18)) % 4;
+    //uint32_t cube = ((addr >> 32) ^ (addr >> 20)) % 4;
+    //printf("thread %d: II %p, page: %p, cube: %d\n", tid, &W[v], (void *) (addr >> 12), cube);
+  }
   for (v = rr_start; v < rr_stop; v += stride) {
     /*mcsim_skip_instrs_begin();
     local_sum += W[v];
     mcsim_skip_instrs_end();*/
     UpdateRR((void *) &W[v], 0, (void *) &sum, DADD);
+    //uint64_t addr = (uint64_t) &W[v];
+    ////uint32_t base_num = ((addr >> 12) ^ (addr >> 18)) % 4;
+    //uint32_t cube = ((addr >> 32) ^ (addr >> 20)) % 4;
+    //printf("thread %d: RR %p, page: %p, cube: %d\n", tid, &W[v], (void *) (addr >> 12), cube);
   }
-  for (; v < i_stop; ++v)
+  for (; v < i_stop; ++v) {
     UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
+    //uint64_t addr = (uint64_t) &W[v];
+    ////uint32_t base_num = ((addr >> 12) ^ (addr >> 18)) % 4;
+    //uint32_t cube = ((addr >> 32) ^ (addr >> 20)) % 4;
+    //printf("thread %d: RR %p, page: %p, cube: %d\n", tid, &W[v], (void *) (addr >> 12), cube);
+  }
   Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   printf("thread %d sends %d updates\n", tid, i_stop - i_start);
   pthread_barrier_wait(arg->barrier);

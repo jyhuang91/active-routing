@@ -65,17 +65,18 @@ void *do_work(void *args)
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
+  uint32_t lines = 0;
   if (i_start < rr_start) {
-    uint32_t lines = (rr_start - i_start) / CACHELINE_SIZE;
+    lines = (rr_start - i_start) / CACHELINE_SIZE;
     if (lines == 0) lines = 1;
     UpdatePage((void *) &W[i_start], lines, &sum, DADD);
   }
+  lines = PAGE_SIZE / CACHELINE_SIZE;
   for (v = rr_start; v < rr_stop; v += stride) {
-    uint32_t lines = PAGE_SIZE / CACHELINE_SIZE;
     UpdatePage((void *) &W[v], lines, (void *) &sum, DADD);
   }
   if (rr_stop < i_stop) {
-    uint32_t lines = (i_stop - rr_stop) / CACHELINE_SIZE;
+    lines = (i_stop - rr_stop) / CACHELINE_SIZE;
     if (lines == 0) lines = 1;
     UpdatePage((void *) &W[v], lines, (void *) &sum, DADD);
   }
@@ -103,7 +104,7 @@ int main(int args, char **argv)
   pthread_barrier_t barrier;
 
   double *W;
-  double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
+  double ret = posix_memalign((void **) &W, CACHELINE_SIZE, N * sizeof(double));
   if (ret != 0) {
     fprintf(stderr, "Could not allocate memory\n");
     exit(EXIT_FAILURE);
@@ -117,7 +118,7 @@ int main(int args, char **argv)
   sum = 0;
 
   // Synchronization parameters
-  pthread_barrier_init(&barrier, NULL, P); 
+  pthread_barrier_init(&barrier, NULL, P);
   pthread_mutex_init(&lock, NULL);
 
   // Thread arguments
@@ -158,7 +159,7 @@ int main(int args, char **argv)
 
   // Read clock and print time
   clock_gettime(CLOCK_REALTIME, &requestEnd);
-  double accum = ( requestEnd.tv_sec - requestStart.tv_sec ) + 
+  double accum = ( requestEnd.tv_sec - requestStart.tv_sec ) +
     ( requestEnd.tv_nsec - requestStart.tv_nsec ) / BILLION;
   printf( "\nTime:%lf seconds\n", accum );
 

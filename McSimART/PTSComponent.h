@@ -123,6 +123,7 @@ namespace PinPthread
     uint64_t   dest_addr;
     uint64_t   src_addr1;
     uint64_t   src_addr2;
+    uint32_t   lines;     // for page-grained offloading
     uint32_t   rlen;
     int32_t    nthreads;  // Jiayi, for gather barrier, 03/31/17
     LocalQueueElement *twin_lqe1;  // for art_mult, store the peer lqe address
@@ -133,7 +134,7 @@ namespace PinPthread
     LocalQueueElement(Component * comp, event_type type_, uint64_t address_)
       : from(), type(type_), address(address_), th_id(0), dummy(false), rob_entry(-1) { from.push(comp); }
     LocalQueueElement(Component * comp, event_type type_, uint64_t dest_addr_, uint64_t src_addr1_, uint64_t src_addr2_, uint32_t rlen_)
-      : from(), type(type_), address(0), th_id(0), dummy(false), rob_entry(-1), dest_addr(dest_addr_),
+      : from(), type(type_), address(0), th_id(0), dummy(false), rob_entry(-1), lines(0), dest_addr(dest_addr_),
       src_addr1(src_addr1_), src_addr2(src_addr2_), rlen(rlen_) { from.push(comp); }
 
     void display();
