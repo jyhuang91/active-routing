@@ -262,7 +262,7 @@ VOID UpdateRRPageAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, UI
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UpdatePage API Pin: %p %p %p %d <%s> (tid: %lu)]\n", a, b, c, lines, OpcodeString[opcode], pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateRRPage API Pin: %p %p %p %d <%s> (tid: %lu)]\n", a, b, c, lines, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
