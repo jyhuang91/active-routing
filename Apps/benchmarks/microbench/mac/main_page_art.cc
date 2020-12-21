@@ -68,10 +68,17 @@ void *do_work(void *args)
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
 
+  uint32_t lines = 0;
   if (i_start < rr_start) {
-    uint32_t lines = (rr_start - i_start) / CACHELINE_SIZE;
+    lines = (rr_start - i_start) / CACHELINE_SIZE;
     if (lines == 0) lines = 1;
-    UpdateRRPage((void *) &W[i_start], (void *) &X[i_start], (void *) sum, lines, DMULT);
+    UpdateRRPage((void *) &W[i_start], (void *) &X[i_start], (void *) &sum, lines, DMULT);
+    //uint64_t addr1 = (uint64_t) &W[i_start];
+    //uint32_t cube1 = ((addr1 >> 32) ^ (addr1 >> 20)) % 4;
+    //uint64_t addr2 = (uint64_t) &X[i_start];
+    //uint32_t cube2 = ((addr2 >> 32) ^ (addr2 >> 20)) % 4;
+    //fprintf(stderr, "thread %d: RRPage phase-I W (%p page %p cube %d) and X (%p page %p cube %d)\n",
+    //    tid, &W[i_start], (void *) (addr1 >> 12), cube1, &X[i_start], (void *) (addr2 >> 12), cube2);
   }
   lines = PAGE_SIZE / CACHELINE_SIZE;
   for (v = rr_start; v < rr_stop; v += stride) {
@@ -79,11 +86,23 @@ void *do_work(void *args)
     local_sum += W[v] * X[v];
     mcsim_skip_instrs_end();*/
     UpdateRRPage((void *) &W[v], (void *) &X[v], (void *) &sum, lines, DMULT);
+    //uint64_t addr1 = (uint64_t) &W[v];
+    //uint32_t cube1 = ((addr1 >> 32) ^ (addr1 >> 20)) % 4;
+    //uint64_t addr2 = (uint64_t) &X[v];
+    //uint32_t cube2 = ((addr2 >> 32) ^ (addr2 >> 20)) % 4;
+    //fprintf(stderr, "thread %d: RRPage phase-II W (%p page %p cube %d) and X (%p page %p cube %d)\n",
+    //    tid, &W[v], (void *) (addr1 >> 12), cube1, &X[v], (void *) (addr2 >> 12), cube2);
   }
   if (rr_stop < i_stop) {
     lines = (i_stop - rr_stop) / CACHELINE_SIZE;
     if (lines == 0) lines = 1;
-    UpdateRRPage((void *) &W[v], (void *) &X[v], (void *) &sum, lines, DADD);
+    UpdateRRPage((void *) &W[v], (void *) &X[v], (void *) &sum, lines, DMULT);
+    //uint64_t addr1 = (uint64_t) &W[v];
+    //uint32_t cube1 = ((addr1 >> 32) ^ (addr1 >> 20)) % 4;
+    //uint64_t addr2 = (uint64_t) &X[v];
+    //uint32_t cube2 = ((addr2 >> 32) ^ (addr2 >> 20)) % 4;
+    //fprintf(stderr, "thread %d: RRPage phase-III W (%p page %p cube %d) and X (%p page %p cube %d)\n",
+    //    tid, &W[v], (void *) (addr1 >> 12), cube1, &X[v], (void *) (addr2 >> 12), cube2);
   }
   Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   //printf("thread %d sends %d updates\n", tid, i_stop - i_start);
@@ -119,6 +138,8 @@ int main(int args, char **argv)
     fprintf(stderr, "Could not allocate memory for X\n");
     exit(EXIT_FAILURE);
   }
+
+  fprintf(stderr, "Allocated page aligned memory for W %p and X %p\n", W, X);
 
   sum = 0;
 

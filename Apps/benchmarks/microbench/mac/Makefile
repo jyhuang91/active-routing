@@ -1,5 +1,5 @@
 
-TRGS = mac naive_art_mac ar_mac pei_mac
+TRGS = mac naive_art_mac ar_mac page_art_mac pei_mac
 
 LIB_DEPEND = hooks
 
