@@ -110,6 +110,8 @@ namespace CasHMC
       int multPipeOccupancy;
       int numMultStages;
 
+      map<int, long long> hist;
+
       // Ram & Jiayi, 03/13/17
       unsigned cubeID;
       RoutingFunction *rf;

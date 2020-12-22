@@ -66,6 +66,8 @@ namespace CasHMC
       vector<vector<Link *> > hmcLinks;
       vector<HMC *> hmcs;
 
+      map<int, long long> hist;
+
       vector<Link *> allLinks;
 
       uint64_t currentClockCycle;

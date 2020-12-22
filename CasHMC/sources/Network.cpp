@@ -193,6 +193,14 @@ namespace CasHMC
     }
     hmcCntLinks.clear();
     for (int i = 0; i < hmcs.size(); ++i) {
+      // Compound all the histograms into the network histogram:
+      for (map<int, long long>::iterator iter = hmcs[i]->crossbarSwitch->hist.begin(); iter != hmcs[i]->crossbarSwitch->hist.end(); iter++) {
+        if (hist.find(iter->first) != hist.end()) {
+          hist[iter->first] += iter->second;
+        } else {
+          hist[iter->first] = iter->second;
+        }
+      }
       delete hmcs[i];
       for (int j = 0; j < hmcLinks[i].size(); ++j) {
         delete hmcLinks[i][j];
@@ -202,6 +210,11 @@ namespace CasHMC
     hmcs.clear();
     hmcLinks.clear();
     allLinks.clear();
+
+    cout << "Network Histogram" << endl;
+    for (map<int, long long>::iterator iter = hist.begin(); iter != hist.end(); iter++) {
+      cout << "Bin: " << iter->first << " freq: " << iter->second << endl;
+    }
 
     outstandRequests.clear();   // Jiayi, 02/07
 
