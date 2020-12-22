@@ -6,7 +6,7 @@ import re
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 from scipy import stats
-from easypyplot import barchart, color
+from easypyplot import pdf, barchart, color
 from easypyplot import format as fmt
 
 
@@ -137,13 +137,14 @@ def main(folder_path):
     result_file.close()
 
     colors = ['#f0f9e8', '#bae4bc', '#7bccc4', '#43a2ca', '#0868ac', '#0796ac']
-    plt.rc('legend', fontsize=18)
-    plt.rc('font', size=18)
+    plt.rc('legend', fontsize=24)
+    plt.rc('font', size=24)
 
     # benchmarks over HMC
     data = [list(i) for i in zip(*speedup)]
     data = np.array(data, dtype=np.float64)
-    fig = plt.figure(figsize=(8, 5))
+    figname = folder_path + '/results/artSpeedup.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5), fontsize=24)
     ax = fig.gca()
     hdls = barchart.draw(
         ax,
@@ -162,26 +163,28 @@ def main(folder_path):
         hdls,
         schemes,
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
+        bbox_to_anchor=(0.5, 1.25),
         ncol=4,
         frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.5)
-    #fmt.resize_ax_box(ax, hratio=0.8)
-    fig.savefig(folder_path + '/results/artSpeedup.pdf', bbox_inches='tight')
+        handletextpad=0.5,
+        columnspacing=1)
+    fmt.resize_ax_box(ax, hratio=0.8)
+    pdf.plot_teardown(pdfpage, fig)
+    #fig.savefig(folder_path + '/results/artSpeedup.pdf', bbox_inches='tight')
 
     # benchmarks over HMC (log)
     data = [list(i) for i in zip(*log_speedup)]
     data = np.array(data, dtype=np.float64)
     log_speedup = np.array(log_speedup, dtype=np.float64)
 
-    fig = plt.figure(figsize=(8, 5))
-    fig.subplots_adjust(left=0.17)
+    figname = folder_path + '/results/artLogSpeedup.pdf'
+    pdfpage, fig = pdf.plot_setup(figname, figsize=(8, 5.5), fontsize=20)
+    #fig.subplots_adjust(left=0.17)
     ax = fig.gca()
     ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
     ax.yaxis.grid(True, linestyle='--')
-    ax.set_ylabel('Normalized Runtime Speedup (log)\n')
+    ax.set_ylabel('Normalized Runtime Speedup (log)')
 
     hdls = barchart.draw(
         ax,
@@ -195,15 +198,16 @@ def main(folder_path):
 
     ax.legend(
         hdls,
-        schemes,
+        schemes[1:],
         loc='upper center',
-        bbox_to_anchor=(0.5, 1.18),
-        ncol=4,
+        bbox_to_anchor=(0.5, 1.23),
+        ncol=3,
         frameon=False,
-        handletextpad=0.1,
-        columnspacing=0.5)
+        handletextpad=0.5,
+        columnspacing=1)
     fig.autofmt_xdate()
-    #fmt.resize_ax_box(ax, hratio=0.8)
+    fmt.resize_ax_box(ax, hratio=0.8)
+    #pdf.plot_teardown(pdfpage, fig)
     fig.savefig(
         folder_path + '/results/artLogSpeedup.pdf', bbox_inches='tight')
 

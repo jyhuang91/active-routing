@@ -18,7 +18,8 @@ namespace CasHMC
   // Ram & Jiayi, 03/13/17
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_,unsigned id_, RoutingFunction *rf_ = NULL):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF), cubeID(id_), rf(rf_),
-    operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0)
+    operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0),
+    numMultStages(5), multPipeOccupancy(0)
   {
     classID << cubeID;
     header = "        (CS";
@@ -33,7 +34,7 @@ namespace CasHMC
 
     // Jiayi, 03/15/17
     neighborCubeID = vector<int>(NUM_LINKS, -1);
-    operandBuffers.resize(operandBufSize, OperandEntry());
+    operandBuffers.resize(operandBufSize, OperandEntry(numMultStages));
     for (int i = 0; i < operandBufSize; i++) {
       freeOperandBufIDs.push_back(i);
     }
@@ -46,7 +47,7 @@ namespace CasHMC
       inputBuffers[l]->xbar = this;
     }
   }
-  
+
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF),
     opbufStalls(0), numUpdates(0), numOperands(0)
@@ -65,7 +66,7 @@ namespace CasHMC
 	
     downBufferDest.clear();
     upBufferDest.clear();
-    pendingSegTag.clear(); 
+    pendingSegTag.clear();
     pendingSegPacket.clear();
 
     flowTable.clear();
@@ -124,7 +125,7 @@ namespace CasHMC
               if(curUpBuffers[i]->TAG == pendingSegTag[j]) {
                 pendingSegTag.erase(pendingSegTag.begin()+j);
                 foundSeg = true;
-                //Check whether curUpBuffers[i] packet is the last segment packet or not 
+                //Check whether curUpBuffers[i] packet is the last segment packet or not
                 for(int k=j; k<pendingSegTag.size(); k++) {
                   if(curUpBuffers[i]->TAG == pendingSegTag[k]) {
                     DEBUG(ALI(18)<<header<<ALI(15)<<*curUpBuffers[i]<<"Up)   Segment packet is WAITING for the others");
@@ -147,8 +148,8 @@ namespace CasHMC
             foundSeg = false;
             for(int j=0; j<pendingSegPacket.size(); j++) {
               if(curUpBuffers[i]->TAG == pendingSegPacket[j]->TAG) {
-                if(curUpBuffers[i]->LNG > 1)	pendingSegPacket[j]->LNG += ADDRESS_MAPPING/16;
-                if(curUpBuffers[i]->trace != NULL)	pendingSegPacket[j]->trace = curUpBuffers[i]->trace;
+                if(curUpBuffers[i]->LNG > 1)  pendingSegPacket[j]->LNG += ADDRESS_MAPPING/16;
+                if(curUpBuffers[i]->trace != NULL)  pendingSegPacket[j]->trace = curUpBuffers[i]->trace;
                 //Delete a segment packet
                 int packetLNG = curUpBuffers[i]->LNG;
                 delete curUpBuffers[i];
@@ -161,7 +162,7 @@ namespace CasHMC
                   pendingSegPacket.erase(pendingSegPacket.begin()+j);
                   combPacket->segment = false;
                   curUpBuffers.insert(curUpBuffers.begin(), combPacket);
-                  for(int k=1; k<combPacket->LNG; k++) {	//Virtual tail packet
+                  for(int k=1; k<combPacket->LNG; k++) {  //Virtual tail packet
                     curUpBuffers.insert(curUpBuffers.begin()+1, NULL);
                   }
                 }
@@ -293,13 +294,13 @@ namespace CasHMC
                 //the packet is divided into segment packets.
                 Packet *tempPacket = curDownBuffers[i];
                 curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
-                if(tempPacket->LNG > 1)	tempPacket->LNG = 1 + ADDRESS_MAPPING/16;	//one flit is 16 bytes
+                if(tempPacket->LNG > 1) tempPacket->LNG = 1 + ADDRESS_MAPPING/16; //one flit is 16 bytes
                 for(int j=0; j<segPacket; j++) {
                   Packet *vaultPacket = new Packet(*tempPacket);
                   vaultPacket->ADRS += j*ADDRESS_MAPPING;
-                  if(j>1)	vaultPacket->trace = NULL;
+                  if(j>1) vaultPacket->trace = NULL;
                   curDownBuffers.insert(curDownBuffers.begin()+i, vaultPacket);
-                  for(int k=1; k<vaultPacket->LNG; k++) {		//Virtual tail packet
+                  for(int k=1; k<vaultPacket->LNG; k++) {   //Virtual tail packet
                     curDownBuffers.insert(curDownBuffers.begin()+i+1, NULL);
                   }
                   i += vaultPacket->LNG;
@@ -550,7 +551,7 @@ namespace CasHMC
                   i--;
                 }
                 else {
-                  //DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) Vault controller buffer FULL");	
+                  //DEBUG(ALI(18)<<header<<ALI(15)<<*curDownBuffers[i]<<"Down) Vault controller buffer FULL");
                 }
               }
             } else {  // not destined for this cube
@@ -786,12 +787,34 @@ namespace CasHMC
 
     // Active-Routing processing
     // 1) consume available operands and free operand buffer
+    bool startedMult = false;
     for (int i = 0; i < operandBuffers.size(); i++) {
       OperandEntry &operandEntry = operandBuffers[i];
       if (operandEntry.ready) {
         FlowID flowID = operandEntry.flowID;
         assert(flowTable.find(flowID) != flowTable.end());
         FlowEntry &flowEntry = flowTable[flowID];
+        //cout << CYCLE() << "cubeID " << cubeID << " Current Occupancy: " << multPipeOccupancy << endl;
+        if (flowEntry.opcode == MAC) {
+          if (operandEntry.multStageCounter == numMultStages) {
+            if (!startedMult && multPipeOccupancy < numMultStages) {
+              //cout << CYCLE() << "cubeID " << cubeID << " Starting operand (incrementing counter)..." << endl;
+              startedMult = true;
+              multPipeOccupancy++;
+              operandEntry.multStageCounter--;
+            }
+            // Otherwise wait to start until pipeline is not full
+            continue; // don't free the buffer
+          } else {
+            //cout << CYCLE() << "cubeID " << cubeID << " Moving operand in stage " << (int) operandEntry.multStageCounter << endl;
+            operandEntry.multStageCounter--;
+            if (operandEntry.multStageCounter > 0)
+              continue;
+            else
+              multPipeOccupancy--;
+          }
+        }
+        //cout << CYCLE() << "cubeID " << cubeID << " ...Finised an operand" << endl;
         flowEntry.rep_count++;
 #ifdef COMPUTE
         int org_res, new_res;
@@ -830,6 +853,7 @@ namespace CasHMC
         operandEntry.op1_ready = false;
         operandEntry.op2_ready = false;
         operandEntry.ready = false;
+        operandEntry.multStageCounter = numMultStages;
         freeOperandBufIDs.push_back(i);
       }
     }

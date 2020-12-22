@@ -7,7 +7,7 @@ using namespace PinPthread;
 
 /* ================================================================== */
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
     Init(argc, argv);
     PIN_InitSymbols();
@@ -29,14 +29,14 @@ namespace PinPthread
 /* Initalization & Clean Up                                           */
 /* ------------------------------------------------------------------ */
 
-VOID Init(uint32_t argc, char** argv) 
+VOID Init(uint32_t argc, char** argv)
 {
     pthreadsim = new PthreadSim(argc, argv);
     in_roi = false;
     ngather = 0;
 }
 
-VOID Fini(INT32 code, VOID* v) 
+VOID Fini(INT32 code, VOID* v)
 {
     delete pthreadsim;
     fprintf(stdout, "Pthread Tool ngather: %d\n", ngather);
@@ -263,7 +263,7 @@ VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UpdateRR API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateRR API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
@@ -320,7 +320,7 @@ VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
             0,
             0, 0, 0, 0,
             0, 0, 0, 0);
-      }      
+      }
       break;
     default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
   }
@@ -334,7 +334,7 @@ VOID UpdateRIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateRI API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
@@ -370,7 +370,7 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, function, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [UpdateII API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 // Jiayi, 01/29/2018
@@ -410,7 +410,7 @@ VOID UpdateAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode 
       category,
       0, 0, 0, 0,
       0, 0, 0, 0);
-  //fprintf(stderr, " [UPDATE API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, opcode, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [Update API Pin: %p %p %p <%s> (tid: %lu)]\n", a, b, c, OpcodeString[opcode], pthreadsim->scheduler->current->first);
 }
 
 VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthreads)
@@ -425,7 +425,7 @@ VOID GatherAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, int nthr
       0, 0, 0, 0,
       0, 0, 0, 0);
   ngather++;
-  //fprintf(stderr, " [GATHER API Pin: %p %p %p <%i> (tid: %d)]  \n", a, b, c, nthreads, pthreadsim->scheduler->current->first);
+  //fprintf(stderr, " [Gather API Pin: %p %p %p <%i> (tid: %lu)]\n", a, b, c, nthreads, pthreadsim->scheduler->current->first);
 }
 
 
@@ -518,7 +518,7 @@ VOID RandIndexCall(int *index, int start, int stop)
 /* Instrumentation Routines                                           */
 /* ------------------------------------------------------------------ */
 
-VOID FlagImg(IMG img, VOID* v) 
+VOID FlagImg(IMG img, VOID* v)
 {
   RTN rtn;
 #ifdef RUNTIME_KNOB
@@ -620,13 +620,13 @@ VOID FlagImg(IMG img, VOID* v)
   }
 
   rtn = RTN_FindByName(img, "__kmp_get_global_thread_id");
-  if (rtn != RTN_Invalid()) 
+  if (rtn != RTN_Invalid())
   {
     RTN_Replace(rtn, (AFUNPTR)CallPthreadSelf);
     //RTN_ReplaceWithUninstrumentedRoutine(rtn, (AFUNPTR)CallPthreadSelf);
   }
   rtn = RTN_FindByName(img, "__kmp_check_stack_overlap");
-  if (rtn != RTN_Invalid()) 
+  if (rtn != RTN_Invalid())
   {
     RTN_Replace(rtn, (AFUNPTR)DummyFunc);
     //RTN_ReplaceWithUninstrumentedRoutine(rtn, (AFUNPTR)DummyFunc);
@@ -916,8 +916,8 @@ VOID FlagImg(IMG img, VOID* v)
   {
     RTN_ReplaceSignature(rtn, (AFUNPTR)CallPthreadJoin,
         IARG_CONTEXT,
-        IARG_G_ARG0_CALLEE,    
-        IARG_G_ARG1_CALLEE,                       
+        IARG_G_ARG0_CALLEE,
+        IARG_G_ARG1_CALLEE,
         IARG_END);
   }
   rtn = RTN_FindByName(img, "pthread_key_create");
@@ -925,7 +925,7 @@ VOID FlagImg(IMG img, VOID* v)
   {
     RTN_ReplaceSignature(rtn, (AFUNPTR)CallPthreadKeyCreate,
         IARG_G_ARG0_CALLEE,
-        IARG_G_ARG1_CALLEE, 
+        IARG_G_ARG1_CALLEE,
         IARG_RETURN_REGS, REG_GAX,
         IARG_END);
   }
@@ -1163,7 +1163,7 @@ VOID FlagImg(IMG img, VOID* v)
 }
 
 
-VOID FlagRtn(RTN rtn, VOID* v) 
+VOID FlagRtn(RTN rtn, VOID* v)
 {
   RTN_Open(rtn);
   string * rtn_name = new string(RTN_Name(rtn));
@@ -1225,21 +1225,21 @@ VOID FlagRtn(RTN rtn, VOID* v)
 }
 
 
-VOID FlagTrace(TRACE trace, VOID* v) 
+VOID FlagTrace(TRACE trace, VOID* v)
 {
   bool unnecessary_art_call = false;
-  if (TRACE_Address(trace) == (ADDRINT)pthread_exit) 
+  if (TRACE_Address(trace) == (ADDRINT)pthread_exit)
   {
     TRACE_InsertCall(trace, IPOINT_BEFORE, (AFUNPTR)CallPthreadExit,
         IARG_CONTEXT,
         IARG_G_ARG0_CALLEE,
         IARG_END);
   }
-  else if (!INS_IsAddedForFunctionReplacement(BBL_InsHead(TRACE_BblHead(trace)))) 
+  else if (!INS_IsAddedForFunctionReplacement(BBL_InsHead(TRACE_BblHead(trace))))
   {
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) 
+    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
-      for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) 
+      for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
       {
         if (INS_IsCall(ins) && !INS_IsDirectBranchOrCall(ins))            // indirect call
         {
@@ -1279,7 +1279,7 @@ VOID FlagTrace(TRACE trace, VOID* v)
         else if (INS_IsRet(ins))                                          // return
         {
           RTN rtn = INS_Rtn(ins);
-          if (RTN_Valid(rtn) && (RTN_Name(rtn) != "_dl_runtime_resolve")) 
+          if (RTN_Valid(rtn) && (RTN_Name(rtn) != "_dl_runtime_resolve"))
           {
             INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessReturn,
                 IARG_PTR, new string(RTN_Name(rtn)),
@@ -1298,7 +1298,7 @@ VOID FlagTrace(TRACE trace, VOID* v)
           bool is_mem_rd   = INS_IsMemoryRead(ins);
           bool has_mem_rd2 = INS_HasMemoryRead2(ins);
 
-          if (is_mem_wr && is_mem_rd && has_mem_rd2) 
+          if (is_mem_wr && is_mem_rd && has_mem_rd2)
           {
             INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessMemIns,
                 IARG_CONTEXT,
@@ -1321,7 +1321,7 @@ VOID FlagTrace(TRACE trace, VOID* v)
                 IARG_UINT32, INS_RegW(ins, 3),
                 IARG_END);
           }
-          else if (is_mem_wr && is_mem_rd && !has_mem_rd2) 
+          else if (is_mem_wr && is_mem_rd && !has_mem_rd2)
           {
             INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessMemIns,
                 IARG_CONTEXT,
@@ -1344,7 +1344,7 @@ VOID FlagTrace(TRACE trace, VOID* v)
                 IARG_UINT32, INS_RegW(ins, 3),
                 IARG_END);
           }
-          else if (is_mem_wr && !is_mem_rd) 
+          else if (is_mem_wr && !is_mem_rd)
           {
             INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessMemIns,
                 IARG_CONTEXT,
@@ -1390,7 +1390,7 @@ VOID FlagTrace(TRACE trace, VOID* v)
                 IARG_UINT32, INS_RegW(ins, 3),
                 IARG_END);
           }
-          else if (!is_mem_wr && is_mem_rd && !has_mem_rd2) 
+          else if (!is_mem_wr && is_mem_rd && !has_mem_rd2)
           {
             INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ProcessMemIns,
                 IARG_CONTEXT,
@@ -1447,142 +1447,142 @@ VOID FlagTrace(TRACE trace, VOID* v)
 /* Pthread Hooks                                                      */
 /* ------------------------------------------------------------------ */
 
-int CallPthreadAttrDestroy(ADDRINT _attr) 
+int CallPthreadAttrDestroy(ADDRINT _attr)
 {
   return PthreadAttr::_pthread_attr_destroy((pthread_attr_t*)_attr);
 }
 
-int CallPthreadAttrGetdetachstate(ADDRINT _attr, ADDRINT _detachstate) 
+int CallPthreadAttrGetdetachstate(ADDRINT _attr, ADDRINT _detachstate)
 {
   return PthreadAttr::_pthread_attr_getdetachstate((pthread_attr_t*)_attr, (int*)_detachstate);
 }
 
-int CallPthreadAttrGetstack(ADDRINT _attr, ADDRINT _stackaddr, ADDRINT _stacksize) 
+int CallPthreadAttrGetstack(ADDRINT _attr, ADDRINT _stackaddr, ADDRINT _stacksize)
 {
   return PthreadAttr::_pthread_attr_getstack((pthread_attr_t*)_attr,
       (void**)_stackaddr, (size_t*)_stacksize);
 }
 
-int CallPthreadAttrGetstackaddr(ADDRINT _attr, ADDRINT _stackaddr) 
+int CallPthreadAttrGetstackaddr(ADDRINT _attr, ADDRINT _stackaddr)
 {
   return PthreadAttr::_pthread_attr_getstackaddr((pthread_attr_t*)_attr, (void**)_stackaddr);
 }
 
-int CallPthreadAttrGetstacksize(ADDRINT _attr, ADDRINT _stacksize) 
+int CallPthreadAttrGetstacksize(ADDRINT _attr, ADDRINT _stacksize)
 {
   return PthreadAttr::_pthread_attr_getstacksize((pthread_attr_t*)_attr, (size_t*)_stacksize);
 }
 
-int CallPthreadAttrInit(ADDRINT _attr) 
+int CallPthreadAttrInit(ADDRINT _attr)
 {
   return PthreadAttr::_pthread_attr_init((pthread_attr_t*)_attr);
 }
 
-int CallPthreadAttrSetdetachstate(ADDRINT _attr, ADDRINT _detachstate) 
+int CallPthreadAttrSetdetachstate(ADDRINT _attr, ADDRINT _detachstate)
 {
   return PthreadAttr::_pthread_attr_setdetachstate((pthread_attr_t*)_attr, (int)_detachstate);
 }
 
-int CallPthreadAttrSetstack(ADDRINT _attr, ADDRINT _stackaddr, ADDRINT _stacksize) 
+int CallPthreadAttrSetstack(ADDRINT _attr, ADDRINT _stackaddr, ADDRINT _stacksize)
 {
   return PthreadAttr::_pthread_attr_setstack((pthread_attr_t*)_attr,
       (void*)_stackaddr, (size_t)_stacksize);
 }
 
-int CallPthreadAttrSetstackaddr(ADDRINT _attr, ADDRINT _stackaddr) 
+int CallPthreadAttrSetstackaddr(ADDRINT _attr, ADDRINT _stackaddr)
 {
   return PthreadAttr::_pthread_attr_setstackaddr((pthread_attr_t*)_attr, (void*)_stackaddr);
 }
 
-int CallPthreadAttrSetstacksize(ADDRINT _attr, ADDRINT _stacksize) 
+int CallPthreadAttrSetstacksize(ADDRINT _attr, ADDRINT _stacksize)
 {
   return PthreadAttr::_pthread_attr_setstacksize((pthread_attr_t*)_attr, (size_t)_stacksize);
 }
 
-int CallPthreadCancel(ADDRINT _thread) 
+int CallPthreadCancel(ADDRINT _thread)
 {
   return pthreadsim->pthread_cancel((pthread_t)_thread);
 }
 
-VOID CallPthreadCleanupPop(CONTEXT* ctxt, ADDRINT _execute) 
+VOID CallPthreadCleanupPop(CONTEXT* ctxt, ADDRINT _execute)
 {
   pthreadsim->pthread_cleanup_pop_((int)_execute, ctxt);
 }
 
-VOID CallPthreadCleanupPush(ADDRINT _routine, ADDRINT _arg) 
+VOID CallPthreadCleanupPush(ADDRINT _routine, ADDRINT _arg)
 {
   pthreadsim->pthread_cleanup_push_(_routine, _arg);
 }
 
-int CallPthreadCondattrDestroy(ADDRINT _attr) 
+int CallPthreadCondattrDestroy(ADDRINT _attr)
 {
   return 0;
 }
 
-int CallPthreadCondattrInit(ADDRINT _attr) 
+int CallPthreadCondattrInit(ADDRINT _attr)
 {
   return 0;
 }
 
-int CallPthreadCondBroadcast(ADDRINT _cond) 
+int CallPthreadCondBroadcast(ADDRINT _cond)
 {
   return pthreadsim->pthread_cond_broadcast((pthread_cond_t*)_cond);
 }
 
-int CallPthreadCondDestroy(ADDRINT _cond) 
+int CallPthreadCondDestroy(ADDRINT _cond)
 {
   return pthreadsim->pthread_cond_destroy((pthread_cond_t*)_cond);
 }
 
-int CallPthreadCondInit(ADDRINT _cond, ADDRINT _condattr) 
+int CallPthreadCondInit(ADDRINT _cond, ADDRINT _condattr)
 {
   return PthreadCond::pthread_cond_init((pthread_cond_t*)_cond, (pthread_condattr_t*)_condattr);
 }
 
-int CallPthreadCondSignal(ADDRINT _cond) 
+int CallPthreadCondSignal(ADDRINT _cond)
 {
   return pthreadsim->pthread_cond_signal((pthread_cond_t*)_cond);
 }
 
-VOID CallPthreadCondTimedwait(CONTEXT* context, ADDRINT _cond, ADDRINT _mutex, ADDRINT _abstime) 
+VOID CallPthreadCondTimedwait(CONTEXT* context, ADDRINT _cond, ADDRINT _mutex, ADDRINT _abstime)
 {
   pthreadsim->pthread_cond_timedwait((pthread_cond_t*)_cond, (pthread_mutex_t*)_mutex,
       (const struct timespec*)_abstime, context);
 }
 
-VOID CallPthreadCondWait(CONTEXT* context, ADDRINT _cond, ADDRINT _mutex) 
+VOID CallPthreadCondWait(CONTEXT* context, ADDRINT _cond, ADDRINT _mutex)
 {
   pthreadsim->pthread_cond_wait((pthread_cond_t*)_cond, (pthread_mutex_t*)_mutex, context);
 }
 
 VOID CallPthreadCreate(CONTEXT* ctxt,
-    ADDRINT _thread, ADDRINT _attr, ADDRINT _func, ADDRINT _arg) 
+    ADDRINT _thread, ADDRINT _attr, ADDRINT _func, ADDRINT _arg)
 {
   pthreadsim->pthread_create((pthread_t*)_thread, (pthread_attr_t*)_attr,
       ctxt, _func, _arg);
 }
 
-int CallPthreadDetach(ADDRINT _th) 
+int CallPthreadDetach(ADDRINT _th)
 {
   return pthreadsim->pthread_detach((pthread_t)_th);
 }
 
-int CallPthreadEqual(ADDRINT _thread1, ADDRINT _thread2) 
+int CallPthreadEqual(ADDRINT _thread1, ADDRINT _thread2)
 {
   return pthreadsim->pthread_equal((pthread_t)_thread1, (pthread_t)_thread2);
 }
 
-VOID CallPthreadExit(CONTEXT* ctxt, ADDRINT _retval)  
+VOID CallPthreadExit(CONTEXT* ctxt, ADDRINT _retval)
 {
   pthreadsim->pthread_exit((void*)_retval, ctxt);
 }
 
-int CallPthreadGetattr(ADDRINT _th, ADDRINT _attr) 
+int CallPthreadGetattr(ADDRINT _th, ADDRINT _attr)
 {
   return pthreadsim->pthread_getattr((pthread_t)_th, (pthread_attr_t*)_attr);
 }
 
-VOID* CallPthreadGetspecific(ADDRINT _key) 
+VOID* CallPthreadGetspecific(ADDRINT _key)
 {
   return pthreadsim->pthread_getspecific((pthread_key_t)_key);
 }
@@ -1593,102 +1593,102 @@ VOID CallPthreadJoin(CONTEXT* ctxt,
   pthreadsim->pthread_join((pthread_t)_th, (void**)_thread_return, ctxt);
 }
 
-int CallPthreadKeyCreate(ADDRINT _key, ADDRINT _func) 
+int CallPthreadKeyCreate(ADDRINT _key, ADDRINT _func)
 {
   return pthreadsim->pthread_key_create((pthread_key_t*)_key, (void(*)(void*))_func);
 }
 
-int CallPthreadKeyDelete(ADDRINT _key) 
+int CallPthreadKeyDelete(ADDRINT _key)
 {
   return pthreadsim->pthread_key_delete((pthread_key_t)_key);
 }
 
-int CallPthreadKill(ADDRINT _thread, ADDRINT _signo) 
+int CallPthreadKill(ADDRINT _thread, ADDRINT _signo)
 {
   return pthreadsim->pthread_kill((pthread_t)_thread, (int)_signo);
 }
 
-int CallPthreadMutexattrDestroy(ADDRINT _attr) 
+int CallPthreadMutexattrDestroy(ADDRINT _attr)
 {
   return PthreadMutexAttr::_pthread_mutexattr_destroy((pthread_mutexattr_t*) _attr);
 }
 
-int CallPthreadMutexattrGetkind(ADDRINT _attr, ADDRINT _kind) 
+int CallPthreadMutexattrGetkind(ADDRINT _attr, ADDRINT _kind)
 {
   return PthreadMutexAttr::_pthread_mutexattr_getkind((pthread_mutexattr_t*)_attr, (int*)_kind);
 }
 
-int CallPthreadMutexattrInit(ADDRINT _attr) 
+int CallPthreadMutexattrInit(ADDRINT _attr)
 {
   return PthreadMutexAttr::_pthread_mutexattr_init((pthread_mutexattr_t*)_attr);
 }
 
-int CallPthreadMutexattrSetkind(ADDRINT _attr, ADDRINT _kind) 
+int CallPthreadMutexattrSetkind(ADDRINT _attr, ADDRINT _kind)
 {
   return PthreadMutexAttr::_pthread_mutexattr_setkind((pthread_mutexattr_t*)_attr, (int)_kind);
 }
 
-int CallPthreadMutexDestroy(ADDRINT _mutex) 
+int CallPthreadMutexDestroy(ADDRINT _mutex)
 {
   return PthreadMutex::_pthread_mutex_destroy((pthread_mutex_t*)_mutex);
 }
 
-int CallPthreadMutexInit(ADDRINT _mutex, ADDRINT _mutexattr) 
+int CallPthreadMutexInit(ADDRINT _mutex, ADDRINT _mutexattr)
 {
   return PthreadMutex::_pthread_mutex_init((pthread_mutex_t*)_mutex, (pthread_mutexattr_t*)_mutexattr);
 }
 
-VOID CallPthreadMutexLock(CONTEXT* context, ADDRINT _mutex) 
+VOID CallPthreadMutexLock(CONTEXT* context, ADDRINT _mutex)
 {
   pthreadsim->pthread_mutex_lock((pthread_mutex_t*)_mutex, context);
 }
 
-int CallPthreadMutexTrylock(ADDRINT _mutex) 
+int CallPthreadMutexTrylock(ADDRINT _mutex)
 {
   return pthreadsim->pthread_mutex_trylock((pthread_mutex_t*)_mutex);
 }
 
-int CallPthreadMutexUnlock(ADDRINT _mutex) 
+int CallPthreadMutexUnlock(ADDRINT _mutex)
 {
   return pthreadsim->pthread_mutex_unlock((pthread_mutex_t*)_mutex);
 }
 
-VOID CallPthreadOnce(CONTEXT* ctxt, ADDRINT _oncecontrol, ADDRINT _initroutine) 
+VOID CallPthreadOnce(CONTEXT* ctxt, ADDRINT _oncecontrol, ADDRINT _initroutine)
 {
   PthreadOnce::pthread_once((pthread_once_t*)_oncecontrol, _initroutine, ctxt);
 }
 
-pthread_t CallPthreadSelf() 
+pthread_t CallPthreadSelf()
 {
   return pthreadsim->pthread_self();
 }
 
-int CallPthreadSetcancelstate(ADDRINT _state, ADDRINT _oldstate) 
+int CallPthreadSetcancelstate(ADDRINT _state, ADDRINT _oldstate)
 {
   return pthreadsim->pthread_setcancelstate((int)_state, (int*)_oldstate);
 }
 
-int CallPthreadSetcanceltype(ADDRINT _type, ADDRINT _oldtype) 
+int CallPthreadSetcanceltype(ADDRINT _type, ADDRINT _oldtype)
 {
   return pthreadsim->pthread_setcanceltype((int)_type, (int*)_oldtype);
 }
 
-int CallPthreadSetspecific(ADDRINT _key, ADDRINT _pointer) 
+int CallPthreadSetspecific(ADDRINT _key, ADDRINT _pointer)
 {
   return pthreadsim->pthread_setspecific((pthread_key_t)_key, (VOID*)_pointer);
 }
 
-int CallPthreadBarrierInit(ADDRINT _barrier, ADDRINT _barrierattr, ADDRINT num) 
+int CallPthreadBarrierInit(ADDRINT _barrier, ADDRINT _barrierattr, ADDRINT num)
 {
   return pthreadsim->pthread_barrier_init((pthread_barrier_t *)_barrier, (pthread_barrierattr_t *)_barrierattr, (unsigned int) num);
 }
 
-int CallPthreadBarrierDestroy(ADDRINT _barrier) 
+int CallPthreadBarrierDestroy(ADDRINT _barrier)
 {
   return pthreadsim->pthread_barrier_destroy((pthread_barrier_t *)_barrier);
 }
 
-int CallPthreadBarrierWait(CONTEXT* context, ADDRINT _barrier) 
+int CallPthreadBarrierWait(CONTEXT* context, ADDRINT _barrier)
 {
   return pthreadsim->pthread_barrier_wait((pthread_barrier_t *)_barrier, context);
 }
@@ -1713,7 +1713,7 @@ int CallPthreadBarrierattrSetpshared(ADDRINT _barrierattr, ADDRINT value)
   return 0;  // not implemented yet
 }
 
-VOID CallPthreadTestcancel(CONTEXT* ctxt) 
+VOID CallPthreadTestcancel(CONTEXT* ctxt)
 {
   pthreadsim->pthread_testcancel(ctxt);
 }
@@ -1743,19 +1743,19 @@ VOID CallMcSimSpinningEnd()
 /* Thread-Safe Memory Allocation Support                              */
 /* ------------------------------------------------------------------ */
 
-VOID ProcessCall(ADDRINT target, ADDRINT arg0, ADDRINT arg1, BOOL tailcall) 
+VOID ProcessCall(ADDRINT target, ADDRINT arg0, ADDRINT arg1, BOOL tailcall)
 {
   PIN_LockClient();
   RTN rtn = RTN_FindByAddress(target);
   PIN_UnlockClient();
-  if (RTN_Valid(rtn)) 
+  if (RTN_Valid(rtn))
   {
     string temp_string(RTN_Name(rtn));
     pthreadsim->threadsafemalloc(true, tailcall, &temp_string);
   }
 }
 
-VOID ProcessReturn(const string* rtn_name) 
+VOID ProcessReturn(const string* rtn_name)
 {
   ASSERTX(rtn_name != NULL);
   pthreadsim->threadsafemalloc(false, false, rtn_name);
@@ -1765,7 +1765,7 @@ VOID ProcessReturn(const string* rtn_name)
 /* Thread Scheduler                                                   */
 /* ------------------------------------------------------------------ */
 
-VOID DoContextSwitch(CONTEXT* context) 
+VOID DoContextSwitch(CONTEXT* context)
 {
   pthreadsim->docontextswitch(context);
 }
@@ -1775,13 +1775,13 @@ VOID DoContextSwitch(CONTEXT* context)
 /* ------------------------------------------------------------------ */
 
 VOID WarnNYI(const string* rtn_name,
-    ADDRINT ip) 
+    ADDRINT ip)
 {
   std::cout << "NYI: " << *rtn_name << " at: 0x" << hex << ip << dec <<  "\n" << flush;
   //ASSERTX(0);
 }
 
-VOID PrintRtnName(const string* rtn_name) 
+VOID PrintRtnName(const string* rtn_name)
 {
   std::cout << "RTN " << *rtn_name << "\n" << flush;
 }
