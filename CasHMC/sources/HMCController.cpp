@@ -111,7 +111,7 @@ namespace CasHMC
   {
     if(chkReceive) {
       downEle->trace->tranTransmitTime = currentClockCycle;
-      if(downEle->transactionType == DATA_WRITE)	downEle->trace->statis->hmcTransmitSize += downEle->dataSize;
+      if(downEle->transactionType == DATA_WRITE)  downEle->trace->statis->hmcTransmitSize += downEle->dataSize;
       //DEBUG(ALI(18)<<header<<ALI(15)<<*downEle<<"Down) RECEIVING transaction");
     }
     else {
@@ -121,7 +121,7 @@ namespace CasHMC
 
   void HMCController::CallbackReceiveUp(Packet *upEle, bool chkReceive)
   {
-    /*	if(chkReceive) {
+    /*  if(chkReceive) {
         DEBUG(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   PUSHING packet into buffer["<<upBuffers.size()<<"/"<<MAX_REQ_BUF-1<<"]");
         }
         else {
@@ -222,7 +222,7 @@ namespace CasHMC
               }
               packet->ReductGlobalTAG();
               delete packet;
-              //DEBUG(ALI(18)<<header<<ALI(15)<<*packet<<"Down) Link "<<link<<" buffer FULL");	
+              //DEBUG(ALI(18)<<header<<ALI(15)<<*packet<<"Down) Link "<<link<<" buffer FULL");
             }
           }
         }
@@ -285,7 +285,7 @@ namespace CasHMC
           }
           packet->ReductGlobalTAG();
           delete packet;
-          //DEBUG(ALI(18)<<header<<ALI(15)<<*packet<<"Down) Link "<<link<<" buffer FULL");	
+          //DEBUG(ALI(18)<<header<<ALI(15)<<*packet<<"Down) Link "<<link<<" buffer FULL");
         }
       }
     }
@@ -330,7 +330,7 @@ namespace CasHMC
     Step();
   }
 
-//this method is called from the CasHMCWrapper 
+//this method is called from the CasHMCWrapper
 vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pritam added this method
     return serv_trans;
 }
@@ -349,67 +349,67 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
         packetLength = 1; //header + tail
         reqDataSize = tran->dataSize;
         switch(tran->dataSize) {
-          case 16:	cmdtype = RD16;		break;
-          case 32:	cmdtype = RD32;		break;
-          case 48:	cmdtype = RD48;		break;
-          case 64:	cmdtype = RD64;		break;
-          case 80:	cmdtype = RD80;		break;
-          case 96:	cmdtype = RD96;		break;
-          case 112:	cmdtype = RD112;	break;
-          case 128:	cmdtype = RD128;	break;
-          case 256:	cmdtype = RD256;	break;
+          case 16:  cmdtype = RD16;   break;
+          case 32:  cmdtype = RD32;   break;
+          case 48:  cmdtype = RD48;   break;
+          case 64:  cmdtype = RD64;   break;
+          case 80:  cmdtype = RD80;   break;
+          case 96:  cmdtype = RD96;   break;
+          case 112: cmdtype = RD112;  break;
+          case 128: cmdtype = RD128;  break;
+          case 256: cmdtype = RD256;  break;
           default:
-                    ERROR(header<<"  == Error - WRONG transaction data size  (CurrentClock : "<<currentClockCycle<<")");
-                    exit(0);
+            ERROR(header<<"  == Error - WRONG transaction data size  (CurrentClock : "<<currentClockCycle<<")");
+            exit(0);
         }
         break;
-      case DATA_WRITE:		
+      case DATA_WRITE:
         packetLength = tran->dataSize /*[byte] Size of data*/ / 16 /*packet 16-byte*/ + 1 /*header + tail*/;
         reqDataSize = tran->dataSize;
         switch(tran->dataSize) {
-          case 16:	cmdtype = WR16;		break;
-          case 32:	cmdtype = WR32;		break;
-          case 48:	cmdtype = WR48;		break;
-          case 64:	cmdtype = WR64;		break;
-          case 80:	cmdtype = WR80;		break;
-          case 96:	cmdtype = WR96;		break;
-          case 112:	cmdtype = WR112;	break;
-          case 128:	cmdtype = WR128;	break;
-          case 256:	cmdtype = WR256;	break;
+          case 16:  cmdtype = WR16;   break;
+          case 32:  cmdtype = WR32;   break;
+          case 48:  cmdtype = WR48;   break;
+          case 64:  cmdtype = WR64;   break;
+          case 80:  cmdtype = WR80;   break;
+          case 96:  cmdtype = WR96;   break;
+          case 112: cmdtype = WR112;  break;
+          case 128: cmdtype = WR128;  break;
+          case 256: cmdtype = WR256;  break;
           default:
-                    ERROR(header<<"  == Error - WRONG transaction data size  (CurrentClock : "<<currentClockCycle<<")");
-                    exit(0);
+            ERROR(header<<"  == Error - WRONG transaction data size  (CurrentClock : "<<currentClockCycle<<")");
+            exit(0);
         }
         break;
-        //Arithmetic atomic
-      case ATM_2ADD8:		cmdtype = _2ADD8;	packetLength = 2;	break;
-      case ATM_ADD16:		cmdtype = ADD16;	packetLength = 2;	break;
-      case ATM_P_2ADD8:	cmdtype = P_2ADD8;	packetLength = 2;	break;
-      case ATM_P_ADD16:	cmdtype = P_ADD16;	packetLength = 2;	break;
-      case ATM_2ADDS8R:	cmdtype = _2ADDS8R;	packetLength = 2;	break;
-      case ATM_ADDS16R:	cmdtype = ADDS16R;	packetLength = 2;	break;
-      case ATM_INC8:		cmdtype = INC8;		packetLength = 1;	break;
-      case ATM_P_INC8:	cmdtype = P_INC8;	packetLength = 1;	break;
-                        //Boolean atomic
-      case ATM_XOR16:		cmdtype = XOR16;	packetLength = 2;	break;
-      case ATM_OR16:		cmdtype = OR16;		packetLength = 2;	break;
-      case ATM_NOR16:		cmdtype = NOR16;	packetLength = 2;	break;
-      case ATM_AND16:		cmdtype = AND16;	packetLength = 2;	break;
-      case ATM_NAND16:	cmdtype = NAND16;	packetLength = 2;	break;
-                        //Comparison atomic
-      case ATM_CASGT8:	cmdtype = CASGT8;	packetLength = 2;	break;
-      case ATM_CASLT8:	cmdtype = CASLT8;	packetLength = 2;	break;
-      case ATM_CASGT16:	cmdtype = CASGT16;	packetLength = 2;	break;
-      case ATM_CASLT16:	cmdtype = CASLT16;	packetLength = 2;	break;
-      case ATM_CASEQ8:	cmdtype = CASEQ8;	packetLength = 2;	break;
-      case ATM_CASZERO16:	cmdtype = CASZERO16;packetLength = 2;	break;
-      case ATM_EQ16:		cmdtype = EQ16;		packetLength = 2;	break;
-      case ATM_EQ8:		cmdtype = EQ8;		packetLength = 2;	break;
-                      //Bitwise atomic
-      case ATM_BWR:		cmdtype = BWR;		packetLength = 2;	break;
-      case ATM_P_BWR:		cmdtype = P_BWR;	packetLength = 2;	break;
-      case ATM_BWR8R:		cmdtype = BWR8R;	packetLength = 2;	break;
-      case ATM_SWAP16:	cmdtype = SWAP16;	packetLength = 2;	break;
+      //Arithmetic atomic
+      case ATM_2ADD8:   cmdtype = _2ADD8; packetLength = 2; break;
+      case ATM_ADD16:   cmdtype = ADD16;  packetLength = 2; break;
+      case ATM_P_2ADD8: cmdtype = P_2ADD8;  packetLength = 2; break;
+      case ATM_P_ADD16: cmdtype = P_ADD16;  packetLength = 2; break;
+      case ATM_2ADDS8R: cmdtype = _2ADDS8R; packetLength = 2; break;
+      case ATM_ADDS16R: cmdtype = ADDS16R;  packetLength = 2; break;
+      case ATM_INC8:    cmdtype = INC8;   packetLength = 1; break;
+      case ATM_P_INC8:  cmdtype = P_INC8; packetLength = 1; break;
+      //Boolean atomic
+      case ATM_XOR16:   cmdtype = XOR16;  packetLength = 2; break;
+      case ATM_OR16:    cmdtype = OR16;   packetLength = 2; break;
+      case ATM_NOR16:   cmdtype = NOR16;  packetLength = 2; break;
+      case ATM_AND16:   cmdtype = AND16;  packetLength = 2; break;
+      case ATM_NAND16:  cmdtype = NAND16; packetLength = 2; break;
+      //Comparison atomic
+      case ATM_CASGT8:  cmdtype = CASGT8; packetLength = 2; break;
+      case ATM_CASLT8:  cmdtype = CASLT8; packetLength = 2; break;
+      case ATM_CASGT16: cmdtype = CASGT16;  packetLength = 2; break;
+      case ATM_CASLT16: cmdtype = CASLT16;  packetLength = 2; break;
+      case ATM_CASEQ8:  cmdtype = CASEQ8; packetLength = 2; break;
+      case ATM_CASZERO16: cmdtype = CASZERO16;packetLength = 2; break;
+      case ATM_EQ16:  cmdtype = EQ16; packetLength = 2; break;
+      case ATM_EQ8:   cmdtype = EQ8;  packetLength = 2; break;
+      //Bitwise atomic
+      case ATM_BWR: cmdtype = BWR;  packetLength = 2; break;
+      case ATM_P_BWR: cmdtype = P_BWR;  packetLength = 2; break;
+      case ATM_BWR8R: cmdtype = BWR8R;  packetLength = 2; break;
+      case ATM_SWAP16:cmdtype = SWAP16; packetLength = 2; break;
 
       // ACTIVE commands, Jiayi, 01/27
       case ACTIVE_GET:  reqDataSize = tran->dataSize; cmdtype = ACT_GET;    packetLength = 1; break;
@@ -420,10 +420,10 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       case PIM_ATOMIC:  reqDataSize = tran->dataSize; cmdtype = PEI_ATOMIC; packetLength = 1 + tran->dataSize / 16; break;
 
       default:
-                       ERROR(header<<"   == Error - WRONG transaction type  (CurrentClock : "<<currentClockCycle<<")");
-                       ERROR(*tran);
-                       exit(0);
-                       break;
+        ERROR(header<<"   == Error - WRONG transaction type  (CurrentClock : "<<currentClockCycle<<")");
+        ERROR(*tran);
+        exit(0);
+        break;
     }
     //packet, cmd, addr, cub, lng, *lat
     //Packet *newPacket = new Packet(REQUEST, cmdtype, tran->address, 0, packetLength, tran->trace);
@@ -439,14 +439,14 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
           tran->transactionType == ACTIVE_DOT) {
         newPacket->ADRS = (tran->src_address1 << 30) >> 30;
       }
-      if (tran->transactionType == ACTIVE_ADD ||
-          tran->transactionType == ACTIVE_MULT) {
+      if (tran->transactionType == ACTIVE_ADD) {
         newPacket->LINES = tran->lines;
       }
     } else if (tran->transactionType == ACTIVE_MULT) {  // Jiayi, 03/23/17
       newPacket = new Packet(REQUEST, cmdtype, 0, packetLength, tran->trace, tran->dest_address, tran->src_address1,
           tran->src_address2, tran->src_cube, tran->dest_cube1, tran->dest_cube2);
       newPacket->ADRS = (tran->src_address1 << 30) >> 30; // FIXME
+      newPacket->LINES = tran->lines;
       newPacket->active = true;
     } else {
       newPacket = new Packet(REQUEST, cmdtype, tran->address, 0, packetLength, tran->trace, tran->src_cube,
@@ -494,7 +494,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
           STATEN(endl<<"                      ");
         }
         if(i < upBuffers.size()) {
-          if(upBuffers[i] != NULL)	realInd = i;
+          if(upBuffers[i] != NULL)  realInd = i;
           STATEN(*upBuffers[realInd]);
         }
         else if(i == upBufferMax-1) {
@@ -508,7 +508,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       STATEN(endl);
     }
   }
-  
+
   //
   // Print active routing tree given active flow ID (dest_addr)
   //
@@ -524,7 +524,7 @@ vector<pair<uint64_t, PacketCommandType> > &HMCController::get_serv_trans(){//pr
       map<FlowID, FlowEntry>::iterator it;
       it = root_xbar->flowTable.find(dest_addr);
       if (it == root_xbar->flowTable.end()) continue;
-      
+
       // print the routing tree using BFS
       vector<CrossbarSwitch *> xbarQ;
       xbarQ.push_back(root_xbar);

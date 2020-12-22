@@ -86,7 +86,7 @@ namespace CasHMC
   //
   void CrossbarSwitch::CallbackReceiveDown(Packet *downEle, bool chkReceive)
   {
-    /*	if(chkReceive) {
+    /*  if(chkReceive) {
         DEBUG(ALI(18)<<header<<ALI(15)<<*downEle<<"Down) RECEIVING packet");
         }
         else {
@@ -95,7 +95,7 @@ namespace CasHMC
   }
   void CrossbarSwitch::CallbackReceiveUp(Packet *upEle, bool chkReceive)
   {
-    /*	if(chkReceive) {
+    /*  if(chkReceive) {
         DEBUG(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RECEIVING packet");
         }
         else {
@@ -284,8 +284,13 @@ namespace CasHMC
           if (curDownBuffers[i] != NULL) {
             assert(curDownBuffers[i]->packetType == REQUEST);
             if (curDownBuffers[i]->DESTCUB == cubeID ||
-                (curDownBuffers[i]->CMD == ACT_MULT && curDownBuffers[i]->SRCADRS1 && curDownBuffers[i]->DESTCUB1 == cubeID) ||
-                (curDownBuffers[i]->CMD == ACT_MULT && curDownBuffers[i]->SRCADRS2 && curDownBuffers[i]->DESTCUB2 == cubeID)) {
+                (curDownBuffers[i]->CMD == ACT_MULT && curDownBuffers[i]->halfPkt1 &&
+                 curDownBuffers[i]->SRCADRS1 && curDownBuffers[i]->DESTCUB1 == cubeID ) ||
+                (curDownBuffers[i]->CMD == ACT_MULT && curDownBuffers[i]->halfPkt2 &&
+                 curDownBuffers[i]->SRCADRS2 && curDownBuffers[i]->DESTCUB2 == cubeID ) ||
+                (((curDownBuffers[i]->CMD == ACT_MULT && curDownBuffers[i]->SRCADRS1 && curDownBuffers[i]->DESTCUB1 == cubeID) ||
+                  (curDownBuffers[i]->CMD == ACT_MULT && curDownBuffers[i]->SRCADRS2 && curDownBuffers[i]->DESTCUB2 == cubeID)) &&
+                  !curDownBuffers[i]->halfPkt1 && !curDownBuffers[i]->halfPkt2)) {
               //Check request size and the maximum block size
               if (curDownBuffers[i]->reqDataSize > ADDRESS_MAPPING) {
                 int segPacket = ceil((double)curDownBuffers[i]->reqDataSize/ADDRESS_MAPPING);
@@ -351,14 +356,14 @@ namespace CasHMC
                     Packet *pkt = curDownBuffers[i];
                     if (curDownBuffers[i]->LINES == 1) {
 #ifdef DEBUG_PAGE_OFFLOADING
-                      cout << CYCLE() << "Cube " << cubeID << " Paeg-Offloading: Last packet "
+                      cout << CYCLE() << "Cube " << cubeID << " Page-Offloading: Last packet "
                         << *pkt << " (" << pkt << ") and send to vault " << vaultMap << endl;
 #endif
                     } else {
                       curDownBuffers[i] = new Packet(*pkt);
                       curDownBuffers[i]->trace = new TranTrace(*(pkt->trace));
 #ifdef DEBUG_PAGE_OFFLOADING
-                      cout << CYCLE() << "Cube " << cubeID << " Paeg-Offloading: Replicate packet "
+                      cout << CYCLE() << "Cube " << cubeID << " Page-Offloading: Replicate packet "
                         << *pkt  << " (" << pkt << ") and send to vault " << vaultMap << endl;
 #endif
                     }
@@ -381,11 +386,11 @@ namespace CasHMC
                 }
                 else if (curDownBuffers[i]->CMD == ACT_MULT) {  // 03/24/17
                   bool operand_buf_avail = false;
-                  bool is_full_pkt = false;
                   // make sure there is free operand buffer
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
-                  is_full_pkt = (curDownBuffers[i]->SRCADRS1 != 0 && curDownBuffers[i]->SRCADRS2 != 0);
+                  bool is_full_pkt = (!curDownBuffers[i]->halfPkt1 && !curDownBuffers[i]->halfPkt2);
                   if (is_full_pkt) {
+                    assert(curDownBuffers[i]->SRCADRS1 != 0 && curDownBuffers[i]->SRCADRS2 != 0);
                     operand_buf_avail = freeOperandBufIDs.empty() ? false : true;
                     if (operand_buf_avail) {
                       assert(curDownBuffers[i]->operandBufID = -1);
@@ -398,8 +403,6 @@ namespace CasHMC
                         pkt->SRCADRS1 = 0;
                         vaultMap = (curDownBuffers[i]->SRCADRS2 >> _log2(ADDRESS_MAPPING)) & (NUM_VAULTS-1);
                       }
-                      pkt->SRCCUB = cubeID;
-                      pkt->DESTCUB = cubeID;
                       if (downBufferDest[vaultMap]->ReceiveDown(pkt)) {
                         numUpdates++;
                         numOperands++;
@@ -426,6 +429,10 @@ namespace CasHMC
                           cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): register an entry at cube " << cubeID << endl;
 #endif
                         } else {
+                          if (it->second.parent != parent_cube) {
+                            cout << "flow: " << hex << curDownBuffers[i]->DESTADRS << dec
+                              << ", it->second.parent " << it->second.parent << ", parent_cube " << parent_cube << endl;
+                          }
                           assert(it->second.parent == parent_cube);
                           it->second.req_count++;
                         }
@@ -445,19 +452,28 @@ namespace CasHMC
                         //  << ", src_addr2: " << curDownBuffers[i]->SRCADRS2 << dec << endl;
 #endif
                         if (curDownBuffers[i]->SRCADRS1 && curDownBuffers[i]->DESTCUB1 == cubeID) {
-                          curDownBuffers[i]->SRCADRS1 = 0;
+                          //curDownBuffers[i]->SRCADRS1 = 0;
                           curDownBuffers[i]->ADRS = (curDownBuffers[i]->SRCADRS2 << 30) >> 30;
                           curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB2;
+                          curDownBuffers[i]->halfPkt2 = true;
+                          pkt->ADRS = (pkt->SRCADRS1 << 30) >> 30;
+                          pkt->halfPkt1 = true;
                         } else {
                           assert(curDownBuffers[i]->SRCADRS2 && curDownBuffers[i]->DESTCUB2 == cubeID);
-                          curDownBuffers[i]->SRCADRS2 = 0;
+                          //curDownBuffers[i]->SRCADRS2 = 0;
                           curDownBuffers[i]->ADRS = (curDownBuffers[i]->SRCADRS1 << 30) >> 30;
                           curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB1;
+                          curDownBuffers[i]->halfPkt1 = true;
+                          pkt->ADRS = (pkt->SRCADRS2 << 30) >> 30;
+                          pkt->halfPkt2 = true;
                         }
                         curDownBuffers[i]->operandBufID = operand_buf_id;
-                        curDownBuffers[i]->SRCCUB = cubeID;
+                        if (curDownBuffers[i]->LINES == 1) {
+                          curDownBuffers[i]->SRCCUB = cubeID;
+                        }
                         pkt->operandBufID = operand_buf_id;
                         pkt->SRCCUB = cubeID;
+                        pkt->DESTCUB = cubeID;
                         i--;
                       } else {
 /*#ifdef DEBUG_UPDATE
@@ -473,16 +489,52 @@ namespace CasHMC
                       cout << "CUBE " << cubeID << ": no operand buffers (full), failed for packet " << *curDownBuffers[i] << endl;
 #endif*/
                     }
-                  } else {
-                    if (downBufferDest[vaultMap]->ReceiveDown(curDownBuffers[i])) {
+                  } else { // half packet
+                    Packet *pkt = curDownBuffers[i]->LINES > 1 ? new Packet(*curDownBuffers[i]): curDownBuffers[i];
+                    if (downBufferDest[vaultMap]->ReceiveDown(pkt)) {
+                      assert(pkt->halfPkt1 ^ pkt->halfPkt2);
                       numOperands++;
 #ifdef DEBUG_ROUTING
                       cout << "CUBE " << cubeID << ": Route MULT (second) packet " << *curDownBuffers[i] << " to my VaultCtrl" << endl;
 #endif
-                      curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                      if (pkt->halfPkt1) {
+                        assert(pkt->ADRS == ((pkt->SRCADRS1 << 30) >> 30));
+                        pkt->SRCADRS2 = 0;
+                      } else {
+                        assert(pkt->ADRS == ((pkt->SRCADRS2 << 30) >> 30));
+                        pkt->SRCADRS1 = 0;
+                      }
+                      pkt->LINES = 1;
+                      if (curDownBuffers[i]->LINES == 1) {
+#ifdef DEBUG_PAGE_OFFLOADING
+                        cout << CYCLE() << "Cube " << cubeID << " Page-Offloading: Last half packet "
+                          << *pkt << " (" << pkt << ") and send to vault " << vaultMap << endl;
+#endif
+                        curDownBuffers.erase(curDownBuffers.begin()+i, curDownBuffers.begin()+i+curDownBuffers[i]->LNG);
+                      } else {
+                        pkt->SRCCUB = cubeID;
+                        pkt->DESTCUB = cubeID;
+                        assert(pkt->DESTCUB1 == pkt->DESTCUB2);
+                        curDownBuffers[i]->halfPkt1 = false;
+                        curDownBuffers[i]->halfPkt2 = false;
+                        curDownBuffers[i]->SRCADRS1 += 64;
+                        curDownBuffers[i]->SRCADRS2 += 64;
+                        curDownBuffers[i]->ADRS = (curDownBuffers[i]->SRCADRS1 << 30) >> 30;
+                        curDownBuffers[i]->LINES--;
+                        curDownBuffers[i]->operandBufID = -1;
+                        curDownBuffers[i]->trace = new TranTrace(*(curDownBuffers[i]->trace));
+#ifdef DEBUG_PAGE_OFFLOADING
+                        cout << CYCLE() << "Cube " << cubeID << " Page-Offloading: Replicate half packet "
+                          << *pkt  << " (" << pkt << ") and send to vault " << vaultMap
+                          << ", remaining packets: " << curDownBuffers[i]->LINES << endl;
+#endif
+                        assert(curDownBuffers[i]->ADRS == ((curDownBuffers[i]->SRCADRS1 << 30) >> 30) ||
+                            curDownBuffers[i]->ADRS == ((curDownBuffers[i]->SRCADRS2 << 30) >> 30));
+                      }
                       i--;
                     } else {
                       // do nothing, try next cycle
+                      if (pkt != curDownBuffers[i]) delete pkt;
                     }
                   }
                 }
@@ -495,7 +547,7 @@ namespace CasHMC
                         ((curDownBuffers[j]->CMD == ACT_ADD ||
                           curDownBuffers[j]->CMD == ACT_DOT ||
                           curDownBuffers[j]->CMD == ACT_MULT) &&
-                         curDownBuffers[j]->DESTADRS == dest_addr)) {
+                          curDownBuffers[j]->DESTADRS == dest_addr)) {
                       is_inorder = false;
                       break;
                     }
@@ -520,7 +572,7 @@ namespace CasHMC
                   }
                   // send GET to children if any
                   if (child_links.size() > 0) {
-                    assert(flowTable[dest_addr].req_count -  flowTable[dest_addr].rep_count > 0);
+                    assert(flowTable[dest_addr].req_count - flowTable[dest_addr].rep_count > 0);
                     // replicate and sent for each child, every cycle can only send one replicate
                     for (int c = 0; c < child_links.size(); ++c) {
                       int child_cube = neighborCubeID[child_links[c]];
@@ -581,9 +633,10 @@ namespace CasHMC
               int link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->DESTCUB);
               assert(link != -1);
               if (curDownBuffers[i]->CMD == ACT_MULT) {
-                bool is_full_pkt = (curDownBuffers[i]->SRCADRS1 && curDownBuffers[i]->SRCADRS2);
+                bool is_full_pkt = (!curDownBuffers[i]->halfPkt1 && !curDownBuffers[i]->halfPkt2);
                 uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                 if (is_full_pkt) {
+                  assert(curDownBuffers[i]->SRCADRS1 != 0 && curDownBuffers[i]->SRCADRS2 != 0);
                   int link1 = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->DESTCUB1);
                   int link2 = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->DESTCUB2);
                   bool should_split = (link1 != link2);
@@ -636,13 +689,19 @@ namespace CasHMC
                         //  << cubeID << ", src_addr1: " << hex << curDownBuffers[i]->SRCADRS1 << ", src_addr2: "
                         //  << curDownBuffers[i]->SRCADRS2 << dec << endl;
 #endif
-                        curDownBuffers[i]->SRCADRS1 = 0;
+                        //curDownBuffers[i]->SRCADRS1 = 0;
+                        curDownBuffers[i]->halfPkt2 = true;
                         curDownBuffers[i]->ADRS = (curDownBuffers[i]->SRCADRS2 << 30) >> 30;
                         curDownBuffers[i]->operandBufID = operand_buf_id;
-                        curDownBuffers[i]->SRCCUB = cubeID;
+                        if (curDownBuffers[i]->LINES == 1) {
+                          curDownBuffers[i]->SRCCUB = cubeID;
+                        }
                         curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB2;
                         pkt->operandBufID = operand_buf_id;
                         pkt->SRCCUB = cubeID;
+                        pkt->ADRS = (pkt->SRCADRS1 << 30) >> 30;
+                        pkt->halfPkt1 = true;
+                        pkt->LINES = 1;
                         i--;
                       } else if (upBufferDest[link2]->currentState != LINK_RETRY && upBufferDest[link2]->ReceiveDown(pkt)) {
                         numUpdates++;
@@ -689,13 +748,19 @@ namespace CasHMC
                         //  << cubeID << ", src_addr1: " << hex << curDownBuffers[i]->SRCADRS1 << ", src_addr2: "
                         //  << curDownBuffers[i]->SRCADRS2 << dec << endl;
 #endif
-                        curDownBuffers[i]->SRCADRS2 = 0;
+                        //curDownBuffers[i]->SRCADRS2 = 0;
+                        curDownBuffers[i]->halfPkt1 = true;
                         curDownBuffers[i]->ADRS = (curDownBuffers[i]->SRCADRS1 << 30) >> 30;
                         curDownBuffers[i]->operandBufID = operand_buf_id;
-                        curDownBuffers[i]->SRCCUB = cubeID;
                         curDownBuffers[i]->DESTCUB = curDownBuffers[i]->DESTCUB1;
+                        if (curDownBuffers[i]->LINES == 1) {
+                          curDownBuffers[i]->SRCCUB = cubeID;
+                        }
                         pkt->operandBufID = operand_buf_id;
+                        pkt->ADRS = (pkt->SRCADRS2 << 30) >> 30;
                         pkt->SRCCUB = cubeID;
+                        pkt->halfPkt2 = true;
+                        pkt->LINES = 1;
                         i--;
                       } else {
 /*#ifdef DEBUG_UPDATE
@@ -745,22 +810,57 @@ namespace CasHMC
                     }
                   }
                 } else { // half packet
-                  if (upBufferDest[link]->currentState != LINK_RETRY && upBufferDest[link]->ReceiveDown(curDownBuffers[i])) {
-                    curDownBuffers[i]->RTC = 0;
-                    curDownBuffers[i]->URTC = 0;
-                    curDownBuffers[i]->DRTC = 0;
-                    curDownBuffers[i]->chkCRC = false;
-                    curDownBuffers[i]->RRP = 0;
-                    curDownBuffers[i]->chkRRP = false;
+                  Packet *pkt = curDownBuffers[i]->LINES > 1 ? new Packet(*curDownBuffers[i]) : curDownBuffers[i];
+                  if (upBufferDest[link]->currentState != LINK_RETRY && upBufferDest[link]->ReceiveDown(pkt)) {
+                    assert(pkt->halfPkt1 ^ pkt->halfPkt2);
+                    pkt->RTC = 0;
+                    pkt->URTC = 0;
+                    pkt->DRTC = 0;
+                    pkt->chkCRC = false;
+                    pkt->RRP = 0;
+                    pkt->chkRRP = false;
 #ifdef DEBUG_ROUTING
-                    cout << CYCLE() << "Active-Routing: route packet " << *curDownBuffers[i] << " from cube " << cubeID << " to cube " <<
-                      curDownBuffers[i]->DESTCUB << ", next hop is cube " << neighborCubeID[link] << endl;
+                    cout << CYCLE() << "Active-Routing: route packet " << *pkt << " from cube " << cubeID << " to cube " <<
+                      pkt->DESTCUB << ", next hop is cube " << neighborCubeID[link] << endl;
 #endif
-                    curDownBuffers.erase(curDownBuffers.begin() + i, curDownBuffers.begin() + i + curDownBuffers[i]->LNG);
+                    if (pkt->halfPkt1) {
+                      assert(pkt->ADRS == ((pkt->SRCADRS1 << 30) >> 30));
+                      pkt->SRCADRS2 = 0;
+                    } else {
+                      assert(pkt->ADRS == ((pkt->SRCADRS2 << 30) >> 30));
+                      pkt->SRCADRS1 = 0;
+                    }
+                    pkt->LINES = 1;
+                    if (curDownBuffers[i]->LINES == 1) {
+#ifdef DEBUG_PAGE_OFFLOADING
+                      cout << CYCLE() << "Cube " << cubeID << " Page-Offloading: Last half packet "
+                        << *pkt << " (" << pkt << ") and send to cube " << pkt->DESTCUB << endl;
+#endif
+                      curDownBuffers.erase(curDownBuffers.begin() + i, curDownBuffers.begin() + i + curDownBuffers[i]->LNG);
+                    } else {
+                      pkt->SRCCUB = cubeID;
+                      pkt->DESTCUB = pkt->halfPkt1 ? pkt->DESTCUB1 : pkt->DESTCUB2;
+                      curDownBuffers[i]->halfPkt1 = false;
+                      curDownBuffers[i]->halfPkt2 = false;
+                      curDownBuffers[i]->SRCADRS1 += 64;
+                      curDownBuffers[i]->SRCADRS2 += 64;
+                      curDownBuffers[i]->ADRS = (curDownBuffers[i]->SRCADRS1 << 30) >> 30;
+                      curDownBuffers[i]->LINES--;
+                      curDownBuffers[i]->operandBufID = -1;
+                      curDownBuffers[i]->trace = new TranTrace(*(curDownBuffers[i]->trace));
+#ifdef DEBUG_PAGE_OFFLOADING
+                      cout << CYCLE() << "Cube " << cubeID << " Page-Offloading: Replicate half packet "
+                        << *pkt  << " (" << pkt << ") and send to cube " << pkt->DESTCUB
+                        << ", remaining packets: " << curDownBuffers[i]->LINES << endl;
+#endif
+                      assert(curDownBuffers[i]->ADRS == ((curDownBuffers[i]->SRCADRS1 << 30) >> 30) ||
+                          curDownBuffers[i]->ADRS == ((curDownBuffers[i]->SRCADRS2 << 30) >> 30));
+                    }
                     --i;
                     break;
                   } else {
                     // no buffers, do nothing, try later
+                    if (pkt != curDownBuffers[i]) delete pkt;
                   }
                 }
               }
@@ -972,7 +1072,7 @@ namespace CasHMC
           STATEN(endl<<"                      ");
         }
         if(i < downBuffers.size()) {
-          if(downBuffers[i] != NULL)	realInd = i;
+          if(downBuffers[i] != NULL)  realInd = i;
           STATEN(*downBuffers[realInd]);
         }
         else if(i == downBufferMax-1) {
@@ -995,7 +1095,7 @@ namespace CasHMC
             STATEN(endl<<"                      ");
           }
           if(i < upBuffers.size()) {
-            if(upBuffers[i] != NULL)	realInd = i;
+            if(upBuffers[i] != NULL)  realInd = i;
             STATEN(*upBuffers[realInd]);
           }
           else if(i == upBufferMax-1) {
@@ -1012,7 +1112,7 @@ namespace CasHMC
           if(i>0 && i%8==0) {
             STATEN(endl<<"                      ");
           }
-          if(upBuffers[i] != NULL)	realInd = i;
+          if(upBuffers[i] != NULL)  realInd = i;
           STATEN(*upBuffers[realInd]);
         }
       }
