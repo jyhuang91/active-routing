@@ -28,6 +28,7 @@ PTSHMCController::PTSHMCController(component_type type_, uint32_t num_,
   interleave_xor_base_bit = get_param_uint64("interleave_xor_base_bit", 20);
   cube_interleave_base_bit = get_param_uint64("cube_interleave_base_bit", 32);
   num_mcs_log2 = log2(mcsim->pts->get_param_uint64("pts.num_mcs", 2));
+  kernel_offloading = get_param_bool("kernel_offloading", "pts.", false);
 
   uint32_t num_mcs = get_param_uint64("num_mcs", "pts.", 4);
   uint32_t net_dim = get_param_uint64("net_dim", "pts.", 4);
@@ -330,6 +331,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       dest_cube = get_active_cube_num(lqele->src_addr1);
       newTran = new Transaction(ACTIVE_ADD, flow_id, lqele->src_addr1, data_size, hmc_net, src_cube, dest_cube);
       newTran->address = lqele->dest_addr;
+      newTran->lines = lqele->lines;
       assert(lqele->nthreads == -1);
       break;
     case ACTIVE_MULT:
@@ -343,6 +345,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       newTran = new Transaction(ACTIVE_MULT, flow_id, lqele->src_addr1, lqele->src_addr2, data_size,
           hmc_net, src_cube, dest_cube1, dest_cube2);
       newTran->address = lqele->dest_addr;
+      newTran->lines = lqele->lines;
       assert(lqele->nthreads == -1);
       break;
 
@@ -513,7 +516,14 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
           assert(lqele->from.top());
           num_update_sent++;
           total_update_stall_time += curr_time - tran_buf.begin()->first;
-          noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+          if (kernel_offloading)
+          {
+            lqele->from.top()->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+          }
+          else
+          {
+            noc->add_rep_event(curr_time + hmc_to_noc_t, lqele, this);
+          }
           pending_active_updates.insert(make_pair(flow_id, lqele));
           active_update_event.erase(req_id);
         }
@@ -691,7 +701,14 @@ uint32_t PTSHMCController::process_event(uint64_t curr_time)
         case et_art_get:
         case et_pei_dot:
         case et_pei_atomic:
-          noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
+          if (kernel_offloading)
+          {
+            (*iter)->from.top()->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
+          }
+          else
+          {
+            noc->add_rep_event(curr_time + hmc_to_noc_t, *iter, this);
+          }
           resp_queue.erase(iter);
           break;
         default:

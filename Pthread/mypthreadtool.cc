@@ -209,18 +209,75 @@ int testFunc(int tid)
 #endif
 
 // TODO: two operands may have different type, int/fp/double, may not aligned in cacheline
-VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
+VOID UpdatePageAPI(CONTEXT *context, ADDRINT ip, VOID *a, UINT32 lines, VOID *c, eOpcode opcode)
 {
   uint32_t category = -1;
   uint32_t rlen = 4 * PEI_GRANULARITY;
   uint32_t wlen = 4; // Bytes
   switch (opcode)
   {
+    case DADD:
+      rlen = CACHELINE_SIZE;
+      wlen = lines;
+      //* ((float *)c) += * ((float *)a);
+      category = ART_CATEGORY_ADD;
+      break;
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
+  }
+
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, 0, rlen,
+      (ADDRINT) c, wlen,
+      false, false,
+      category,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //fprintf(stderr, " [UpdatePage API Pin: %p %d %p <%i> (tid: %lu)]\n", a, lines, c, opcode, pthreadsim->scheduler->current->first);
+}
+
+VOID UpdateRRPageAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, UINT32 lines, eOpcode opcode)
+{
+  uint32_t category = -1;
+  uint32_t rlen = 4 * PEI_GRANULARITY;
+  uint32_t wlen = 4; // Bytes
+  switch (opcode)
+  {
+    case DMULT:
+      rlen = CACHELINE_SIZE;
+      wlen = lines;
+      //* ((float *)c) += * ((float *)a);
+      category = ART_CATEGORY_MULT;
+      break;
+    default: fprintf(stderr, "Unknown active operation: %d\n", opcode); exit(1);
+  }
+
+  pthreadsim->process_ins(
+      context,
+      ip,
+      (ADDRINT) a, (ADDRINT) b, rlen,
+      (ADDRINT) c, wlen,
+      false, false,
+      category,
+      0, 0, 0, 0,
+      0, 0, 0, 0);
+  //fprintf(stderr, " [UpdateRRPage API Pin: %p %p %p %d <%s> (tid: %lu)]\n", a, b, c, lines, OpcodeString[opcode], pthreadsim->scheduler->current->first);
+}
+
+VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcode opcode)
+{
+  uint32_t category = -1;
+  uint32_t rlen = 4 * PEI_GRANULARITY;
+  uint32_t wlen = 4; // Bytes
+  uint32_t lines = 1;
+  switch (opcode)
+  {
     case IADD:
     case FADD:
     case DADD:
       rlen = CACHELINE_SIZE;
-      wlen = 0;
+      wlen = lines;
       //* ((float *)c) += * ((float *)a);
       category = ART_CATEGORY_ADD;
       break;
@@ -228,7 +285,7 @@ VOID UpdateRRAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
     case FMULT:
     case DMULT:
       rlen = CACHELINE_SIZE;
-      wlen = 0;
+      wlen = lines;
       //* ((float *)c) += (*((float *)a)) * (*((float *)b));
       category = ART_CATEGORY_MULT;
       break;
@@ -341,6 +398,7 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
 {
   uint32_t category = -1;
   uint32_t rlen = 4;
+  uint32_t lines = 1;
   switch (opcode)
   {
     case DADD:
@@ -365,7 +423,7 @@ VOID UpdateIIAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, eOpcod
       context,
       ip,
       (ADDRINT) a, (ADDRINT) b, rlen,
-      (ADDRINT) c, 0,
+      (ADDRINT) c, lines,
       false, false,
       category,
       0, 0, 0, 0,
@@ -548,6 +606,31 @@ VOID FlagImg(IMG img, VOID* v)
     RTN_Close(rtn);
   }
   // Jiayi, 01/29/2018
+  rtn = RTN_FindByName(img, "UpdatePage");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)UpdatePageAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_END);
+  }
+  rtn = RTN_FindByName(img, "UpdateRRPage");
+  if (rtn != RTN_Invalid())
+  {
+    RTN_ReplaceSignature(rtn, (AFUNPTR)UpdateRRPageAPI,
+        IARG_CONTEXT,
+        IARG_INST_PTR,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 3,
+        IARG_FUNCARG_ENTRYPOINT_VALUE, 4,
+        IARG_END);
+  }
   rtn = RTN_FindByName(img, "UpdateRR");
   if (rtn != RTN_Invalid())
   {

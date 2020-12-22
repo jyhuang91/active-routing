@@ -23,7 +23,7 @@
 #include "DRAMConfig.h"
 #include "DRAMCommand.h"
 #include "CommandQueue.h"
-#include "DRAM.h" 
+#include "DRAM.h"
 using namespace std;
 
 namespace CasHMC
@@ -50,6 +50,8 @@ namespace CasHMC
       void PrintState();
       void PrintBuffers();
 
+      uint64_t totalOperandRequests;
+
       //
       //Fields
       //
@@ -57,9 +59,9 @@ namespace CasHMC
       unsigned refreshCountdown;
       bool powerDown;
 
-      static unsigned DRAM_rd_data; 
-      static unsigned DRAM_wr_data; 
-      static unsigned DRAM_act_data; 
+      static unsigned DRAM_rd_data;
+      static unsigned DRAM_wr_data;
+      static unsigned DRAM_act_data;
       DRAM *dramP;
       CommandQueue *commandQueue;
       DRAMCommand *poppedCMD;
@@ -76,7 +78,7 @@ namespace CasHMC
       DRAMCommand *dataBus;
       unsigned dataCyclesLeft;
       vector<DRAMCommand *> writeDataToSend;
-      vector<unsigned> writeDataCountdown;	
+      vector<unsigned> writeDataCountdown;
   };
 
 }

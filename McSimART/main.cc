@@ -290,12 +290,13 @@ int main(int argc, char * argv[])
       //envp[1] = (char *)(ld_path.c_str());
       //envp[2] = NULL;
 
-      char ** argp = new char * [programs[i].prog_n_argv.size() + 17];
+      char ** argp = new char * [programs[i].prog_n_argv.size() + 18];
       int  curr_argc = 0;
       char port_num_str[10];
       char perc_str[10];
       sprintf(port_num_str, "%d", programs[i].port_num);
       argp[curr_argc++] = (char *)pin_name.c_str();
+      argp[curr_argc++] = (char *) "-ifeellucky"; // for linux kernel higher versions
       //argp[curr_argc++] = (char *)"-separate_memory";
       argp[curr_argc++] = (char *)"-t";
       argp[curr_argc++] = (char *)pintool_name.c_str();

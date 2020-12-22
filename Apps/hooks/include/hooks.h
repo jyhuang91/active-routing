@@ -49,34 +49,11 @@ typedef enum {
   DPEI_ATOMIC
 } eOpcode;
 
-const char * const OpcodeString[] = {
-  "GET",
-  "IADD",
-  "FADD",
-  "DADD",
-  "IMULT",
-  "FMULT",
-  "DMULT",
-  "IFMULT",
-  "IDMULT",
-  "FDMULT",
-  "DIDIV",
-  "DEXP",
-  // PEI
-  "IPEI_DOT",
-  "FPEI_DOT",
-  "DPEI_DOT",
-  "IFPEI_DOT",
-  "IDPEI_DOT",
-  "FDPEI_DOT",
-  "IPEI_ATOMIC",
-  "FPEI_ATOMIC",
-  "DPEI_ATOMIC"
-};
-
+extern const char * const OpcodeString[];
 
 #define CACHELINE_SIZE 64 // Bytes
 #define PEI_GRANULARITY 4 // elements
+#define PAGE_SIZE 4096    // Bytes
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,6 +84,8 @@ void mcsim_skip_instrs_end();
 void mcsim_spinning_begin();
 void mcsim_spinning_end();
 
+void UpdatePage(void *src_addr, uint32_t lines, void *dest_addr, eOpcode op);
+void UpdateRRPage(void *src_addr1, void *src_addr2, void *dest_addr, uint32_t lines, eOpcode op);
 void UpdateRR(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
 void UpdateRI(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
 void UpdateII(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
