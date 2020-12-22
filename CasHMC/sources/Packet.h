@@ -14,11 +14,11 @@
 
 //Packet.h
 
-#include <stdint.h>		//uint64_t
-#include <stdlib.h>		//exit(0)
-#include <iomanip>		//setw()
-#include <iostream> 	//ostream
-#include <sstream>		//stringstream
+#include <stdint.h> //uint64_t
+#include <stdlib.h> //exit(0)
+#include <iomanip>  //setw()
+#include <iostream> //ostream
+#include <sstream>  //stringstream
 
 #include "SimConfig.h"
 #include "TranTrace.h"
@@ -42,14 +42,14 @@ namespace CasHMC
   enum PacketCommandType
   {
     //Request commands
-    WR16=8, WR32, WR48, WR64, WR80, WR96, WR112, WR128, MD_WR, WR256=79, 				//WRITE Requests
-    P_WR16=24, P_WR32, P_WR48, P_WR64, P_WR80, P_WR96, P_WR112, P_WR128, P_WR256=95, 	//POSTED WRITE Requests
-    RD16=48, RD32, RD48, RD64, RD80, RD96, RD112, RD128, RD256=119, MD_RD=40, 			//READ Requests
+    WR16=8, WR32, WR48, WR64, WR80, WR96, WR112, WR128, MD_WR, WR256=79,              //WRITE Requests
+    P_WR16=24, P_WR32, P_WR48, P_WR64, P_WR80, P_WR96, P_WR112, P_WR128, P_WR256=95,  //POSTED WRITE Requests
+    RD16=48, RD32, RD48, RD64, RD80, RD96, RD112, RD128, RD256=119, MD_RD=40,         //READ Requests
     //ATOMICS commands
-    _2ADD8=18, ADD16, P_2ADD8=34, P_ADD16, _2ADDS8R=82, ADDS16R, INC8=80, P_INC8=84, 	//ARITHMETIC ATOMICS
-    XOR16=64, OR16, NOR16, AND16, NAND16, 												//BOOLEAN ATOMICS
-    CASGT8=96, CASLT8, CASGT16, CASLT16, CASEQ8, CASZERO16, EQ16=104, EQ8, 				//COMPARISON ATOMICS
-    BWR=17, P_BWR=33, BWR8R=81, SWAP16=106, 											//BITWISE ATOMICS
+    _2ADD8=18, ADD16, P_2ADD8=34, P_ADD16, _2ADDS8R=82, ADDS16R, INC8=80, P_INC8=84,  //ARITHMETIC ATOMICS
+    XOR16=64, OR16, NOR16, AND16, NAND16, //BOOLEAN ATOMICS
+    CASGT8=96, CASLT8, CASGT16, CASLT16, CASEQ8, CASZERO16, EQ16=104, EQ8, //COMPARISON ATOMICS
+    BWR=17, P_BWR=33, BWR8R=81, SWAP16=106, //BITWISE ATOMICS
     //Flow Commands
     NULL_=0, PRET=1, TRET=2, IRTRY=3,
 
@@ -65,11 +65,11 @@ namespace CasHMC
   {
     public:
       //Functions
-      //Packet(PacketType packet, PacketCommandType cmd, uint64_t addr, unsigned cub, unsigned lng, TranTrace *lat);	//Request Packet
-      //Packet(PacketType packet, PacketCommandType cmd, unsigned tag, unsigned lng, TranTrace *lat);				//Response Packet
+      //Packet(PacketType packet, PacketCommandType cmd, uint64_t addr, unsigned cub, unsigned lng, TranTrace *lat);  //Request Packet
+      //Packet(PacketType packet, PacketCommandType cmd, unsigned tag, unsigned lng, TranTrace *lat); //Response Packet
       Packet(PacketType packet, PacketCommandType cmd, uint64_t addr, unsigned cub, unsigned lng, TranTrace *lat,
-          int src, int dest);	//Request Packet
-      Packet(PacketType packet, PacketCommandType cmd, unsigned tag, unsigned lng, TranTrace *lat, int src, int dest);				//Response Packet
+          int src, int dest); //Request Packet
+      Packet(PacketType packet, PacketCommandType cmd, unsigned tag, unsigned lng, TranTrace *lat, int src, int dest);  //Response Packet
       // support for active router, Jiayi, 01/31
       Packet(PacketType packet, PacketCommandType cmd, uint64_t dest_addr, uint64_t src_addr, unsigned cub, unsigned
           lng, TranTrace *lat, int src, int dest);    // Request Packet
@@ -85,7 +85,7 @@ namespace CasHMC
 
       //Fields
       TranTrace *trace;
-      PacketType packetType;	//Type of transaction (defined above)
+      PacketType packetType;  //Type of transaction (defined above)
       int bufPopDelay;
       uint64_t *DATA;
       uint32_t CRCtable[256];
@@ -109,6 +109,9 @@ namespace CasHMC
 
       // Active Request Packet Fields, Jiayi, 01/31
       uint64_t DESTADRS, SRCADRS1, SRCADRS2;
+      uint32_t LINES;
+      bool     halfPkt1; // for two-operand page-level offloading
+      bool     halfPkt2;
       // Jiayi, debug 02/06
       bool active;
       // Ram & Jiayi, 03/13/17

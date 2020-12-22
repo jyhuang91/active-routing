@@ -72,9 +72,10 @@ namespace CasHMC
     bool     op2_ready;
     bool     ready;
     char     multStageCounter;
+    bool     counted;
 
-    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false) {}
-    OperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false) {}
+    OperandEntry() : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(5), ready(false), counted(false) {}
+    OperandEntry(char initMultStage) : flowID(0), src_addr1(0), op1_ready(false), src_addr2(0), op2_ready(false), multStageCounter(initMultStage), ready(false), counted(false) {}
   };
 
   class CrossbarSwitch : public DualVectorObject<Packet, Packet>
@@ -121,6 +122,11 @@ namespace CasHMC
       uint64_t opbufStalls;
       uint64_t numUpdates;
       uint64_t numOperands;
+
+      int total_ready_operands;
+      int total_results_ready;
+      map<int, long long> ready_operands_hist;
+      map<int, long long> results_ready_hist;
 
       TranStatistic *transtat;
   };

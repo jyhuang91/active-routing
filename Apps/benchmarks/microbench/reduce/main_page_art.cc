@@ -47,17 +47,17 @@ void *do_work(void *args)
   int i_start = start_d;
   int i_stop = stop_d;
 
-  int stride = CACHELINE_SIZE / sizeof(float);
+  int stride = PAGE_SIZE / sizeof(float);
 
   int rr_start = i_start;
   int rr_stop = i_stop;
   uint64_t start_address = (uint64_t) &W[i_start];
-  if (start_address % CACHELINE_SIZE != 0) {
-    rr_start += (CACHELINE_SIZE - start_address % CACHELINE_SIZE) / sizeof(double);
+  if (start_address % PAGE_SIZE != 0) {
+    rr_start += (PAGE_SIZE - start_address % PAGE_SIZE) / sizeof(double);
   }
   uint64_t stop_address = (uint64_t) &W[i_stop];
-  if (stop_address % CACHELINE_SIZE != 0) {
-    rr_stop -= (stop_address % CACHELINE_SIZE) / sizeof(double);
+  if (stop_address % PAGE_SIZE != 0) {
+    rr_stop -= (stop_address % PAGE_SIZE) / sizeof(double);
   }
 
   pthread_barrier_wait(arg->barrier);
@@ -65,29 +65,20 @@ void *do_work(void *args)
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
-  for (v = i_start; v < rr_start; ++v) {
-    UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
-    //uint64_t addr = (uint64_t) &W[v];
-    ////uint32_t base_num = ((addr >> 12) ^ (addr >> 18)) % 4;
-    //uint32_t cube = ((addr >> 32) ^ (addr >> 20)) % 4;
-    //printf("thread %d: II %p, page: %p, cube: %d\n", tid, &W[v], (void *) (addr >> 12), cube);
+  uint32_t lines = 0;
+  if (i_start < rr_start) {
+    lines = (rr_start - i_start) / CACHELINE_SIZE;
+    if (lines == 0) lines = 1;
+    UpdatePage((void *) &W[i_start], lines, &sum, DADD);
   }
+  lines = PAGE_SIZE / CACHELINE_SIZE;
   for (v = rr_start; v < rr_stop; v += stride) {
-    /*mcsim_skip_instrs_begin();
-    local_sum += W[v];
-    mcsim_skip_instrs_end();*/
-    UpdateRR((void *) &W[v], 0, (void *) &sum, DADD);
-    //uint64_t addr = (uint64_t) &W[v];
-    ////uint32_t base_num = ((addr >> 12) ^ (addr >> 18)) % 4;
-    //uint32_t cube = ((addr >> 32) ^ (addr >> 20)) % 4;
-    //printf("thread %d: RR %p, page: %p, cube: %d\n", tid, &W[v], (void *) (addr >> 12), cube);
+    UpdatePage((void *) &W[v], lines, (void *) &sum, DADD);
   }
-  for (; v < i_stop; ++v) {
-    UpdateII((void *) &W[v], 0, (void *) &sum, DADD);
-    //uint64_t addr = (uint64_t) &W[v];
-    ////uint32_t base_num = ((addr >> 12) ^ (addr >> 18)) % 4;
-    //uint32_t cube = ((addr >> 32) ^ (addr >> 20)) % 4;
-    //printf("thread %d: RR %p, page: %p, cube: %d\n", tid, &W[v], (void *) (addr >> 12), cube);
+  if (rr_stop < i_stop) {
+    lines = (i_stop - rr_stop) / CACHELINE_SIZE;
+    if (lines == 0) lines = 1;
+    UpdatePage((void *) &W[v], lines, (void *) &sum, DADD);
   }
   Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
   printf("thread %d sends %d updates\n", tid, i_stop - i_start);
@@ -113,7 +104,7 @@ int main(int args, char **argv)
   pthread_barrier_t barrier;
 
   double *W;
-  double ret = posix_memalign((void **) &W, 64, N * sizeof(double));
+  double ret = posix_memalign((void **) &W, CACHELINE_SIZE, N * sizeof(double));
   if (ret != 0) {
     fprintf(stderr, "Could not allocate memory\n");
     exit(EXIT_FAILURE);
@@ -127,7 +118,7 @@ int main(int args, char **argv)
   sum = 0;
 
   // Synchronization parameters
-  pthread_barrier_init(&barrier, NULL, P); 
+  pthread_barrier_init(&barrier, NULL, P);
   pthread_mutex_init(&lock, NULL);
 
   // Thread arguments
@@ -168,7 +159,7 @@ int main(int args, char **argv)
 
   // Read clock and print time
   clock_gettime(CLOCK_REALTIME, &requestEnd);
-  double accum = ( requestEnd.tv_sec - requestStart.tv_sec ) + 
+  double accum = ( requestEnd.tv_sec - requestStart.tv_sec ) +
     ( requestEnd.tv_nsec - requestStart.tv_nsec ) / BILLION;
   printf( "\nTime:%lf seconds\n", accum );
 

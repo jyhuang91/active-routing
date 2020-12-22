@@ -104,6 +104,7 @@ namespace PinPthread
       uint64_t updtdest;
       uint32_t rlen;
       int32_t  nthreads;  // Jiayi, for gather barrier, 03/31/17
+      uint32_t lines;
   };
 
   class O3Core : public Component
@@ -163,6 +164,8 @@ namespace PinPthread
       bool           display_barrier;
       bool           was_nack;
       bool           mimick_inorder;
+
+      bool kernel_offloading;
 
       std::queue< std::pair<ins_type, uint64_t> > mem_acc;
       O3Queue * o3queue;

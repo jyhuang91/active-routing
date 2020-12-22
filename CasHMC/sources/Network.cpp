@@ -183,7 +183,32 @@ namespace CasHMC
     plotScriptOut.flush();	plotScriptOut.close();
     resultOut.flush();		resultOut.close();
 
-    //Jiayi, 02/28/17
+    // Sum up all the histograms for all the hmcs
+    // Go through each clock cycle. For each cycle, sum all the counts from the cubes
+/*    for (int c = 0; c <= currentClockCycle; c++) {
+      for (int i = 0; i < hmcs.size(); i++) {
+        int hmc_ready_operands = hmcs[i]->ready_operands_counts[c];
+        int hmc_results_ready = hmcs[i]->results_ready_counts[c];
+        int hmc_updates_received = hmcs[i]->updates_received_counts[c];
+
+        if (ready_operands_hist.find(hmc_ready_operands) != ready_operands_hist.end()) {
+          ready_operands_hist[hmc_ready_operands]++;
+        } else {
+          ready_operands_hist[hmc_ready_operands] = 1;
+        }
+        if (results_ready_hist.find(hmc_results_ready) != results_ready_hist.end()) {
+          results_ready_hist[hmc_results_ready]++;
+        } else {
+          results_ready_hist[hmc_results_ready] = 1;
+        }
+        if (updates_received_hist.find(hmc_updates_received) != updates_received_hist.end()) {
+          updates_received_hist[hmc_updates_received]++;
+        } else {
+          updates_received_hist[hmc_updates_received] = 1;
+        }
+      }
+    }
+*/    //Jiayi, 02/28/17
     for (int i = 0; i < hmcConts.size(); ++i) {
       delete hmcConts[i];
     }
@@ -210,12 +235,17 @@ namespace CasHMC
     hmcs.clear();
     hmcLinks.clear();
     allLinks.clear();
-
-    cout << "Network Histogram" << endl;
-    for (map<int, long long>::iterator iter = hist.begin(); iter != hist.end(); iter++) {
-      cout << "Bin: " << iter->first << " freq: " << iter->second << endl;
+/*
+    cout << "NETWORK Histograms" << endl;
+    cout << "Ready Operands Histogram:" << endl;
+    for (map<int, long long>::iterator it = ready_operands_hist.begin(); it != ready_operands_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
     }
-
+    cout << "Results Ready Histogram:" << endl;
+    for (map<int, long long>::iterator it = results_ready_hist.begin(); it != results_ready_hist.end(); it++) {
+      cout << "Bin: " << it->first << " Freq: " << it->second << endl;
+    }
+*/
     outstandRequests.clear();   // Jiayi, 02/07
 
     if (rf) {
@@ -1660,28 +1690,38 @@ namespace CasHMC
       resultOut<<"  └───── Total effec Bandwidth : "<<ALI(7)<<linkEffecBandwidth[i]<<" GB/s"<<endl<<endl;
     }
 
-    resultOut << "  Operand buffer stalls : ";
+    resultOut << "  Operand buffer stalls :";
     totOpbufStalls = 0;
     for (int i = 0; i < nodes; i++) {
       opbufStalls[i] = hmcs[i]->crossbarSwitch->opbufStalls;
       totOpbufStalls += hmcs[i]->crossbarSwitch->opbufStalls;
-      resultOut << "[" << i << "] " << opbufStalls[i] << "  ";
+      resultOut << "  [" << i << "] " << opbufStalls[i];
     }
     resultOut << endl << "  Total operand buffer stalls " << totOpbufStalls << endl << endl;
 
-    resultOut << "  Number of updates : ";
+    resultOut << "  Number of updates :";
     for (int i = 0; i < nodes; i++) {
       numUpdates[i] = hmcs[i]->crossbarSwitch->numUpdates;
-      resultOut << "[" << i << "] " << numUpdates[i] << "  ";
+      resultOut << "  [" << i << "] " << numUpdates[i];
     }
     resultOut << endl << endl;
 
-    resultOut << "  Number of operands : ";
+    resultOut << "  Number of operands in cube :";
     for (int i = 0; i < nodes; i++) {
       numOperands[i] = hmcs[i]->crossbarSwitch->numOperands;
-      resultOut << "[" << i << "] " << numOperands[i] << "  ";
+      resultOut << "  [" << i << "] " << numOperands[i];
     }
     resultOut << endl << endl;
+
+    resultOut << "  Number of operand requests in vault :" << endl;
+    for (int i = 0; i < nodes; i++) {
+      resultOut << "  - Cube " << i << " :";
+      for (int v = 0; v < NUM_VAULTS; v++) {
+        resultOut << "  [" << v << "] " << hmcs[i]->vaultControllers[v]->totalOperandRequests;
+      }
+      resultOut << endl;
+    }
+    resultOut << endl;
   }
 
   //
