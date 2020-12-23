@@ -4,13 +4,13 @@
 // Network.h
 
 //#include "CasHMCWrapper.h"
-#include <time.h>		//time
-#include <sys/stat.h>	//mkdir
-#include <errno.h>		//EEXIST
-#include <unistd.h>		//access()
-#include <sstream>		//stringstream
-#include <fstream>		//ofstream
-#include <vector>		//vector
+#include <time.h>     //time
+#include <sys/stat.h> //mkdir
+#include <errno.h>    //EEXIST
+#include <unistd.h>   //access()
+#include <sstream>    //stringstream
+#include <fstream>    //ofstream
+#include <vector>     //vector
 
 #include "SimConfig.h"
 #include "TranStatistic.h"
@@ -46,9 +46,9 @@ namespace CasHMC
       void Alloc();
       void PrintXbarBuffers();
       void MultiStep(uint64_t cycles);
-    
+
       uint64_t get_tran_addr(Transaction *tran);//pritam added
-	    vector<pair<uint64_t, PacketCommandType> > &get_serv_trans(int cpu_id);//pritam added
+      vector<pair<uint64_t, PacketCommandType> > &get_serv_trans(int cpu_id);//pritam added
       uint64_t get_tran_tag(Transaction *tran) { return tran->transactionID; }//pritam added
 
       //
@@ -66,6 +66,7 @@ namespace CasHMC
       vector<vector<Link *> > hmcLinks;
       vector<HMC *> hmcs;
 
+      map<int, long long> hist;
       map<int, long long> ready_operands_hist;
       int network_ready_operands;
       map<int, long long> results_ready_hist;
