@@ -244,6 +244,7 @@ VOID UpdateRRPageAPI(CONTEXT *context, ADDRINT ip, VOID *a, VOID *b, VOID *c, UI
   uint32_t wlen = 4; // Bytes
   switch (opcode)
   {
+    case FMULT:
     case DMULT:
       rlen = CACHELINE_SIZE;
       wlen = lines;
