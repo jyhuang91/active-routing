@@ -73,10 +73,10 @@ PthreadSim::PthreadSim(uint32_t argc, char** argv) :
     }
   }
 
-  cout << "  -- {" << setw(5) << port_num << "} cmd: ";
+  cout << "  -- {" << setw(5) << port_num << "} cmd:";
   for (uint32_t i = 0; i < argc; i++)
   {
-    cout << argv[i] << " ";
+    cout << " " << argv[i];
   }
   cout << endl;
 

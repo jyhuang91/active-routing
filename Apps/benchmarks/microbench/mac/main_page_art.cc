@@ -15,6 +15,7 @@
 typedef struct
 {
   double*   W;
+  double*   X;
   int       tid;
   int       P;
   int       N;
@@ -35,6 +36,7 @@ void *do_work(void *args)
   volatile thread_arg_t* arg = (thread_arg_t*) args;
   int tid                    = arg->tid;
   double* W              = arg->W;
+  double* X                  = arg->X;
   const int N                = arg->N;
   int v                      = 0;      //variable for current vertex
   double N_real              = N;
@@ -65,24 +67,46 @@ void *do_work(void *args)
   /*mcsim_skip_instrs_begin();
   double local_sum = 0.0;
   mcsim_skip_instrs_end();*/
+
   uint32_t lines = 0;
   if (i_start < rr_start) {
     lines = (rr_start - i_start) / CACHELINE_SIZE;
     if (lines == 0) lines = 1;
-    UpdatePage((void *) &W[i_start], lines, &sum, DADD);
+    UpdateRRPage((void *) &W[i_start], (void *) &X[i_start], (void *) &sum, lines, DMULT);
+    //uint64_t addr1 = (uint64_t) &W[i_start];
+    //uint32_t cube1 = ((addr1 >> 32) ^ (addr1 >> 20)) % 4;
+    //uint64_t addr2 = (uint64_t) &X[i_start];
+    //uint32_t cube2 = ((addr2 >> 32) ^ (addr2 >> 20)) % 4;
+    //fprintf(stderr, "thread %d: RRPage phase-I W (%p page %p cube %d) and X (%p page %p cube %d)\n",
+    //    tid, &W[i_start], (void *) (addr1 >> 12), cube1, &X[i_start], (void *) (addr2 >> 12), cube2);
   }
   lines = PAGE_SIZE / CACHELINE_SIZE;
   for (v = rr_start; v < rr_stop; v += stride) {
-    UpdatePage((void *) &W[v], lines, (void *) &sum, DADD);
+    /*mcsim_skip_instrs_begin();
+    local_sum += W[v] * X[v];
+    mcsim_skip_instrs_end();*/
+    UpdateRRPage((void *) &W[v], (void *) &X[v], (void *) &sum, lines, DMULT);
+    //uint64_t addr1 = (uint64_t) &W[v];
+    //uint32_t cube1 = ((addr1 >> 32) ^ (addr1 >> 20)) % 4;
+    //uint64_t addr2 = (uint64_t) &X[v];
+    //uint32_t cube2 = ((addr2 >> 32) ^ (addr2 >> 20)) % 4;
+    //fprintf(stderr, "thread %d: RRPage phase-II W (%p page %p cube %d) and X (%p page %p cube %d)\n",
+    //    tid, &W[v], (void *) (addr1 >> 12), cube1, &X[v], (void *) (addr2 >> 12), cube2);
   }
   if (rr_stop < i_stop) {
     lines = (i_stop - rr_stop) / CACHELINE_SIZE;
     if (lines == 0) lines = 1;
-    UpdatePage((void *) &W[v], lines, (void *) &sum, DADD);
+    UpdateRRPage((void *) &W[v], (void *) &X[v], (void *) &sum, lines, DMULT);
+    //uint64_t addr1 = (uint64_t) &W[v];
+    //uint32_t cube1 = ((addr1 >> 32) ^ (addr1 >> 20)) % 4;
+    //uint64_t addr2 = (uint64_t) &X[v];
+    //uint32_t cube2 = ((addr2 >> 32) ^ (addr2 >> 20)) % 4;
+    //fprintf(stderr, "thread %d: RRPage phase-III W (%p page %p cube %d) and X (%p page %p cube %d)\n",
+    //    tid, &W[v], (void *) (addr1 >> 12), cube1, &X[v], (void *) (addr2 >> 12), cube2);
   }
   Gather((void *) &sum, (void *) &sum, (void *) &sum, arg->P);
-  printf("thread %d sends %d updates\n", tid, i_stop - i_start);
-  pthread_barrier_wait(arg->barrier);
+  //printf("thread %d sends %d updates\n", tid, i_stop - i_start);
+  //pthread_barrier_wait(arg->barrier);
 
   /*mcsim_skip_instrs_begin();
   pthread_mutex_lock(&lock);
@@ -103,19 +127,27 @@ int main(int args, char **argv)
 
   pthread_barrier_t barrier;
 
-  double *W;
-  double ret = posix_memalign((void **) &W, CACHELINE_SIZE, N * sizeof(double));
-  if (ret != 0) {
-    fprintf(stderr, "Could not allocate memory\n");
+  double *W, *X;
+
+  if (posix_memalign((void **) &W, PAGE_SIZE, N * sizeof(double))) {
+    fprintf(stderr, "Could not allocate memory for W\n");
     exit(EXIT_FAILURE);
   }
+
+  if (posix_memalign((void **) &X, PAGE_SIZE, N * sizeof(double))) {
+    fprintf(stderr, "Could not allocate memory for X\n");
+    exit(EXIT_FAILURE);
+  }
+
+  fprintf(stderr, "Allocated page aligned memory for W %p and X %p\n", W, X);
+
+  sum = 0;
 
   // Memory initialization
   //for (int i = 0; i < N; ++i) {
   //  W[i] = 1;
+  //  X[i] = 1;
   //}
-
-  sum = 0;
 
   // Synchronization parameters
   pthread_barrier_init(&barrier, NULL, P);
@@ -125,6 +157,7 @@ int main(int args, char **argv)
   for (int j = 0; j < P; ++j)
   {
     thread_arg[j].W       = W;
+    thread_arg[j].X       = X;
     thread_arg[j].tid     = j;
     thread_arg[j].P       = P;
     thread_arg[j].N       = N;

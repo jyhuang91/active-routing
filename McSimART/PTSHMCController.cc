@@ -301,7 +301,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
               mcsim->hmcs[i]->tran_buf.insert(make_pair(event_time, newTran));
             }
 #ifdef DEBUG_GATHER
-            cout << " hmc" << i << "(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : " ");
+            cout << " hmc" << i << "-(" << hex << flow_id << ")" << (send_dummy_gather == true ? "-dummy " : "");
 #endif
           }
         }
@@ -330,8 +330,8 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       active_forests[lqele->dest_addr][num] = true;
       dest_cube = get_active_cube_num(lqele->src_addr1);
       newTran = new Transaction(ACTIVE_ADD, flow_id, lqele->src_addr1, data_size, hmc_net, src_cube, dest_cube);
-      newTran->src_address2 = lqele->src_addr2;
       newTran->address = lqele->dest_addr;
+      newTran->lines = lqele->lines;
       assert(lqele->nthreads == -1);
       break;
     case ACTIVE_MULT:
@@ -345,6 +345,7 @@ void PTSHMCController::add_req_event(uint64_t event_time, LocalQueueElement * lq
       newTran = new Transaction(ACTIVE_MULT, flow_id, lqele->src_addr1, lqele->src_addr2, data_size,
           hmc_net, src_cube, dest_cube1, dest_cube2);
       newTran->address = lqele->dest_addr;
+      newTran->lines = lqele->lines;
       assert(lqele->nthreads == -1);
       break;
 

@@ -669,7 +669,8 @@ namespace CasHMC
                   flowTable[dest_addr].parent = cubeID; // for now
                   flowTable[dest_addr].req_count = 1;
 #if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
-                  cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << xbar->cubeID << endl;
+                  cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube "
+                    << cubeID << " vault " << vaultContID << endl;
 #endif
                 } else {
                   assert(it->second.parent == cubeID);
@@ -681,8 +682,8 @@ namespace CasHMC
                 operandEntry.flowID = dest_addr;
                 operandEntry.src_addr1 = downBuffers[i]->SRCADRS1; // only use the first operand
 #ifdef DEBUG_UPDATE
-                cout << "Packet " << *curDownBuffers[i] << " reserves operand buffer " << operand_buf_id
-                  << " at cube " << xbar->cubeID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
+                cout << "Packet " << *downBuffers[i] << " reserves operand buffer " << operand_buf_id
+                  << " at cube " << cubeID << " vault " << vaultContID << " with operand addr " << hex << operandEntry.src_addr1 << dec << endl;
 #endif
                 int tempLNG = downBuffers[i]->LNG;
                 assert(downBuffers[i]->SRCADRS1 != 0);
