@@ -2,6 +2,31 @@
 
 #include <stdio.h>
 
+const char * const OpcodeString[] = {
+  "GET",
+  "IADD",
+  "FADD",
+  "DADD",
+  "IMULT",
+  "FMULT",
+  "DMULT",
+  "IFMULT",
+  "IDMULT",
+  "FDMULT",
+  "DIDIV",
+  "DEXP",
+  // PEI
+  "IPEI_DOT",
+  "FPEI_DOT",
+  "DPEI_DOT",
+  "IFPEI_DOT",
+  "IDPEI_DOT",
+  "FDPEI_DOT",
+  "IPEI_ATOMIC",
+  "FPEI_ATOMIC",
+  "DPEI_ATOMIC"
+};
+
 void roi_begin()
 {
   printf("[" HOOKS_STR "] ROI begin\n");
@@ -44,6 +69,11 @@ void mcsim_spinning_end()
 }
 
 void UpdatePage(void *src_addr, uint32_t lines, void *dest_addr, eOpcode op)
+{
+  //magic_op(MAGIC_OP_UPDATE);
+}
+
+void UpdateRRPage(void *src_addr1, void *src_addr2, void *dest_addr, uint32_t lines, eOpcode op)
 {
   //magic_op(MAGIC_OP_UPDATE);
 }

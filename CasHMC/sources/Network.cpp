@@ -2,11 +2,11 @@
 
 using namespace std;
 
-extern long numSimCycles;				//The number of CPU cycles to be simulated
-extern string traceType;				//Trace type ('random' or 'file')
-extern double memUtil;					//Frequency of requests - 0.0 = no requests, 1.0 = as fast as possible
-extern double rwRatio;					//(%) The percentage of reads in request stream
-extern string traceFileName;			//Trace file name
+extern long numSimCycles;     //The number of CPU cycles to be simulated
+extern string traceType;      //Trace type ('random' or 'file')
+extern double memUtil;        //Frequency of requests - 0.0 = no requests, 1.0 = as fast as possible
+extern double rwRatio;        //(%) The percentage of reads in request stream
+extern string traceFileName;  //Trace file name
 
 int gDim = -1;
 double gCpuClkPeriod = 0;
@@ -37,7 +37,7 @@ namespace CasHMC
     computeFinishCycle = 0;
 
     //Check CPU clock cycle and link speed
-    if(gCpuClkPeriod < linkPeriod) {	//Check CPU clock cycle and link speed
+    if(gCpuClkPeriod < linkPeriod) {  //Check CPU clock cycle and link speed
       ERROR(" == Error - WRONG CPU clock cycle or link speed (gCpuClkPeriod should be bigger than (1/LINK_SPEED))");
       ERROR(" == Error - gCpuClkPeriod : "<<gCpuClkPeriod<<"  1/LINK_SPEED : "<<linkPeriod);
       exit(0);
@@ -103,7 +103,7 @@ namespace CasHMC
       logName += temp_vn.str();
       logName += "_setting.log";
 
-      if(access(logName.c_str(), 0) == -1)	break;
+      if(access(logName.c_str(), 0) == -1)  break;
       else {
         logName.erase(logName.find("_no"));
         temp_vn.str( string() );
@@ -113,7 +113,7 @@ namespace CasHMC
     }
     logName.erase(logName.find("_no"));
     cout.setf(ios::left);
-    cout<<endl<<"   === Simulation start === "<<endl;
+    cout<<endl<<"   === Simulation start ==="<<endl;
 
     if(BANDWIDTH_PLOT) {
       hmcTransmitSizeTemp = 0;
@@ -1550,7 +1550,7 @@ namespace CasHMC
     }
 
     resultOut.open(resName.c_str());
-    cout<<"\n   === Simulation finished  ( CPU clk:"<<currentClockCycle<<" ) ===   "<<endl;
+    cout<<"\n   === Simulation finished  ( CPU clk:"<<currentClockCycle<<" ) ==="<<endl;
     cout<<"  [ "<<resName<<" ] is generated"<<endl<<endl;
     //cout << "sim compute time: " << computeFinishCycle << endl;
 

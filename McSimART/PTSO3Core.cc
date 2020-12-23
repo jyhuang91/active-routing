@@ -398,6 +398,8 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         o3rob_entry.updtdest   = o3queue_entry.waddr;
         o3rob_entry.rlen       = o3queue_entry.rlen;
         o3rob_entry.nthreads   = (o3queue_entry.type == ins_art_get) ? o3queue_entry.wlen : -1;  // Jiayi, 03/31/17
+        o3rob_entry.lines      = (o3queue_entry.type == ins_art_add || o3queue_entry.type == ins_art_mult) ?
+                                 o3queue_entry.wlen : 0;
         instr_dep              = rob_idx;
         rob_idx = (rob_idx + 1) % o3rob_max_size;
         o3rob_size++;
@@ -665,6 +667,7 @@ uint32_t O3Core::process_event(uint64_t curr_time)
         lqe->src_addr2 = o3rob_entry.updtsrc2;
         lqe->dest_addr = o3rob_entry.updtdest;
         lqe->rlen = o3rob_entry.rlen;
+        lqe->lines = o3rob_entry.lines;
         o3rob_entry.ready_time = curr_time + process_interval;
         //geq->add_event(o3rob_entry.ready_time, this); //cache will add the event on response
         lqe->type = (o3rob_entry.type == ins_art_get) ? et_art_get :
@@ -740,6 +743,7 @@ uint32_t O3Core::process_event(uint64_t curr_time)
           twin_lqe->src_addr2 = o3rob_entry.updtsrc2;
           twin_lqe->dest_addr = o3rob_entry.updtdest;
           twin_lqe->rlen = o3rob_entry.rlen;
+          twin_lqe->lines = o3rob_entry.lines;
           twin_lqe->type = et_art_mult;
           twin_lqe->nthreads = o3rob_entry.nthreads;
           twin_lqe->twin_lqe1 = lqe;

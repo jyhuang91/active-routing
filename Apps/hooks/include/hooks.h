@@ -49,6 +49,8 @@ typedef enum {
   DPEI_ATOMIC
 } eOpcode;
 
+extern const char * const OpcodeString[];
+
 #define CACHELINE_SIZE 64 // Bytes
 #define PEI_GRANULARITY 4 // elements
 #define PAGE_SIZE 4096    // Bytes
@@ -83,6 +85,7 @@ void mcsim_spinning_begin();
 void mcsim_spinning_end();
 
 void UpdatePage(void *src_addr, uint32_t lines, void *dest_addr, eOpcode op);
+void UpdateRRPage(void *src_addr1, void *src_addr2, void *dest_addr, uint32_t lines, eOpcode op);
 void UpdateRR(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
 void UpdateRI(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
 void UpdateII(void *src_addr1, void *src_addr2, void *dest_addr, eOpcode op);
