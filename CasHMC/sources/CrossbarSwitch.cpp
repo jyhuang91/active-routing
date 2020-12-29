@@ -337,12 +337,11 @@ namespace CasHMC
                     map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                     int link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);
                     int parent_cube = neighborCubeID[link];
+                    flowTable[dest_addr].vault_list[vaultMap] = true;
                     if (it == flowTable.end()) {
-                      cout << "CUBE " << cubeID << " VC " << vaultMap << " ADD Flow " << hex << dest_addr << dec << endl;
                       flowTable.insert(make_pair(dest_addr, FlowEntry(ADD)));
                       flowTable[dest_addr].parent = parent_cube;
                       flowTable[dest_addr].req_count = 1;
-                      flowTable[dest_addr].vault = vaultMap;
 #if defined(DEBUG_FLOW) || defined(DEBUG_UPDATE)
                       cout << "Active-Routing (flow: " << hex << dest_addr << dec << "): reserve an entry for Active target at cube " << cubeID << endl;
 #endif
@@ -549,7 +548,6 @@ namespace CasHMC
                 }
                 else if (curDownBuffers[i]->CMD == ACT_GET) {
                   uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
-                  cout << "ACT_GET to cube " << curDownBuffers[i]->DESTCUB << " headed for vault " << flowTable[dest_addr].vault << " flow " << hex << dest_addr << dec << " Packet type " << curDownBuffers[i]->CMD << endl;
                   // Jiayi, force the ordering for gather after update, 07/02/17
                   bool is_inorder = true;
                   for (int j = 0; j < i; j++) {
@@ -621,10 +619,11 @@ namespace CasHMC
 #endif
                     // mark the g flag to indicate gather request arrives
                     flowTable[dest_addr].g_flag = true;
-                    // Also send the ACT_GET packet to the vault controller...
-                    if (flowTable[dest_addr].opcode == ADD && flowTable[dest_addr].vault != 0) {
-                      cout << "Passing " << curDownBuffers[i]->CMD << " packet to VC " << flowTable[dest_addr].vault << endl;
-                      downBufferDest[flowTable[dest_addr].vault]->ReceiveDown(curDownBuffers[i]);
+                    // Also send the ACT_GET packet to the vault controllers...
+                    for (int j = 0; j < NUM_VAULTS; j++) {
+                      if (flowTable[dest_addr].vault_list[j]) {
+                        downBufferDest[j]->ReceiveDown(curDownBuffers[i]);
+                      }
                     }
                     int pktLNG = curDownBuffers[i]->LNG;
                     //delete curDownBuffers[i];

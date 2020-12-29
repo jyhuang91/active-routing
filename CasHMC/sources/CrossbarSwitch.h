@@ -49,18 +49,24 @@ namespace CasHMC
     int      children_count[NUM_LINKS]; // number of updates sent to children
     bool     children_gflag[NUM_LINKS];
     bool     g_flag;                    // flag indicating gather command received or not
-    unsigned vault;											// ARE has to remember which vault to send GET to
+    bool     vault_list[32/*NUM_VAULTS*/];		// which vaults are working in this flow
 
-    FlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false), vault(0) {
+    FlowEntry() : opcode(INVALID), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
       for (int i = 0; i < NUM_LINKS; i++) {
         children_count[i] = 0;
         children_gflag[i] = false;
       }
+      for (int i = 0; i < 32/*NUM_VAULTS*/; i++) {
+        vault_list[i] = false;
+      }
     }
-    FlowEntry(Opcode op) : opcode(op), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false), vault(0) {
+    FlowEntry(Opcode op) : opcode(op), result(0), req_count(0), rep_count(0), parent(-1), g_flag(false) {
       for (int i = 0; i < NUM_LINKS; i++) {
         children_count[i] = 0;
         children_gflag[i] = false;
+      }
+      for (int i = 0; i < 32/*NUM_VAULTS*/; i++) {
+        vault_list[i] = false;
       }
     }
   };
