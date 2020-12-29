@@ -16,9 +16,12 @@
 
 #include <stdint.h>		//uint64_t
 #include <vector>		//vector
+#include <map>      // map
 #include <math.h>		//ceil()
+#include <deque>
 
 #include "DualVectorObject.h"
+#include "CrossbarSwitch.h"		// for OperandEntry and FlowEntry, for now
 #include "SimConfig.h"
 #include "DRAMConfig.h"
 #include "DRAMCommand.h"
@@ -50,7 +53,16 @@ namespace CasHMC
       void PrintState();
       void PrintBuffers();
 
-      uint64_t totalOperandRequests;
+      // Extension for vault-level parallelism:
+      map<FlowID, FlowEntry> flowTable;
+      vector<OperandEntry> operandBuffers;
+      deque<int> freeOperandBufIDs;
+      int operandBufSize;
+      int multPipeOccupancy;
+      int numMultStages;
+      uint64_t opbufStalls;
+      uint64_t numUpdates;
+      uint64_t numOperands;
 
       //
       //Fields

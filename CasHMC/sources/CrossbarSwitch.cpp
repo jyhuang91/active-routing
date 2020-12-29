@@ -19,7 +19,7 @@ namespace CasHMC
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_,unsigned id_, RoutingFunction *rf_ = NULL):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF), cubeID(id_), rf(rf_),
     operandBufSize(MAX_OPERAND_BUF), opbufStalls(0), numUpdates(0), numOperands(0),
-    numMultStages(5), multPipeOccupancy(0)
+    numMultStages(5), multPipeOccupancy(0), numAdds(0)
   {
     classID << cubeID;
     header = "        (CS";
@@ -50,7 +50,7 @@ namespace CasHMC
 
   CrossbarSwitch::CrossbarSwitch(ofstream &debugOut_, ofstream &stateOut_):
     DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_CROSS_BUF, MAX_CROSS_BUF),
-    opbufStalls(0), numUpdates(0), numOperands(0)
+    opbufStalls(0), numUpdates(0), numOperands(0), numAdds(0)
   {
     header = "        (CS)";
 
@@ -75,6 +75,9 @@ namespace CasHMC
 
     rf = NULL;
     neighborCubeID.clear();
+
+		if (numAdds > 0)
+			cout << "CUBE " << cubeID << " did " << numAdds << " ADDs with " << numOperands << " Operands" << endl;
 
     for (int l = 0; l < NUM_LINKS+1; l++) {
       delete inputBuffers[l];
@@ -327,6 +330,9 @@ namespace CasHMC
 #endif
                     numOperands++;
                     numUpdates++;
+										if (curDownBuffers[i]->CMD == ACT_ADD) {
+											numAdds++;
+										}
                     uint64_t dest_addr = curDownBuffers[i]->DESTADRS;
                     map<FlowID, FlowEntry>::iterator it = flowTable.find(dest_addr);
                     int link = rf->findNextLink(inServiceLink, cubeID, curDownBuffers[i]->SRCCUB, true);

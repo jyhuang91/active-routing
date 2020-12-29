@@ -110,6 +110,7 @@ namespace CasHMC
       int operandBufSize;
       int multPipeOccupancy;
       int numMultStages;
+      int numAdds;
 
       map<int, long long> hist;
 
