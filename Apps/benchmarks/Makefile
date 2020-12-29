@@ -4,6 +4,7 @@ all:
 	@$(MAKE) -C baseline
 	@$(MAKE) -C naive_art
 	@$(MAKE) -C active_routing
+	@$(MAKE) -C page_art
 	@$(MAKE) -C pei
 	@$(MAKE) -C microbench
 
