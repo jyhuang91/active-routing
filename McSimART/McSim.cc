@@ -222,8 +222,10 @@ McSim::McSim(PthreadTimingSimulator * pts_)
     (art_type == "address")          ? art_addr :
     (art_type == "threadid")         ? art_tid : art_addr;
 
+  bool vlp = pts->get_param_bool("pts.vault_level_parallelism", false);
+
   double cpu_clk = 1.0 / (double) core_frequency; // unit in ns
-  hmc_net = Network::New(net_dim, hmc_topology, benchname, cpu_clk);
+  hmc_net = Network::New(net_dim, hmc_topology, benchname, cpu_clk, vlp);
 
   // for stats
   if (use_o3core)
@@ -989,7 +991,7 @@ pair<uint32_t, uint64_t> McSim::resume_simulation(bool must_switch)
   {
     //cout.setf(left); cout.setfill(' ');
     num_instrs_printed_last_time = num_fetched_instrs / print_interval;
-    cout << "  -- [" << dec << setw(12) << global_q->curr_time << "]: " 
+    cout << "  -- [" << dec << setw(12) << global_q->curr_time << "]: "
       << setw(10) << num_fetched_instrs << " instrs so far,";
 
     if (global_q->curr_time > curr_time_last)
@@ -1225,7 +1227,7 @@ uint32_t McSim::add_instruction(
     uint64_t raddr,
     uint64_t raddr2,
     UINT32   rlen,
-    uint64_t ip, 
+    uint64_t ip,
     uint32_t category,
     bool     isbranch,
     bool     isbranchtaken,
@@ -1264,7 +1266,7 @@ uint32_t McSim::add_instruction(
       (isbranch && !isbranchtaken)       ? ins_branch_not_taken :
       (category == XED_CATEGORY_X87_ALU || category == XED_CATEGORY_SSE) ? ins_x87 :  // treat an SSE op as an X87 op
       (islock == true)                   ? ins_lock :
-      (isunlock == true)                 ? ins_unlock : 
+      (isunlock == true)                 ? ins_unlock :
       (isbarrier == true)                ? ins_barrier : no_mem;
 
     o3core->num_instrs++;
@@ -1300,7 +1302,7 @@ uint32_t McSim::add_instruction(
     o3core->o3queue_size++;
 
     if ((raddr != 0 && !is_race_free_application && !o3core->is_private(raddr)) ||
-        (raddr != 0 && !is_race_free_application && !o3core->is_private(raddr2)) || 
+        (raddr != 0 && !is_race_free_application && !o3core->is_private(raddr2)) ||
         (waddr != 0 && !is_race_free_application && !o3core->is_private(waddr)))
     {
       num_available_slot = 0;
@@ -1339,7 +1341,7 @@ uint32_t McSim::add_instruction(
       (isbranch && !isbranchtaken)       ? ins_branch_not_taken :
       (category == XED_CATEGORY_X87_ALU || category == XED_CATEGORY_SSE) ? ins_x87 :  // treat an SSE op as an X87 op
       (islock == true)                   ? ins_lock :
-      (isunlock == true)                 ? ins_unlock : 
+      (isunlock == true)                 ? ins_unlock :
       (isbarrier == true)                ? ins_barrier : no_mem;
 
     hthread->num_call_ops += (category == XED_CATEGORY_CALL) ? 1 : 0;
@@ -1369,7 +1371,7 @@ uint32_t McSim::add_instruction(
         raddr += sizeof(uint64_t);
         if (raddr2)
         {
-          if (!is_race_free_application && !hthread->is_private(raddr2)) num_available_slot = 0; 
+          if (!is_race_free_application && !hthread->is_private(raddr2)) num_available_slot = 0;
           hthread->mem_acc.push(std::pair<ins_type, uint64_t>(mem_rd, raddr2));
           raddr2 += sizeof(uint64_t);
         }
@@ -1393,7 +1395,7 @@ uint32_t McSim::add_instruction(
       }
     }
 
-    num_available_slot = ((max_acc_queue_size <= hthread->mem_acc.size()) ? 0 : 
+    num_available_slot = ((max_acc_queue_size <= hthread->mem_acc.size()) ? 0 :
         (max_acc_queue_size - hthread->mem_acc.size()));
 
   }
@@ -1472,7 +1474,7 @@ void McSim::show_l2_cache_summary()
   num_cache_lines = num_i_cache_lines + num_e_cache_lines +
     num_s_cache_lines + num_m_cache_lines + num_tr_cache_lines;
 
-  cout << " L2$ (i,e,s,m,tr) ratio=(" 
+  cout << " L2$ (i,e,s,m,tr) ratio=("
     << setiosflags(ios::fixed) << setw(4) << 1000 * num_i_cache_lines  / num_cache_lines << ", "
     << setiosflags(ios::fixed) << setw(4) << 1000 * num_e_cache_lines  / num_cache_lines << ", "
     << setiosflags(ios::fixed) << setw(4) << 1000 * num_s_cache_lines  / num_cache_lines << ", "
@@ -1487,13 +1489,13 @@ void McSim::show_l2_cache_summary()
   }
   else
   {
-    cout << setiosflags(ios::fixed) 
+    cout << setiosflags(ios::fixed)
       << (cache_line_life_time - cache_line_life_time_last_time) /
       ((num_destroyed_cache_lines - num_destroyed_cache_lines_last_time) * l2s[0]->process_interval) << ", "
       << "avg time bet last acc to $ destroy = "
       << setiosflags(ios::fixed)
       << (time_between_last_access_and_cache_destroy - time_between_last_access_and_cache_destroy_last_time) /
-      ((num_destroyed_cache_lines - num_destroyed_cache_lines_last_time) * l2s[0]->process_interval) 
+      ((num_destroyed_cache_lines - num_destroyed_cache_lines_last_time) * l2s[0]->process_interval)
       << " L2$ cycles" << endl;
   }*/
 }

@@ -13,6 +13,7 @@ double gCpuClkPeriod = 0;
 TOPOLOGY gTopology = DFLY;
 int gHmcNumLinks = -1;
 int gTotalNumLinks = -1;
+bool gVLP = false;
 
 
 namespace CasHMC
@@ -177,11 +178,17 @@ namespace CasHMC
     cout << " ## VLTCtrller DRAM_rd_bw:"<<(double)VaultController::DRAM_rd_data/elapsedTime/(1<<30)<< "GBps DRAM_wr_bw:"<<(double)VaultController::DRAM_wr_data/elapsedTime/(1<<30)<<"GBps DRAM_act_bw:" << (double)VaultController::DRAM_act_data/elapsedTime/(1<<30)<<"GBps"<<endl;
     PrintEpochStatistic();
     PrintFinalStatistic();
-    debugOut.flush();		debugOut.close();
-    stateOut.flush();		stateOut.close();
-    plotDataOut.flush();	plotDataOut.close();
-    plotScriptOut.flush();	plotScriptOut.close();
-    resultOut.flush();		resultOut.close();
+
+    debugOut.flush();
+    debugOut.close();
+    stateOut.flush();
+    stateOut.close();
+    plotDataOut.flush();
+    plotDataOut.close();
+    plotScriptOut.flush();
+    plotScriptOut.close();
+    resultOut.flush();
+    resultOut.close();
 
     // Sum up all the histograms for all the hmcs
     // Go through each clock cycle. For each cycle, sum all the counts from the cubes
@@ -277,7 +284,7 @@ namespace CasHMC
     }
   }
 
-  Network *Network::New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk)
+  Network *Network::New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk, bool vlp)
   {
     // initialize static and global variables
     gDim = dimension;
@@ -310,6 +317,7 @@ namespace CasHMC
     }
     gHmcNumLinks = nodes * 4;
     gTotalNumLinks = gHmcNumLinks + ncpus;
+    gVLP = vlp;
 
     Network *result;
     switch (topology) {
@@ -802,10 +810,12 @@ namespace CasHMC
       cout<<"\n   === Simulation ["<<currentClockCycle/LOG_EPOCH<<"] epoch starts  ( CPU clk:"<<currentClockCycle<<" ) ===   "<<endl;
       PrintEpochStatistic();
       if(DEBUG_SIM) {
-        debugOut.flush();	debugOut.close();
+        debugOut.flush();
+        debugOut.close();
       }
       if(STATE_SIM) {
-        stateOut.flush();	stateOut.close();
+        stateOut.flush();
+        stateOut.close();
       }
       if(DEBUG_SIM || STATE_SIM) {
         PrintEpochHeader();
@@ -1065,7 +1075,7 @@ namespace CasHMC
         temp_vn << logNum;
         debName += temp_vn.str();
         debName += "].log";
-        if(access(debName.c_str(), 0)==-1)		break;
+        if(access(debName.c_str(), 0)==-1)  break;
         else {
           debName.erase(debName.find("["));
           logNum++;
@@ -1088,7 +1098,7 @@ namespace CasHMC
           temp_vn_st << logNum;
           staName += temp_vn_st.str();
           staName += "].log";
-          if(access(staName.c_str(), 0)==-1)		break;
+          if(access(staName.c_str(), 0)==-1)  break;
           else {
             staName.erase(staName.find("["));
             logNum++;
@@ -1161,7 +1171,7 @@ namespace CasHMC
         logName += temp_vn.str();
         logName += "_setting.log";
 
-        if(access(logName.c_str(), 0) == -1)	break;
+        if(access(logName.c_str(), 0) == -1)  break;
         else {
           logName.erase(logName.find("_no"));
           temp_vn.str( string() );
@@ -1228,7 +1238,7 @@ namespace CasHMC
     settingOut<<ALI(36)<<" Address mapping (Max block size) : "<<ADDRESS_MAPPING<<endl;
     settingOut<<ALI(36)<<" Vault controller max buffer size : "<<MAX_VLT_BUF<<endl;
     settingOut<<ALI(36)<<" Command queue max size : "<<MAX_CMD_QUE<<endl;
-    settingOut<<ALI(36)<<" Command queue structure : "<<(QUE_PER_BANK ? "Bank-level command queue (Bank-Level parallelism)" 														: "Vault-level command queue (Non bank-Level parallelism)")<<endl;
+    settingOut<<ALI(36)<<" Command queue structure : "<<(QUE_PER_BANK ? "Bank-level command queue (Bank-Level parallelism)" : "Vault-level command queue (Non bank-Level parallelism)")<<endl;
     settingOut<<ALI(36)<<" Memory scheduling : "<<(OPEN_PAGE ? "open page policy" : "close page policy" )<<endl;
     settingOut<<ALI(36)<<" The maximum row buffer accesses : "<<MAX_ROW_ACCESSES<<endl;
     settingOut<<ALI(36)<<" Power-down mode : "<<(USE_LOW_POWER ? "Enable" : "Disable")<<endl;
@@ -1257,7 +1267,8 @@ namespace CasHMC
     settingOut<<"  WL   [clk] : "<<WL<<endl;
     settingOut<<"  BL   [clk] : "<<BL<<endl;
 
-    settingOut.flush();		settingOut.close();
+    settingOut.flush();
+    settingOut.close();
   }
 
   //
@@ -1313,13 +1324,13 @@ namespace CasHMC
     unsigned epochError = 0;
 
     for(int i=0; i<gTotalNumLinks; i++) {
-      epochReads	+= readPerLink[i];
-      epochWrites	+= writePerLink[i];
+      epochReads  += readPerLink[i];
+      epochWrites += writePerLink[i];
       epochAtomics+= atomicPerLink[i];
-      epochReq	+= reqPerLink[i];
-      epochRes	+= resPerLink[i];
-      epochFlow	+= flowPerLink[i];
-      epochError	+= errorPerLink[i];
+      epochReq    += reqPerLink[i];
+      epochRes    += resPerLink[i];
+      epochFlow   += flowPerLink[i];
+      epochError  += errorPerLink[i];
     }
 
     //Ttransaction traced latency statistic calculation
@@ -1525,13 +1536,13 @@ namespace CasHMC
     errorRetrySum = 0;
 
     for(int i=0; i<gTotalNumLinks; i++) {
-      totalReadPerLink[i] += readPerLink[i];		readPerLink[i] = 0;
-      totalWritePerLink[i] += writePerLink[i];	writePerLink[i] = 0;
-      totalAtomicPerLink[i] += atomicPerLink[i];	atomicPerLink[i] = 0;
-      totalReqPerLink[i] += reqPerLink[i];		reqPerLink[i] = 0;
-      totalResPerLink[i] += resPerLink[i];		resPerLink[i] = 0;
-      totalFlowPerLink[i] += flowPerLink[i];		flowPerLink[i] = 0;
-      totalErrorPerLink[i] += errorPerLink[i];	errorPerLink[i] = 0;
+      totalReadPerLink[i]   += readPerLink[i];  readPerLink[i] = 0;
+      totalWritePerLink[i]  += writePerLink[i]; writePerLink[i] = 0;
+      totalAtomicPerLink[i] += atomicPerLink[i];atomicPerLink[i] = 0;
+      totalReqPerLink[i]    += reqPerLink[i];   reqPerLink[i] = 0;
+      totalResPerLink[i]    += resPerLink[i];   resPerLink[i] = 0;
+      totalFlowPerLink[i]   += flowPerLink[i];  flowPerLink[i] = 0;
+      totalErrorPerLink[i]  += errorPerLink[i]; errorPerLink[i] = 0;
     }
 
     totalTranFullMax = max(tranFullMax, totalTranFullMax);
@@ -1629,13 +1640,13 @@ namespace CasHMC
     uint64_t epochFlow = 0;
     unsigned epochError = 0;
     for(int i=0; i<gTotalNumLinks; i++) {
-      epochReads	+= totalReadPerLink[i];
-      epochWrites	+= totalWritePerLink[i];
+      epochReads  += totalReadPerLink[i];
+      epochWrites += totalWritePerLink[i];
       epochAtomics+= totalAtomicPerLink[i];
-      epochReq	+= totalReqPerLink[i];
-      epochRes	+= totalResPerLink[i];
-      epochFlow	+= totalFlowPerLink[i];
-      epochError	+= totalErrorPerLink[i];
+      epochReq    += totalReqPerLink[i];
+      epochRes    += totalResPerLink[i];
+      epochFlow   += totalFlowPerLink[i];
+      epochError  += totalErrorPerLink[i];
     }
 
 

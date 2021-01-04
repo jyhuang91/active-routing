@@ -32,7 +32,7 @@ namespace CasHMC
       //
       Network(int dimension, string benchname);
       virtual ~Network();
-      static Network *New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk = 0.5); // cpu_clk in ns
+      static Network *New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk = 0.5, bool vlp = false); // cpu_clk in ns
       bool ReceiveTran(TransactionType tranType, uint64_t addr, unsigned size, int cpu_id);
       bool ReceiveTran(Transaction *tran, int cpu_id);
       void Update();
@@ -86,6 +86,7 @@ namespace CasHMC
       string logName;
       int logNum;
       string benchname;
+      bool vault_level_parallelism;
 
       unsigned cpu_link_ratio;
       unsigned cpu_link_tune;

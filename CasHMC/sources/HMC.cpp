@@ -60,13 +60,21 @@ namespace CasHMC
       downLinkSlaves[l]->linkSlaveID = cubeID * 4 + l;
       upLinkMasters[l]->linkMasterID = cubeID * 4 + l;
     }
-    crossbarSwitch = new CrossbarSwitch(debugOut, stateOut, id_, rf_);
+
+    if (gVLP)
+      crossbarSwitch = new VLPCrossbarSwitch(debugOut, stateOut, id_, rf_);
+    else
+      crossbarSwitch = new CrossbarSwitch(debugOut, stateOut, id_, rf_);
+
     vaultControllers.reserve(NUM_VAULTS);
     drams.reserve(NUM_VAULTS);
     for(int v=0; v<NUM_VAULTS; v++) {
       classID.str("");
       classID << "HMC" << cubeID;
-      vaultControllers.push_back(new VaultController(debugOut, stateOut, v, classID.str()));
+      if (gVLP)
+        vaultControllers.push_back(new VLPVaultController(debugOut, stateOut, v, classID.str()));
+      else
+        vaultControllers.push_back(new VaultController(debugOut, stateOut, v, classID.str()));
       classID << "_VC" << v;
       drams.push_back(new DRAM(debugOut, stateOut, v, vaultControllers[v], classID.str()));
     }
@@ -115,7 +123,7 @@ namespace CasHMC
   //Update the state of HMC
   //
   void HMC::Update()
-  {	
+  {
     for(int l=0; l<NUM_LINKS; l++) {
       downLinkSlaves[l]->Update();
     }

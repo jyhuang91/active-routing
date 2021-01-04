@@ -14,7 +14,7 @@
 
 //HMC.h
 
-#include <vector>		//vector
+#include <vector>   //vector
 
 #include "SimulatorObject.h"
 #include "SimConfig.h"
@@ -23,6 +23,8 @@
 #include "LinkMaster.h"
 #include "CrossbarSwitch.h"
 #include "VaultController.h"
+#include "VLPCrossbarSwitch.h"
+#include "VLPVaultController.h"
 #include "DRAM.h"
 
 using namespace std;

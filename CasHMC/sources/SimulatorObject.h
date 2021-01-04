@@ -17,10 +17,10 @@
 //Header file for simulator object class
 //
 
-#include <stdint.h>		//uint64_t
-#include <fstream>		//ofstream
-#include <iomanip>		//setw()
-#include <sstream>		//stringstream
+#include <stdint.h> //uint64_t
+#include <fstream>  //ofstream
+#include <iomanip>  //setw()
+#include <sstream>  //stringstream
 
 using namespace std;
 
@@ -47,6 +47,7 @@ namespace CasHMC
       ofstream &debugOut;
       ofstream &stateOut;
       string header;
+      string name;
       stringstream classID;
 
   };

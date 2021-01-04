@@ -17,7 +17,7 @@
 //Header file for dual buffer object class
 //
 
-#include <vector>		//vector
+#include <vector>   //vector
 
 #include "SimulatorObject.h"
 #include "Transaction.h"
@@ -31,16 +31,28 @@ namespace CasHMC
   {
     public:
       DualVectorObject(ofstream &debugOut_, ofstream &stateOut_, int downBufMax, int upBufMax):
-        SimulatorObject(debugOut_, stateOut_), downBufferMax(downBufMax), upBufferMax(upBufMax) {
+        SimulatorObject(debugOut_, stateOut_), downBufferMax(downBufMax), upBufferMax(upBufMax),
+        artBufferMax(0) {
           bufPopDelay = 0;
           downBuffers.reserve(downBufferMax);
           upBuffers.reserve(upBufferMax);
+          artBuffers.reserve(artBufferMax);
+          is_link = false;
+          currentState = NORMAL;
+        }
+      DualVectorObject(ofstream &debugOut_, ofstream &stateOut_, int downBufMax, int upBufMax, int artBufMax):
+        SimulatorObject(debugOut_, stateOut_), downBufferMax(downBufMax), upBufferMax(upBufMax), artBufferMax(artBufMax) {
+          bufPopDelay = 0;
+          downBuffers.reserve(downBufferMax);
+          upBuffers.reserve(upBufferMax);
+          artBuffers.reserve(artBufferMax);
           is_link = false;
           currentState = NORMAL;
         }
       ~DualVectorObject() {
-        downBuffers.clear(); 
+        downBuffers.clear();
         upBuffers.clear();
+        artBuffers.clear();
         linkRxTx.clear();
       }
       virtual void Update()=0;
@@ -85,8 +97,8 @@ namespace CasHMC
       }
       bool ReceiveUp(UpT *upEle) {
         if(upBuffers.size() + upEle->LNG <= upBufferMax) {
-          //Upstream buffer does not need upBufPopCycle (one cycle to pop one buffer data), 
-          //	because upBufferDest (upstream buffer destination) is updated before buffer class.
+          //Upstream buffer does not need upBufPopCycle (one cycle to pop one buffer data),
+          //because upBufferDest (upstream buffer destination) is updated before buffer class.
           upBuffers.push_back(upEle);
           //If receiving packet is packet, add virtual tail packet in Buffers as long as packet length
           if(sizeof(*upEle) == sizeof(Packet)) {
@@ -102,13 +114,35 @@ namespace CasHMC
           return false;
         }
       }
+      bool ReceiveArt(UpT *upEle) {
+        if(artBuffers.size() + upEle->LNG <= artBufferMax) {
+          //Active-Routing buffer does not need upBufPopCycle (one cycle to pop one buffer data),
+          //because it is the sink for data.
+          artBuffers.push_back(upEle);
+          //If receiving packet is packet, add virtual tail packet in Buffers as long as packet length
+          if(sizeof(*upEle) == sizeof(Packet)) {
+            for(int i=1; i<upEle->LNG; i++) {
+              artBuffers.push_back(NULL);
+            }
+          }
+          CallbackReceiveArt(upEle, true);
+          return true;
+        }
+        else {
+          CallbackReceiveArt(upEle, false);
+          return false;
+        }
+      }
       virtual void CallbackReceiveDown(DownT *downEle, bool chkReceive)=0;
       virtual void CallbackReceiveUp(UpT *upEle, bool chkReceive)=0;
+      virtual void CallbackReceiveArt(UpT *upEle, bool chkReceive) {}
 
       int downBufferMax;
       int upBufferMax;
+      int artBufferMax;
       vector<DownT *> downBuffers;
       vector<UpT *> upBuffers;
+      vector<UpT *> artBuffers; // active-routing response to vaults to avoid deadlock
       int bufPopDelay;
 
       bool is_link;
