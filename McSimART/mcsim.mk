@@ -27,14 +27,14 @@ endif
 #DBG += -DDEBUG_GATHER
 #OPT = -O3 -DNDEBUG -axS -march=core2 -mtune=core2
 #OPT = -O3 -DNDEBUG -msse2 -march=pentium-m -mfpmath=sse
-#CXXFLAGS = -Wall -Wno-unknown-pragmas -Winline $(DBG) $(OPT) 
-#CXXFLAGS = -fPIC -Wno-unknown-pragmas $(DBG) $(OPT) 
-CXXFLAGS = -Wno-unknown-pragmas $(DBG) $(OPT) 
+#CXXFLAGS = -Wall -Wno-unknown-pragmas -Winline $(DBG) $(OPT)
+#CXXFLAGS = -fPIC -Wno-unknown-pragmas $(DBG) $(OPT)
+CXXFLAGS = -Wno-unknown-pragmas $(DBG) $(OPT)
 CXX = g++ -DTARGET_IA32E
 CC  = gcc -DTARGET_IA32E
 #CXX = icpc -DTARGET_IA32E
 #CC = icc -DTARGET_IA32E
-PINFLAGS = 
+PINFLAGS =
 
 SRCS = PTSCache.cc \
 	PTSComponent.cc \
@@ -65,5 +65,5 @@ obj_$(TAG)/%.o : %.cc
 	$(CXX) -c $(CXXFLAGS) $(PIN_CXXFLAGS) $(INCS) -o $@ $<
 
 clean:
-	-rm -f *.o pin.log mcsim 
+	-rm -f *.o pin.log mcsim
 

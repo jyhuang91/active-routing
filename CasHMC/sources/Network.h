@@ -32,7 +32,7 @@ namespace CasHMC
       //
       Network(int dimension, string benchname);
       virtual ~Network();
-      static Network *New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk = 0.5); // cpu_clk in ns
+      static Network *New(int dimension, TOPOLOGY topology, string benchname, double cpu_clk = 0.5, bool vlp = false); // cpu_clk in ns
       bool ReceiveTran(TransactionType tranType, uint64_t addr, unsigned size, int cpu_id);
       bool ReceiveTran(Transaction *tran, int cpu_id);
       void Update();
@@ -66,11 +66,12 @@ namespace CasHMC
       vector<vector<Link *> > hmcLinks;
       vector<HMC *> hmcs;
 
-      map<int, long long> hist;
       map<int, long long> ready_operands_hist;
       int network_ready_operands;
       map<int, long long> results_ready_hist;
       int network_results_ready;
+      map<int, long long> updates_received_hist;
+      int network_updates_received;
 
       vector<Link *> allLinks;
 
@@ -85,6 +86,7 @@ namespace CasHMC
       string logName;
       int logNum;
       string benchname;
+      bool vault_level_parallelism;
 
       unsigned cpu_link_ratio;
       unsigned cpu_link_tune;

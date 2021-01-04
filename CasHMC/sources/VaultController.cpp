@@ -22,11 +22,12 @@ namespace CasHMC
 {
 
   VaultController::VaultController(ofstream &debugOut_, ofstream &stateOut_, unsigned id):
-    DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_VLT_BUF, MAX_VLT_BUF),
+    DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_VLT_BUF, MAX_VLT_BUF, MAX_VLT_BUF),
     vaultContID(id)
   {
     classID << vaultContID;
     header = "        (VC_" + classID.str() + ")";
+    name = "VC" + classID.str();
 
     refreshCountdown = 0;
     powerDown = false;
@@ -47,11 +48,12 @@ namespace CasHMC
   }
 
   VaultController::VaultController(ofstream &debugOut_, ofstream &stateOut_, unsigned id, string headerPrefix):
-    DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_VLT_BUF, MAX_VLT_BUF),
+    DualVectorObject<Packet, Packet>(debugOut_, stateOut_, MAX_VLT_BUF, MAX_VLT_BUF, MAX_VLT_BUF),
     vaultContID(id)
   {
     classID << vaultContID;
     header = "        (" + headerPrefix + "_VC_" + classID.str() + ")";
+    name = headerPrefix + "_VC" + classID.str();
 
     refreshCountdown = 0;
     powerDown = false;
@@ -83,7 +85,7 @@ namespace CasHMC
   //
   void VaultController::CallbackReceiveDown(Packet *downEle, bool chkReceive)
   {
-    /*	if(chkReceive) {
+    /*  if(chkReceive) {
         DEBUG(ALI(18)<<header<<ALI(15)<<*downEle<<"Down) RECEIVING packet");
         }
         else {
@@ -95,30 +97,50 @@ namespace CasHMC
   {
     if(chkReceive) {
       switch(upEle->CMD) {
-        case RD_RS:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING read data response packet");	break;
-        case WR_RS:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING write response packet");		break;
-        case ACT_ADD:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");		break;
-        case ACT_MULT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet");  break;
-        case ACT_DOT:	DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_dot response packet");		break;
+        case RD_RS: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING read data response packet"); break;
+        case WR_RS: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING write response packet"); break;
+        case ACT_ADD: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_add response packet");  break;
+        case ACT_MULT:DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet"); break;
+        case ACT_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_dot response packet");  break;
+        case ACT_GET: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETURNING active_get response packet");  break; // VLP
         case PEI_DOT: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING pei dot response packet");  break;
         case PEI_ATOMIC: DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING pei atomic response packet");  break;
         default:
-                    ERROR(header<<"  == Error - WRONG response packet command type  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
-                    exit(0);
-                    break;
+          ERROR(header<<"  == Error - WRONG response packet command type  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
+          exit(0);
+          break;
       }
     }
     else {
-      ERROR(header<<"  == Error - Vault controller upstream packet buffer FULL  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
-      ERROR(header<<"             Vault buffer max size : "<<upBufferMax<<", current size : "<<upBuffers.size()<<", "<<*upEle<<" size : "<<upEle->LNG);
-      exit(0);
+      //WARN(header<<"  == Warn - Vault controller upstream packet buffer FULL  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
+      //WARN(header<<"             Vault buffer max size : "<<upBufferMax<<", current size : "<<upBuffers.size()<<", "<<*upEle<<" size : "<<upEle->LNG);
+      //ERROR(header<<"  == Error - Vault controller upstream packet buffer FULL  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
+      //ERROR(header<<"             Vault buffer max size : "<<upBufferMax<<", current size : "<<upBuffers.size()<<", "<<*upEle<<" size : "<<upEle->LNG);
+      //exit(0);
+    }
+  }
+
+  void VaultController::CallbackReceiveArt(Packet *upEle, bool chkReceive)
+  {
+    if(chkReceive) {
+      switch(upEle->CMD) {
+        case ACT_MULT:DE_CR(ALI(18)<<header<<ALI(15)<<*upEle<<"Up)   RETRUNING active mult response packet"); break;
+        default:
+          ERROR(header<<"  == Error - WRONG response packet command type  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
+          exit(0);
+          break;
+      }
+    }
+    else {
+      WARN(header<<"  == Warn - Vault controller art packet buffer FULL  "<<*upEle<<"  (CurrentClock : "<<currentClockCycle<<")");
+      WARN(header<<"             Vault buffer max size : "<<upBufferMax<<", current size : "<<upBuffers.size()<<", "<<*upEle<<" size : "<<upEle->LNG);
     }
   }
 
   //
   //Return read commands from DRAM
   //
-  void VaultController::ReturnCommand(DRAMCommand *retCMD)
+  bool VaultController::ReturnCommand(DRAMCommand *retCMD)
   {
     //Read and write data commands share one data bus
     if(dataBus != NULL) {
@@ -126,6 +148,7 @@ namespace CasHMC
       exit(0);
     }
 
+    bool consumeRetCMD = true;
     bool foundMatch = false;
     for(int i=0; i<pendingReadData.size(); i++) {
       if(retCMD->packetTAG == pendingReadData[i]) {
@@ -136,14 +159,17 @@ namespace CasHMC
             DE_CR(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   RETURNING ATOMIC read data");
           }
           else {
-            MakeRespondPacket(retCMD);
-            delete retCMD;
+            if (MakeRespondPacket(retCMD))
+              delete retCMD;
+            else
+              consumeRetCMD = false;
           }
         }
         else {
           delete retCMD;
         }
-        pendingReadData.erase(pendingReadData.begin()+i);
+        if (consumeRetCMD)
+          pendingReadData.erase(pendingReadData.begin()+i);
         foundMatch = true;
         break;
       }
@@ -152,44 +178,47 @@ namespace CasHMC
       ERROR(header<<"  == Error - Can't find a matching transaction  "<<*retCMD<<" 0x"<<hex<<retCMD->packetTAG<<dec<<"  (CurrentClock : "<<currentClockCycle<<")");
       exit(0);
     }
+
+    return consumeRetCMD;
   }
 
   //
   //Make response packet from request
   //
-  void VaultController::MakeRespondPacket(DRAMCommand *retCMD)
+  bool VaultController::MakeRespondPacket(DRAMCommand *retCMD)
   {
-    if(retCMD->trace != NULL) {
-      retCMD->trace->vaultFullLat = currentClockCycle - retCMD->trace->vaultIssueTime;
-    }
+
+    bool consumeRetCMD = true;
+    unsigned newPendingDataSize = pendingDataSize;
+
     Packet *newPacket;
     if(retCMD->atomic) {
       if(retCMD->packetCMD == _2ADD8 || retCMD->packetCMD == ADD16 || retCMD->packetCMD == INC8
           || retCMD->packetCMD == EQ8 || retCMD->packetCMD == EQ16 || retCMD->packetCMD == BWR) {
         newPacket = new Packet(RESPONSE, WR_RS, retCMD->packetTAG, 1, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
-        pendingDataSize -= 1;
+        newPendingDataSize -= 1;
       }
       else if (retCMD->packetCMD == PEI_ATOMIC) {
         newPacket = new Packet(RESPONSE, PEI_ATOMIC, retCMD->packetTAG, 1, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
-        pendingDataSize -= 1;
+        newPendingDataSize -= 1;
       }
       else {
         newPacket = new Packet(RESPONSE, RD_RS, retCMD->packetTAG, 2, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
-        pendingDataSize -= 2;
+        newPendingDataSize -= 2;
       }
     }
     else {
       if(retCMD->commandType == WRITE_DATA) {
         //packet, cmd, tag, lng, *lat
         newPacket = new Packet(RESPONSE, WR_RS, retCMD->packetTAG, 1, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
-        pendingDataSize -= 1;
-        //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   pendingDataSize 1 decreased   (current pendingDataSize : "<<pendingDataSize<<")");
+        newPendingDataSize -= 1;
+        //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   newPendingDataSize 1 decreased   (current newPendingDataSize : "<<newPendingDataSize<<")");
       }
       else if(retCMD->commandType == READ_DATA) {
         //packet, cmd, tag, lng, *lat
         newPacket = new Packet(RESPONSE, RD_RS, retCMD->packetTAG, (retCMD->dataSize/16)+1, retCMD->trace, retCMD->dest_cube, retCMD->src_cube);
-        pendingDataSize -= (retCMD->dataSize/16)+1;
-        //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   pendingDataSize "<<(retCMD->dataSize/16)+1<<" decreased   (current pendingDataSize : "<<pendingDataSize<<")");
+        newPendingDataSize -= (retCMD->dataSize/16)+1;
+        //DEBUG(ALI(18)<<header<<ALI(15)<<*retCMD<<"Up)   newPendingDataSize "<<(retCMD->dataSize/16)+1<<" decreased   (current newPendingDataSize : "<<newPendingDataSize<<")");
         newPacket->ADRS = retCMD->addr; // Jiayi, 03/27/17
 
         if (retCMD->packetCMD == ACT_ADD ||
@@ -245,7 +274,7 @@ namespace CasHMC
     newPacket->tran_tag = retCMD->tran_tag;
     newPacket->segment = retCMD->segment;
     if (newPacket->CMD != PEI_DOT) {
-      ReceiveUp(newPacket);
+      consumeRetCMD = ReceiveUp(newPacket);
     } else {
       if (pcuPacket.empty()) {
         newPacket->bufPopDelay = PCU_DELAY;
@@ -254,6 +283,45 @@ namespace CasHMC
       }
       pcuPacket.push_back(newPacket);
     }
+
+    if (consumeRetCMD == true) {
+      if(retCMD->trace != NULL) {
+        retCMD->trace->vaultFullLat = currentClockCycle - retCMD->trace->vaultIssueTime;
+      }
+      pendingDataSize = newPendingDataSize;
+#ifdef DEBUG_UPDATE
+      if (retCMD->packetCMD == ACT_ADD ||
+          retCMD->packetCMD == ACT_DOT)
+      {
+        cout << CYCLE() << "ART: Active response packet " << *newPacket
+          << " is returned for operand addr " << hex << newPacket->SRCADRS1 << dec << endl;
+      }
+      else if(retCMD->packetCMD == PEI_DOT)
+      {
+        cout << CYCLE() << "PEI response packet " << *newPacket
+          << " is returned for operand addr " << hex << newPacket->SRCADRS1 << dec << endl;
+      }
+      else if (retCMD->packetCMD == ACT_MULT)
+      {
+        cout << CYCLE() << "ART: Active MULT packet " << newPacket->TAG;
+        if (newPacket->SRCADRS1) {
+          assert(newPacket->SRCADRS2 == 0);
+          cout << " for operand 1 is returned, src_cube: " << newPacket->SRCCUB << ", dest_cube: " << newPacket->DESTCUB
+            << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
+            << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
+        } else {
+          assert(newPacket->SRCADRS1 == 0 && newPacket->SRCADRS2);
+          cout << " for operand 2 is returned, src_cube: " << newPacket->SRCCUB << ", dest_cube: " << newPacket->DESTCUB
+            << " (srcAddr1: 0x" << hex << newPacket->SRCADRS1
+            << ", srcAddr2: 0x" << newPacket->SRCADRS2 << ")" << dec << endl;
+        }
+      }
+#endif
+    } else {
+      delete newPacket;
+    }
+
+    return consumeRetCMD;
   }
 
   //
@@ -262,7 +330,8 @@ namespace CasHMC
   void VaultController::Update()
   {
     if(!pcuPacket.empty() && (pcuPacket.front())->bufPopDelay == 0){
-      ReceiveUp(pcuPacket.front()); pcuPacket.erase(pcuPacket.begin());
+      if (ReceiveUp(pcuPacket.front()))
+        pcuPacket.erase(pcuPacket.begin());
     }
     //Update DRAM state and various countdown
     UpdateCountdown();
@@ -375,7 +444,7 @@ namespace CasHMC
           }
           if(QUE_PER_BANK) {
             commandQueue->queue[atomicCMD->bank].insert(commandQueue->queue[atomicCMD->bank].begin(), atmRstCMD);
-            classID.str( string() );	classID.clear();
+            classID.str( string() );  classID.clear();
             classID << atomicCMD->bank;
             DE_CR(ALI(18)<<(commandQueue->header+"-"+classID.str()+")")<<ALI(15)<<*atmRstCMD<<"Down) PUSHING atomic result command into command queue");
           }
@@ -402,9 +471,13 @@ namespace CasHMC
     EnablePowerdown();
 
     commandQueue->Update();
-    for(int i=0; i<pcuPacket.size(); i++){
-      assert(pcuPacket[i]->bufPopDelay > 0);
-      pcuPacket[i]->bufPopDelay--;
+
+    for (int i=0; i<pcuPacket.size(); i++) {
+      //assert(pcuPacket[i]->bufPopDelay > 0);
+      if (pcuPacket[i]->bufPopDelay > 0)
+        pcuPacket[i]->bufPopDelay--;
+      else
+        cout << CYCLE() << "PEI: local upBuffer must be fulled for a while" << endl;
     }
     Step();
   }
@@ -417,7 +490,7 @@ namespace CasHMC
     //Check for outgoing command and handle countdowns
     if(cmdBus != NULL) {
       cmdCyclesLeft--;
-      if(cmdCyclesLeft == 0) {	//command is ready to be transmitted
+      if(cmdCyclesLeft == 0) {  //command is ready to be transmitted
         DE_CR(ALI(18)<<header<<ALI(15)<<*cmdBus<<"Down) ISSUING command to DRAM");
         if(cmdBus->trace != NULL && cmdBus->trace->vaultIssueTime == 0) {
           cmdBus->trace->vaultIssueTime = currentClockCycle;
@@ -455,7 +528,7 @@ namespace CasHMC
           exit(0);
         }
         dataBus = writeDataToSend[0];
-        dataCyclesLeft = BL;	//block size according to address mapping / DATA_WIDTH
+        dataCyclesLeft = BL;  //block size according to address mapping / DATA_WIDTH
 
         writeDataCountdown.erase(writeDataCountdown.begin());
         writeDataToSend.erase(writeDataToSend.begin());
@@ -474,7 +547,7 @@ namespace CasHMC
       DEBUG(ALI(39)<<header<<"REFRESH countdown is over");
     }
     //If a rank is powered down, make sure we power it up in time for a refresh
-    else if(powerDown && refreshCountdown<=tXP)	{
+    else if(powerDown && refreshCountdown<=tXP) {
     }
   }
 
@@ -491,66 +564,66 @@ namespace CasHMC
     bool atomic = false;
     switch(packet->CMD) {
       //Write
-      case WR16:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR32:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR48:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR64:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR80:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR96:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR112:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR128:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case WR256:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-      case MD_WR:		tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	break;
-                    //Poseted Write
-      case P_WR16:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR32:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR48:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR64:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR80:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR96:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR112:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR128:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-      case P_WR256:	tempCMD = OPEN_PAGE ? WRITE : WRITE_P;	tempPosted = true;	break;
-                    //Read
-      case RD16:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD32:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD48:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD64:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD80:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD96:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD112:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD128:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case RD256:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-      case MD_RD:		tempCMD = OPEN_PAGE ? READ : READ_P;	break;
-                    //Arithmetic atomic
-      case _2ADD8:	atomic = true;	tempCMD = READ;	break;
-      case ADD16:		atomic = true;	tempCMD = READ;	break;
-      case P_2ADD8:	atomic = true;	tempCMD = READ;	tempPosted = true;	break;
-      case P_ADD16:	atomic = true;	tempCMD = READ;	tempPosted = true;	break;
-      case _2ADDS8R:	atomic = true;	tempCMD = READ;	break;
-      case ADDS16R:	atomic = true;	tempCMD = READ; break;
-      case INC8:		atomic = true;	tempCMD = READ;	break;
-      case P_INC8:	atomic = true;	tempCMD = READ;	tempPosted = true;	break;
-                    //Boolean atomic
-      case XOR16:		atomic = true;	tempCMD = READ;	break;
-      case OR16:		atomic = true;	tempCMD = READ;	break;
-      case NOR16:		atomic = true;	tempCMD = READ;	break;
-      case AND16:		atomic = true;	tempCMD = READ;	break;
-      case NAND16:	atomic = true;	tempCMD = READ;	break;
-                    //Comparison atomic
-      case CASGT8:	atomic = true;	tempCMD = READ;	break;
-      case CASLT8:	atomic = true;	tempCMD = READ;	break;
-      case CASGT16:	atomic = true;	tempCMD = READ;	break;
-      case CASLT16:	atomic = true;	tempCMD = READ;	break;
-      case CASEQ8:	atomic = true;	tempCMD = READ;	break;
-      case CASZERO16:	atomic = true;	tempCMD = READ;	break;
-      case EQ16:		atomic = true;	tempCMD = READ;	break;
-      case EQ8:		atomic = true;	tempCMD = READ;	break;
-                  //Bitwise atomic
-      case BWR:		atomic = true;	tempCMD = READ;	break;
-      case P_BWR:		atomic = true;	tempCMD = READ;	tempPosted = true;	break;
-      case BWR8R:		atomic = true;	tempCMD = READ;	break;
-      case SWAP16:	atomic = true;	tempCMD = READ;	break;
+      case WR16:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR32:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR48:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR64:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR80:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR96:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR112: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR128: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case WR256: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      case MD_WR: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  break;
+      //Poseted Write
+      case P_WR16:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR32:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR48:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR64:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR80:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR96:  tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR112: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR128: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      case P_WR256: tempCMD = OPEN_PAGE ? WRITE : WRITE_P;  tempPosted = true;  break;
+      //Read
+      case RD16:  tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD32:  tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD48:  tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD64:  tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD80:  tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD96:  tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD112: tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD128: tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case RD256: tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      case MD_RD: tempCMD = OPEN_PAGE ? READ : READ_P;  break;
+      //Arithmetic atomic
+      case _2ADD8:  atomic = true;  tempCMD = READ; break;
+      case ADD16:   atomic = true;  tempCMD = READ; break;
+      case P_2ADD8: atomic = true;  tempCMD = READ; tempPosted = true;  break;
+      case P_ADD16: atomic = true;  tempCMD = READ; tempPosted = true;  break;
+      case _2ADDS8R:atomic = true;  tempCMD = READ; break;
+      case ADDS16R: atomic = true;  tempCMD = READ; break;
+      case INC8:    atomic = true;  tempCMD = READ; break;
+      case P_INC8:  atomic = true;  tempCMD = READ; tempPosted = true;  break;
+      //Boolean atomic
+      case XOR16: atomic = true;  tempCMD = READ; break;
+      case OR16:  atomic = true;  tempCMD = READ; break;
+      case NOR16: atomic = true;  tempCMD = READ; break;
+      case AND16: atomic = true;  tempCMD = READ; break;
+      case NAND16:atomic = true;  tempCMD = READ; break;
+      //Comparison atomic
+      case CASGT8:  atomic = true;  tempCMD = READ; break;
+      case CASLT8:  atomic = true;  tempCMD = READ; break;
+      case CASGT16: atomic = true;  tempCMD = READ; break;
+      case CASLT16: atomic = true;  tempCMD = READ; break;
+      case CASEQ8:  atomic = true;  tempCMD = READ; break;
+      case CASZERO16: atomic = true;  tempCMD = READ; break;
+      case EQ16:  atomic = true;  tempCMD = READ; break;
+      case EQ8:   atomic = true;  tempCMD = READ; break;
+      //Bitwise atomic
+      case BWR:   atomic = true;  tempCMD = READ; break;
+      case P_BWR: atomic = true;  tempCMD = READ; tempPosted = true;  break;
+      case BWR8R: atomic = true;  tempCMD = READ; break;
+      case SWAP16:atomic = true;  tempCMD = READ; break;
       // Active ops
       case ACT_ADD:   tempCMD = OPEN_PAGE ? READ : READ_P; break;
       case ACT_MULT:  tempCMD = OPEN_PAGE ? READ : READ_P; break;
@@ -560,8 +633,8 @@ namespace CasHMC
       case PEI_ATOMIC: atomic = true; tempCMD = READ; break;
 
       default:
-                      ERROR(header<<"  == Error - WRONG packet command type  (CurrentClock : "<<currentClockCycle<<")");
-                      exit(0);
+        ERROR(header<<"  == Error - WRONG packet command type  (CurrentClock : "<<currentClockCycle<<")");
+        exit(0);
     }
 
     //Due to the internal 32-byte granularity of the DRAM data bus within each vault in the HMC (HMC spec v2.1 p.99)
@@ -679,7 +752,7 @@ namespace CasHMC
           STATEN(endl<<"                      ");
         }
         if(i < downBuffers.size()) {
-          if(downBuffers[i] != NULL)	realInd = i;
+          if(downBuffers[i] != NULL)  realInd = i;
           STATEN(*downBuffers[realInd]);
         }
         else if(i == downBufferMax-1) {
@@ -701,7 +774,7 @@ namespace CasHMC
           STATEN(endl<<"                      ");
         }
         if(i < upBuffers.size()) {
-          if(upBuffers[i] != NULL)	realInd = i;
+          if(upBuffers[i] != NULL)  realInd = i;
           STATEN(*upBuffers[realInd]);
         }
         else if(i == upBufferMax-1) {
@@ -727,7 +800,8 @@ namespace CasHMC
     assert(ibuf);
     CrossbarSwitch *xbar = dynamic_cast<CrossbarSwitch *> (ibuf->xbar);
     assert(xbar);
-    cout << " -- Vault " << vaultContID << endl;
+    //cout << " -- Vault " << vaultContID << endl;
+    cout << " -- Vault " << name << endl;
     cout << "  - downBuffers size: " << downBuffers.size() << endl;
     for (int i = 0; i < downBuffers.size(); i++) {
       if (downBuffers[i] != NULL) {
@@ -738,6 +812,8 @@ namespace CasHMC
           << " (src_cube: " << downBuffers[i]->SRCCUB << ", dest_cube: " << downBuffers[i]->DESTCUB
           << ", packet length: " << downBuffers[i]->LNG;
         if (downBuffers[i]->CMD == ACT_MULT) {
+          if (gVLP)
+            cout << ", compute vault: " << downBuffers[i]->computeVault;
           if (downBuffers[i]->SRCADRS1 && downBuffers[i]->SRCADRS2) {
             cout << ", full pkt, dest_cube1: " << downBuffers[i]->DESTCUB1 << ", dest_cube: " << downBuffers[i]->DESTCUB2
               << ")" << endl;
@@ -761,6 +837,8 @@ namespace CasHMC
           << " (src_cube: " << upBuffers[i]->SRCCUB << ", dest_cube: " << upBuffers[i]->DESTCUB
           << ", packet length: " << upBuffers[i]->LNG;
         if (upBuffers[i]->CMD == ACT_MULT) {
+          if (gVLP)
+            cout << ", compute vault: " << upBuffers[i]->computeVault;
           if (upBuffers[i]->SRCADRS1 && upBuffers[i]->SRCADRS2) {
             cout << ", full pkt, dest_cube1: " << upBuffers[i]->DESTCUB1 << ", dest_cube2: " << upBuffers[i]->DESTCUB2
               << ")" << endl;
@@ -771,6 +849,21 @@ namespace CasHMC
           }
         } else {
           cout << ")" << endl;
+        }
+      }
+    }
+    cout << "  - artBuffers size: " << artBuffers.size() << endl;
+    for (int i = 0; i < artBuffers.size(); i++) {
+      if (artBuffers[i] != NULL) {
+        assert(artBuffers[i]->packetType == RESPONSE);
+        cout << *artBuffers[i] << " compute vault: " << artBuffers[i]->computeVault;
+        if (artBuffers[i]->SRCADRS1 && !artBuffers[i]->SRCADRS2) {
+          cout << ", first operand pkt)" << endl;
+        } else if (!artBuffers[i]->SRCADRS1 && artBuffers[i]->SRCADRS2) {
+          cout <<", second operand pkt)" << endl;
+        } else {
+          ERROR("artBuffer can't hold full MULT packet");
+          exit(0);
         }
       }
     }

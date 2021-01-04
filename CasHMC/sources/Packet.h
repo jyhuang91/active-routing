@@ -94,6 +94,9 @@ namespace CasHMC
       bool segment;
       unsigned reqDataSize;
 
+      // For tracking how often updates come into a cube
+      bool counted;
+
       //Packet Common Fields
       unsigned CUB, TAG, LNG;
       PacketCommandType CMD;
@@ -118,6 +121,8 @@ namespace CasHMC
       int SRCCUB, DESTCUB, DESTCUB1, DESTCUB2; // CUB ID varies from topology to topology
       uint64_t orig_addr, tran_tag;
       int operandBufID; // 03/24/17
+      int vaultOperandBufID; // copy for testing
+      int computeVault; // which vault to send operands to for computation
 
       unsigned URTC, DRTC;  // up return token (response) and down return token (request)
   };

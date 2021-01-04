@@ -14,9 +14,9 @@
 
 //VaultController.h
 
-#include <stdint.h>		//uint64_t
-#include <vector>		//vector
-#include <math.h>		//ceil()
+#include <stdint.h> //uint64_t
+#include <vector>   //vector
+#include <math.h>   //ceil()
 
 #include "DualVectorObject.h"
 #include "SimConfig.h"
@@ -40,15 +40,20 @@ namespace CasHMC
       virtual ~VaultController();
       void CallbackReceiveDown(Packet *packet, bool chkReceive);
       void CallbackReceiveUp(Packet *packet, bool chkReceive);
-      void ReturnCommand(DRAMCommand *retRead);
-      void MakeRespondPacket(DRAMCommand *retCMD);
-      void Update();
+      void CallbackReceiveArt(Packet *packet, bool chkReceive);
+      bool ReturnCommand(DRAMCommand *retRead);
+      virtual bool MakeRespondPacket(DRAMCommand *retCMD);
+      virtual void Update();
       void UpdateCountdown();
-      bool ConvPacketIntoCMDs(Packet *packet);
+      virtual bool ConvPacketIntoCMDs(Packet *packet);
       void AddressMapping(uint64_t physicalAddress, unsigned &bankAdd, unsigned &colAdd, unsigned &rowAdd);
       void EnablePowerdown();
       void PrintState();
       void PrintBuffers();
+
+      // For VLP
+      virtual int  OperandBufferStatus(Packet* p) { return -1; };
+      virtual void FreeOperandBuffer(int i) {};
 
       uint64_t totalOperandRequests;
 
@@ -68,8 +73,8 @@ namespace CasHMC
       DRAMCommand *atomicCMD;
       unsigned atomicOperLeft;
       unsigned pendingDataSize;
-      vector<unsigned> pendingReadData;	//Store Read packet TAG for return data
-      vector<Packet *>pcuPacket;	//Store Read packet TAG for return data
+      vector<unsigned> pendingReadData; //Store Read packet TAG for return data
+      vector<Packet *>pcuPacket;        //Store Read packet TAG for return data
       DualVectorObject<Packet, Packet> *upBufferDest;
 
       //Command and data to be transmitted to DRAM I/O

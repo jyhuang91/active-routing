@@ -25,7 +25,8 @@ namespace CasHMC
     LNG(lng),
     trace(lat),
     SRCCUB(src),
-    DESTCUB(dest)
+    DESTCUB(dest),
+    counted(false)
   {
     bufPopDelay=1;
     CRCtable[256]=0;
@@ -96,7 +97,8 @@ namespace CasHMC
     LNG(lng),
     trace(lat),
     SRCCUB(src),
-    DESTCUB(dest)
+    DESTCUB(dest),
+    counted(false)
   {
     bufPopDelay = 1;
     CRCtable[256] = 0;
@@ -162,7 +164,8 @@ namespace CasHMC
     SRCCUB(src),
     DESTCUB(dest1),
     DESTCUB1(dest1),
-    DESTCUB2(dest2)
+    DESTCUB2(dest2),
+    counted(false)
   {
     bufPopDelay = 1;
     CRCtable[256] = 0;
@@ -220,7 +223,8 @@ namespace CasHMC
     LNG(lng),
     trace(lat),
     SRCCUB(src),
-    DESTCUB(dest)
+    DESTCUB(dest),
+    counted(false)
   {
     bufPopDelay=1;
     CRCtable[256]=0;
@@ -309,6 +313,8 @@ namespace CasHMC
     // Jiayi, 03/27
     orig_addr = f.orig_addr; tran_tag = f.tran_tag;
     URTC = f.URTC;  DRTC = f.DRTC;
+    vaultOperandBufID = f.vaultOperandBufID;
+    computeVault = f.computeVault;
 
     AF = f.AF;  ERRSTAT = f.ERRSTAT;
     DINV = f.DINV;
